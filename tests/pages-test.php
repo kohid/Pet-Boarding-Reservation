@@ -31,6 +31,6 @@ Pages::forget();
 $wpdb->col_queue = array( array( 11 ) );
 Pages::url( 'pawfectly_my_bookings' );
 t( 'forget clears the cache', count( $wpdb->queries ) === $n + 1 );
-t( 'five shortcodes listed', array( 'pawfectly_reservation_form', 'pawfectly_user_menu', 'pawfectly_my_profile', 'pawfectly_my_bookings', 'pawfectly_dashboard' ) === array_keys( Pages::TAGS ) );
+t( 'six shortcodes listed', array( 'pawfectly_reservation_form', 'pawfectly_user_menu', 'pawfectly_login', 'pawfectly_my_profile', 'pawfectly_my_bookings', 'pawfectly_dashboard' ) === array_keys( Pages::TAGS ) );
 
 done();

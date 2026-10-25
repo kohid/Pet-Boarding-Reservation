@@ -44,13 +44,11 @@ final class AccountRest {
 			return self::too_many();
 		}
 		$in   = (array) $req->get_json_params();
-		$user = Accounts::authenticate( self::text( $in, 'email' ), self::raw( $in, 'password' ) );
+		$user = Accounts::authenticate( self::text( $in, 'email' ), self::raw( $in, 'password' ), ! empty( $in['remember'] ) );
 		if ( is_wp_error( $user ) ) {
 			return $user;
 		}
-		Accounts::start_session( (int) $user->ID );
-		do_action( 'wp_login', $user->user_login, $user ); // Core's own sign-in fires this; security plugins listen.
-		return new \WP_REST_Response( array( 'ok' => true, 'reload' => true ) );
+		return new \WP_REST_Response( array( 'ok' => true, 'reload' => true, 'redirect' => Login::target( self::raw( $in, 'redirect_to' ), $user ) ) );
 	}
 
 	/** @return \WP_REST_Response|\WP_Error */
@@ -70,7 +68,7 @@ final class AccountRest {
 		}
 		Accounts::start_session( $id );
 		Accounts::send_verification( $id );
-		return new \WP_REST_Response( array( 'ok' => true, 'reload' => true ) );
+		return new \WP_REST_Response( array( 'ok' => true, 'reload' => true, 'redirect' => Login::target( self::raw( $in, 'redirect_to' ), get_user_by( 'id', $id ) ) ) );
 	}
 
 	/** @return \WP_REST_Response|\WP_Error */

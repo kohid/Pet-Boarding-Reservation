@@ -1,5 +1,5 @@
 /*
- * Pawfectly — My Profile and My Bookings: tabs, JSON forms to the account REST routes,
+ * Pawfectly — login page, My Profile and My Bookings: tabs, JSON forms to the account REST routes,
  * resend verification, and owner cancel. Pages are rendered by the server.
  */
 (function () {
@@ -94,7 +94,7 @@
 					}
 				});
 			});
-			select(location.hash === '#signup' ? 'signup' : 'signin', false);
+			select(location.hash === '#signup' || root.getAttribute('data-paw-start') === 'signup' ? 'signup' : 'signin', false);
 			window.addEventListener('hashchange', function () {
 				if (location.hash === '#signup') {
 					select('signup', true);
@@ -109,13 +109,17 @@
 				var btn = form.querySelector('button[type=submit]');
 				var msg = form.querySelector('[data-paw-msg]');
 				var body = {};
-				form.querySelectorAll('input[name]').forEach(function (i) { body[i.name] = i.value; });
+				form.querySelectorAll('input[name]').forEach(function (i) { body[i.name] = i.type === 'checkbox' ? (i.checked ? '1' : '') : i.value; });
 				clearErrors(form);
 				say(msg, '');
 				btn.disabled = true;
 				var label = btn.textContent;
 				btn.textContent = I18N.saving;
 				call(form.getAttribute('data-paw-form'), body).then(function (r) {
+					if (r.ok && r.data.redirect && root.hasAttribute('data-paw-start')) {
+						location.assign(r.data.redirect);
+						return;
+					}
 					if (r.ok && r.data.reload) {
 						location.reload();
 						return;

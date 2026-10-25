@@ -66,34 +66,26 @@ final class Accounts {
 		return (int) $id;
 	}
 
-	/** Roles that may use the owner sign-in. Everyone else signs in on wp-login.php. */
+	/** Roles that count as plain customers (their reservations link to their account). */
 	private const CUSTOMER_ROLES = array( self::ROLE, 'subscriber', 'customer' );
 
 	/**
-	 * Owner sign-in. Privileged accounts are refused before the password is looked at, so this
-	 * endpoint cannot be used to test staff passwords outside wp-login's protections.
+	 * Sign-in for everyone, by email or username. wp_signon runs the `authenticate` filter, so
+	 * lockout and security plugins still apply, sets the cookie and fires `wp_login`.
 	 *
 	 * @return \WP_User|\WP_Error
 	 */
-	public static function authenticate( string $email, string $password ) {
-		$user = get_user_by( 'email', $email );
-		if ( $user && ! self::may_use_customer_login( $user ) ) {
-			return new \WP_Error(
-				'paw_staff_login',
-				/* translators: %s: WordPress login page address */
-				sprintf( __( 'Staff sign in on the WordPress login page: %s', 'pawfectly-reservations' ), wp_login_url() ),
-				array( 'status' => 403, 'login_url' => wp_login_url() )
-			);
-		}
-		// wp_authenticate runs the `authenticate` filter, so lockout and 2FA plugins still apply.
-		$checked = $user ? wp_authenticate( $user->user_login, $password ) : null;
-		if ( ! $checked instanceof \WP_User ) {
+	public static function authenticate( string $login, string $password, bool $remember = false ) {
+		$user = is_email( $login ) ? get_user_by( 'email', $login ) : get_user_by( 'login', $login );
+		$done = $user ? wp_signon( array( 'user_login' => $user->user_login, 'user_password' => $password, 'remember' => $remember ), is_ssl() ) : null;
+		if ( ! $done instanceof \WP_User ) {
 			return new \WP_Error( 'paw_login', __( 'The email or password is not right.', 'pawfectly-reservations' ), array( 'status' => 400 ) );
 		}
-		return $checked;
+		wp_set_current_user( (int) $done->ID );
+		return $done;
 	}
 
-	/** Only plain customer accounts: no staff capability, nothing beyond reading. */
+	/** Plain customer accounts: no staff capability, nothing beyond reading. */
 	public static function may_use_customer_login( \WP_User $user ): bool {
 		return ! array_diff( (array) $user->roles, self::CUSTOMER_ROLES ) && ! $user->has_cap( Activator::CAPABILITY ) && ! $user->has_cap( 'edit_posts' );
 	}

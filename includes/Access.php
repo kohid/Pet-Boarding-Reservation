@@ -48,7 +48,7 @@ final class Access {
 		if ( self::open() || $ajax || $cron || defined( 'WP_CLI' ) || in_array( $pagenow, self::PASS, true ) || self::is_admin_user( $u ) ) {
 			return null;
 		}
-		return home_url( '/' ); // Task 2 points this at the user's home page.
+		return Login::home_for( $u );
 	}
 
 	public static function gate(): void {

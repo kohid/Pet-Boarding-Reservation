@@ -1,7 +1,7 @@
 <?php
 /**
- * [pawfectly_my_profile]: signed out, Sign in / Create account tabs for owners (staff are pointed
- * to the WordPress login); signed in, details and password forms for everyone.
+ * [pawfectly_my_profile]: signed in, details and password forms for everyone; signed out, the
+ * login panel in place (the same one [pawfectly_login] shows).
  *
  * @package Pawfectly
  */
@@ -59,14 +59,12 @@ final class Profile {
 	}
 
 	public static function render(): string {
+		$user = wp_get_current_user();
+		if ( ! $user->exists() ) {
+			return Login::panel( (string) ( get_permalink() ?: home_url( '/' ) ) );
+		}
 		self::enqueue();
-		$user  = wp_get_current_user();
-		$here  = (string) ( get_permalink() ?: home_url( '/' ) );
-		$links = array(
-			'lost'     => wp_lostpassword_url( $here ),
-			'staff'    => wp_login_url( $here ),
-			'bookings' => Pages::url( MyBookings::TAG ),
-		);
+		$links = array( 'bookings' => Pages::url( MyBookings::TAG ) );
 		$phone = $user->exists() ? (string) get_user_meta( (int) $user->ID, Accounts::META_PHONE, true ) : '';
 
 		ob_start();

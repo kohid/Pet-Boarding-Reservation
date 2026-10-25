@@ -21,6 +21,7 @@ final class Plugin {
 		Uploads::init();
 		Shortcode::init();
 		Pages::init();
+		Login::init();
 		UserMenu::init();
 		Profile::init();
 		MyBookings::init();

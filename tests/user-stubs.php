@@ -83,7 +83,7 @@ function get_user_by( $field, $value ) {
 	if ( 'id' === $field ) {
 		return $GLOBALS['paw_users'][ (int) $value ] ?? false;
 	}
-	$id = 'email' === $field ? email_exists( $value ) : false;
+	$id = 'email' === $field ? email_exists( $value ) : ( 'login' === $field ? username_exists( $value ) : false );
 	return $id ? $GLOBALS['paw_users'][ $id ] : false;
 }
 function get_userdata( $id ) { return get_user_by( 'id', $id ); }
@@ -119,3 +119,19 @@ function wp_authenticate( $login, $password ) {
 	return $u && wp_check_password( $password, $u->user_pass ) ? $u : new WP_Error( 'incorrect_password', 'no' );
 }
 function get_edit_profile_url( $id = 0 ) { return 'https://example.test/wp-admin/profile.php'; }
+/** Core's wp_signon: authenticates (running the `authenticate` filter), sets the cookie, fires wp_login. */
+function wp_signon( $creds = array(), $secure = '' ) {
+	$u = wp_authenticate( $creds['user_login'] ?? '', $creds['user_password'] ?? '' );
+	if ( $u instanceof WP_User ) {
+		$GLOBALS['paw_auth_cookie']   = $u->ID;
+		$GLOBALS['paw_remember']      = ! empty( $creds['remember'] );
+		do_action( 'wp_login', $u->user_login, $u );
+	}
+	return $u;
+}
+function is_ssl() { return true; }
+function wp_validate_redirect( $location, $fallback = '' ) {
+	$host = parse_url( (string) $location, PHP_URL_HOST );
+	return ( '' !== (string) $location && ( null === $host || 'example.test' === $host ) ) ? $location : $fallback;
+}
+function apply_filters( $hook, $value, ...$args ) { return isset( $GLOBALS['paw_filters'][ $hook ] ) ? $GLOBALS['paw_filters'][ $hook ]( $value, ...$args ) : $value; }

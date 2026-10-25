@@ -1,6 +1,6 @@
 <?php
 /**
- * Account endpoints: sign in (owners only), sign up, profile, password, verification link.
+ * Account endpoints: sign in (everyone), sign up, profile, password, verification link.
  * Run: php tests/account-rest-test.php
  */
 require __DIR__ . '/bootstrap.php';
@@ -45,12 +45,18 @@ t( 'honeypot refused, no account', is_wp_error( $bot ) && ! email_exists( 'bot@e
 wp_set_current_user( 0 );
 $ok = AccountRest::login( req( array( 'email' => 'zoe@example.com', 'password' => 'correct horse' ) ) );
 t( 'sign-in succeeds and asks for a reload', 'ok' === code( $ok ) && true === $ok->get_data()['reload'] && $zoe->ID === get_current_user_id() );
+t( 'owners are sent home: no My Bookings page, so the site home', 'https://example.test/' === $ok->get_data()['redirect'] );
 t( 'sign-in fires wp_login for security plugins', in_array( 'wp_login', $GLOBALS['paw_actions'], true ) );
 wp_set_current_user( 0 );
 t( 'wrong password → 400 paw_login', 'paw_login' === code( AccountRest::login( req( array( 'email' => 'zoe@example.com', 'password' => 'nope nope' ) ) ) ) );
 paw_test_user( 'desk@example.com', 'desk pass1', array( Accounts::STAFF_ROLE ), array( Activator::CAPABILITY => true ) );
-$staff = AccountRest::login( req( array( 'email' => 'desk@example.com', 'password' => 'desk pass1' ) ) );
-t( 'staff sent to wp-login with a link', 'paw_staff_login' === code( $staff ) && 'https://example.test/wp-login.php' === $staff->get_error_data()['login_url'] && 0 === get_current_user_id() );
+wp_set_current_user( 0 );
+$staff = AccountRest::login( req( array( 'email' => 'desk@example.com', 'password' => 'desk pass1', 'redirect_to' => 'https://example.test/book/' ) ) );
+t( 'staff sign in here too and go where they were headed', 'ok' === code( $staff ) && 'https://example.test/book/' === $staff->get_data()['redirect'] );
+wp_set_current_user( 0 );
+$evil = AccountRest::login( req( array( 'email' => 'desk@example.com', 'password' => 'desk pass1', 'redirect_to' => 'https://evil.test/' ) ) );
+t( 'another site in redirect_to is ignored', 'https://evil.test/' !== $evil->get_data()['redirect'] );
+wp_set_current_user( 0 );
 for ( $i = 0; $i < 8; $i++ ) {
 	AccountRest::login( req( array( 'email' => 'zoe@example.com', 'password' => 'guess' . $i ) ) );
 }

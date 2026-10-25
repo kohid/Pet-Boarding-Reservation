@@ -472,3 +472,20 @@
 	clip: rect(0 0 0 0);
 	white-space: nowrap;
 }
+
+.paw-acct .paw-acct__check {
+	display: inline-flex;
+	gap: 0.5rem;
+	align-items: center;
+	margin-top: 1rem;
+	color: var(--paw-text);
+	font-size: 0.9375rem;
+	cursor: pointer;
+}
+
+.paw-acct .paw-acct__check input {
+	width: 1rem;
+	height: 1rem;
+	margin: 0;
+	accent-color: var(--paw-primary);
+}

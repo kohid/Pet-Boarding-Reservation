@@ -26,7 +26,7 @@ final class Dashboard {
 		$here = (string) ( get_permalink() ?: home_url( '/' ) );
 
 		if ( ! $user->exists() ) {
-			return '<div class="paw-dash-gate"><p>' . esc_html__( 'Staff only. Please sign in.', 'pawfectly-reservations' ) . '</p><p><a href="' . esc_url( wp_login_url( $here ) ) . '">' . esc_html__( 'Sign in', 'pawfectly-reservations' ) . '</a></p></div>';
+			return '<div class="paw-dash-gate"><p>' . esc_html__( 'Staff only. Please sign in.', 'pawfectly-reservations' ) . '</p><p><a href="' . esc_url( Login::url_for( $here ) ) . '">' . esc_html__( 'Sign in', 'pawfectly-reservations' ) . '</a></p></div>';
 		}
 		if ( ! current_user_can( Activator::CAPABILITY ) ) {
 			return '<div class="paw-dash-gate"><p>' . esc_html__( 'No access. This page is for Pawfectly staff.', 'pawfectly-reservations' ) . '</p></div>';

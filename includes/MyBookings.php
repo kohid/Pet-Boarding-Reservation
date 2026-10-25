@@ -26,8 +26,7 @@ final class MyBookings {
 		Profile::enqueue();
 		$user = wp_get_current_user();
 		if ( ! $user->exists() ) {
-			$profile = Pages::url( Profile::TAG );
-			$sign_in = '' !== $profile ? $profile : wp_login_url( (string) ( get_permalink() ?: home_url( '/' ) ) );
+			$sign_in = Login::url_for( (string) ( get_permalink() ?: home_url( '/' ) ) );
 			return '<div class="paw-acct">' . Profile::notices( 0 ) . '<div class="paw-acct__card"><p>' . esc_html__( 'Sign in to see your reservations.', 'pawfectly-reservations' ) . '</p><p><a class="paw-acct__btn" href="' . esc_url( $sign_in ) . '">' . esc_html__( 'Sign in', 'pawfectly-reservations' ) . '</a></p></div></div>';
 		}
 
