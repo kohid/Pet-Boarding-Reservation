@@ -33,6 +33,7 @@ $config['nonceUrl'] = '/mock/nonce';
 $config['today']   = gmdate( 'Y-m-d' );
 $config['maxTotal'] = 200000; // Small, so the e2e test can exercise the combined-size check.
 $config['account']['loginRest'] = '/mock/login';
+$config['rates'] = array( 'small' => 30.0, 'large' => 40.0, 'other' => null ); // Nightly boarding rates for the estimate checks.
 
 $html = Shortcode::markup( Settings::get() );
 $page = '<!doctype html>

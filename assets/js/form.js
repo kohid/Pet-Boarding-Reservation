@@ -70,7 +70,7 @@
 
 	function value(id) {
 		var f = CFG.fields[id];
-		if (f.type === 'choice' || f.type === 'yesno') {
+		if (f.type === 'choice' || f.type === 'yesno' || f.type === 'service') {
 			var checked = form.querySelector('input[name="' + id + '"]:checked');
 			return checked ? checked.value : '';
 		}
@@ -86,7 +86,10 @@
 
 	function isShown(id) {
 		var cond = CFG.fields[id].showIf;
-		return Object.keys(cond).every(function (target) { return value(target) === cond[target]; });
+		return Object.keys(cond).every(function (target) {
+			var wanted = cond[target];
+			return Array.isArray(wanted) ? wanted.indexOf(value(target)) !== -1 : value(target) === wanted;
+		});
 	}
 
 	function isDate(v) {
@@ -136,6 +139,14 @@
 			}
 			if (id === 'check_in' && v < CFG.today) {
 				return I18N.pastCheckIn;
+			}
+			if (id === 'appointment_date') {
+				if (value('booking_type') === 'grooming' && v < CFG.today) {
+					return I18N.pastGrooming;
+				}
+				if (value('booking_type') === 'both' && isDate(value('check_in')) && isDate(value('check_out')) && (v < value('check_in') || v > value('check_out'))) {
+					return I18N.groomingStay;
+				}
 			}
 			if (id === 'check_out' && isDate(value('check_in'))) {
 				if (v <= value('check_in')) {
@@ -252,7 +263,98 @@
 			accountField.hidden = !creatingAccount();
 			confirmField.hidden = !creatingAccount();
 		}
+		dogsOnly();
+		showPrices();
+		showEstimate();
 		nextBtn.disabled = warned();
+	}
+
+	/* ---------- Grooming: dogs only, prices by size, estimated total (display only) ---------- */
+
+	function dogsOnly() {
+		var dog = value('pet_type') === 'dog';
+		root.querySelectorAll('[data-paw-dog-only]').forEach(function (label) {
+			label.hidden = !dog;
+			var radio = label.querySelector('input');
+			if (!dog && radio.checked) {
+				setValue('booking_type', 'boarding');
+				showError('booking_type', null);
+			}
+		});
+	}
+
+	function money(n) {
+		var whole = Math.abs(n - Math.round(n)) < 0.005;
+		return CFG.currency + n.toLocaleString('en-US', { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 });
+	}
+
+	function priceText(amount, monthly) {
+		return amount === null ? I18N.onRequest : money(amount) + (monthly ? ' ' + I18N.perMonth : '');
+	}
+
+	function showPrices() {
+		var size = value('dog_size');
+		if (size !== 'small' && size !== 'large') {
+			return; // Keep the server's "from–to" range until a size is chosen.
+		}
+		root.querySelectorAll('[data-paw-price]').forEach(function (el) {
+			var svc = CFG.services[el.getAttribute('data-paw-price')];
+			if (svc) {
+				el.textContent = priceText(svc[size], svc.monthly);
+				el.classList.toggle('is-request', svc[size] === null);
+			}
+		});
+	}
+
+	function nights(a, b) {
+		return isDate(a) && isDate(b) && b > a ? Math.round((new Date(b) - new Date(a)) / 864e5) : 0;
+	}
+
+	/** The same sums as Services::estimate(). */
+	function estimate() {
+		var type = value('booking_type');
+		var size = value('dog_size');
+		var lines = [];
+		if (type === 'boarding' || type === 'both') {
+			var n = nights(value('check_in'), value('check_out'));
+			if (n > 0) {
+				var rate = value('pet_type') === 'dog' ? (size ? CFG.rates[size] : null) : CFG.rates.other;
+				lines.push({ label: format(n === 1 ? I18N.boardingOne : I18N.boardingMany, n), amount: rate === null || rate === undefined ? null : rate * n, monthly: false });
+			}
+		}
+		var svc = CFG.services[value('service')];
+		if (svc && (type === 'grooming' || type === 'both')) {
+			var picked = form.querySelector('input[name=service]:checked').closest('[data-paw-svc]').querySelector('.paw-svc__name').textContent;
+			lines.push({ label: picked, amount: size === 'small' || size === 'large' ? svc[size] : null, monthly: svc.monthly });
+		}
+		return lines;
+	}
+
+	function showEstimate() {
+		var box = root.querySelector('[data-paw-estimate]');
+		if (!box) {
+			return;
+		}
+		var lines = estimate();
+		var known = lines.filter(function (l) { return l.amount !== null; });
+		box.hidden = !known.length; // Nothing priced yet: no estimate to show.
+		if (!known.length) {
+			return;
+		}
+		var list = box.querySelector('[data-paw-estimate-lines]');
+		list.textContent = '';
+		lines.forEach(function (l) {
+			var li = document.createElement('li');
+			var name = document.createElement('span');
+			name.textContent = l.label;
+			var amount = document.createElement('span');
+			amount.textContent = priceText(l.amount, l.monthly);
+			li.appendChild(name);
+			li.appendChild(amount);
+			list.appendChild(li);
+		});
+		var total = known.reduce(function (sum, l) { return sum + l.amount; }, 0);
+		box.querySelector('[data-paw-estimate-total]').textContent = money(total) + (known.length < lines.length ? ' + ' + I18N.plusOnRequest : '');
 	}
 
 	/* ---------- Navigation ---------- */
@@ -356,7 +458,7 @@
 
 	function setValue(id, v) {
 		var t = CFG.fields[id].type;
-		if (t === 'choice' || t === 'yesno') {
+		if (t === 'choice' || t === 'yesno' || t === 'service') {
 			var r = form.querySelector('input[name="' + id + '"][value="' + CSS.escape(v) + '"]');
 			if (r) {
 				r.checked = true;
@@ -448,6 +550,7 @@
 						pickers.check_out.set('maxDate', isDate(ci) ? addDays(ci, CFG.maxNights) : null);
 					}
 					showError(id, null);
+					refresh();
 					saveDraft();
 				}
 			});
@@ -602,6 +705,12 @@
 	function finish(reference, accountMade) {
 		clearDraft();
 		root.querySelector('[data-paw-reference]').textContent = reference;
+		var est = root.querySelector('[data-paw-estimate]');
+		var doneEst = root.querySelector('[data-paw-estimate-done]');
+		if (est && doneEst && !est.hidden) {
+			doneEst.innerHTML = est.innerHTML;
+			doneEst.hidden = false;
+		}
 		if (accountMade) {
 			var note = document.createElement('p');
 			note.className = 'paw-done__text';

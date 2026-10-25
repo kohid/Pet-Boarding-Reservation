@@ -79,4 +79,21 @@ t( 'config: field rules without labels', isset( $cfg['fields']['owner_email']['t
 t( 'signed out: no prefill sent to the browser', false === $cfg['account']['signedIn'] && array() === $cfg['account']['prefill'] && str_ends_with( $cfg['account']['loginRest'], 'pawfectly/v1/account/login' ) );
 t( 'config: messages', 'This field is required.' === $cfg['i18n']['required'] );
 
+// Services and estimate.
+preg_match_all( '/data-paw-svc="([a-z_]+)"/', $html, $svc );
+t( 'seven service cards in the listed order', array( 'nail_trim', 'nail_membership', 'bath_membership', 'basic_bath', 'deluxe_bath', 'basic_haircut', 'premium_haircut' ) === $svc[1] );
+t( 'service cards are radios named service', 7 === substr_count( $html, 'name="service"' ) );
+t( 'monthly tag on the two memberships', 2 === substr_count( $html, 'class="paw-svc__tag"' ) );
+t( "what's included listed", str_contains( $html, 'Paw pad inspection' ) && str_contains( $html, 'What&#039;s included' ) );
+t( 'price range before a size is chosen', str_contains( $html, '$15–$20' ) && str_contains( $html, 'Price on request' ) );
+t( 'boarding is preselected', (bool) preg_match( '/name="booking_type" value="boarding"[^>]*checked/', $html ) );
+t( 'grooming options marked dogs-only', 2 === substr_count( $html, 'data-paw-dog-only' ) );
+t( 'estimate box in the stay step, hidden at first', (bool) preg_match( '/data-paw-estimate[^>]*hidden/', $html ) && strpos( $html, 'data-paw-estimate' ) > strpos( $html, 'data-step="3"' ) && strpos( $html, 'data-paw-estimate' ) < strpos( $html, 'data-step="4"' ) );
+t( 'config: prices by size, null when on request', 20.0 === $cfg['services']['nail_trim']['large'] && null === $cfg['services']['basic_bath']['small'] && true === $cfg['services']['bath_membership']['monthly'] );
+t( 'config: rates and currency', array_key_exists( 'other', $cfg['rates'] ) && '$' === $cfg['currency'] );
+t( 'config: estimate copy', 'Estimate. Payment is taken at Pawfectly; staff confirm the final price.' === $cfg['i18n']['estimate'] && 'Price on request' === $cfg['i18n']['onRequest'] );
+$GLOBALS['paw_options'][ Settings::OPTION ] = array( 'services' => array( 'deluxe_bath' => array( 'enabled' => false ) ) );
+t( 'turned-off services are not shown', ! str_contains( Shortcode::markup( Settings::get() ), 'data-paw-svc="deluxe_bath"' ) );
+unset( $GLOBALS['paw_options'][ Settings::OPTION ] );
+
 done();
