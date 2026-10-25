@@ -165,6 +165,11 @@ final class Services {
 		return $out;
 	}
 
+	/** @return list<string> Pawfectly's groomers, as listed in Settings. */
+	public static function groomers(): array {
+		return array_values( array_map( 'strval', (array) ( Settings::get()['groomers'] ?? array() ) ) );
+	}
+
 	/** The services the form offers. */
 	public static function enabled(): array {
 		return array_filter( self::catalog(), static fn( array $s ): bool => $s['enabled'] );
@@ -212,26 +217,15 @@ final class Services {
 	 */
 	public static function estimate( array $v ): array {
 		$type  = (string) ( $v['booking_type'] ?? 'boarding' );
-		$size  = (string) ( $v['dog_size'] ?? '' );
 		$lines = array();
-
-		if ( in_array( $type, array( 'boarding', 'both' ), true ) ) {
-			$nights = self::nights( (string) ( $v['check_in'] ?? '' ), (string) ( $v['check_out'] ?? '' ) );
-			$rate   = self::rate( (string) ( $v['pet_type'] ?? '' ), $size );
-			$lines[] = array(
-				/* translators: %d: number of nights */
-				'label'   => sprintf( _n( 'Boarding: %d night', 'Boarding: %d nights', $nights, 'pawfectly-reservations' ), $nights ),
-				'amount'  => null === $rate ? null : round( $rate * $nights, 2 ),
-				'monthly' => false,
-			);
-		}
-		$service = self::catalog()[ (string) ( $v['service'] ?? '' ) ] ?? null;
-		if ( $service && in_array( $type, array( 'grooming', 'both' ), true ) ) {
-			$lines[] = array(
-				'label'   => $service['name'],
-				'amount'  => self::price( $service['id'], $size ),
-				'monthly' => $service['monthly'],
-			);
+		if ( isset( $v['pets'] ) && is_array( $v['pets'] ) ) {
+			foreach ( $v['pets'] as $pet ) {
+				$pet    = (array) $pet;
+				$prefix = (string) ( $pet['pet_name'] ?? '' );
+				$lines  = array_merge( $lines, self::pet_lines( $type, $v, $pet, '' !== $prefix ? $prefix . ': ' : '' ) );
+			}
+		} else {
+			$lines = self::pet_lines( $type, $v, $v, '' ); // Bookings from before several pets.
 		}
 
 		$total = 0.0;
@@ -271,6 +265,35 @@ final class Services {
 			return __( 'Price on request', 'pawfectly-reservations' );
 		}
 		return self::money( $total, $currency ) . ( ! empty( $pricing['on_request'] ) ? ' + ' . __( 'price on request', 'pawfectly-reservations' ) : '' );
+	}
+
+	/** One pet's boarding and service lines. $prefix "Rex: " labels them per pet. */
+	private static function pet_lines( string $type, array $booking, array $pet, string $prefix ): array {
+		$size  = (string) ( $pet['dog_size'] ?? '' );
+		$lines = array();
+		if ( in_array( $type, array( 'boarding', 'both' ), true ) ) {
+			$nights  = self::nights( (string) ( $booking['check_in'] ?? '' ), (string) ( $booking['check_out'] ?? '' ) );
+			$rate    = self::rate( (string) ( $pet['pet_type'] ?? '' ), $size );
+			$label   = '' !== $prefix
+				/* translators: %d: number of nights */
+				? sprintf( _n( 'Boarding, %d night', 'Boarding, %d nights', $nights, 'pawfectly-reservations' ), $nights )
+				/* translators: %d: number of nights */
+				: sprintf( _n( 'Boarding: %d night', 'Boarding: %d nights', $nights, 'pawfectly-reservations' ), $nights );
+			$lines[] = array(
+				'label'   => $prefix . $label,
+				'amount'  => null === $rate ? null : round( $rate * $nights, 2 ),
+				'monthly' => false,
+			);
+		}
+		$service = self::catalog()[ (string) ( $pet['service'] ?? '' ) ] ?? null;
+		if ( $service && in_array( $type, array( 'grooming', 'both' ), true ) ) {
+			$lines[] = array(
+				'label'   => $prefix . $service['name'],
+				'amount'  => self::price( $service['id'], $size ),
+				'monthly' => $service['monthly'],
+			);
+		}
+		return $lines;
 	}
 
 	private static function nights( string $in, string $out ): int {

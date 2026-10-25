@@ -79,6 +79,12 @@ $GLOBALS['paw_options'][ Settings::OPTION ] = $p;
 $general = Settings::sanitize( array( 'business_name' => 'Pawfectly' ) );
 t( 'saving the wp-admin form (no pricing fields) keeps the prices', '45.00' === $general['services']['basic_bath']['small'] && '35.00' === $general['boarding_rates']['small'] && '€' === $general['currency'] );
 
+t( 'groomers: default none', array() === Settings::defaults()['groomers'] );
+$g = Settings::sanitize( array( 'groomers' => " Ana \n\nBen\nana\n" . str_repeat( 'x', 70 ) ) );
+t( 'groomers: trimmed, blanks and duplicates dropped, 60 characters, order kept', array( 'Ana', 'Ben', str_repeat( 'x', 60 ) ) === $g['groomers'] );
+$GLOBALS['paw_options'][ Settings::OPTION ] = $g;
+t( 'groomers: kept when not sent', array( 'Ana', 'Ben', str_repeat( 'x', 60 ) ) === Settings::sanitize( array( 'business_name' => 'P' ) )['groomers'] );
+t( 'groomers: an array works too', array( 'Cy' ) === Settings::sanitize( array( 'groomers' => array( ' Cy ', '' ) ) )['groomers'] );
 t( 'staff email list helper', array( 'a@example.com', 'b@example.com' ) === Settings::staff_emails( array( 'staff_emails' => 'a@example.com, b@example.com' ) ) );
 
 done();

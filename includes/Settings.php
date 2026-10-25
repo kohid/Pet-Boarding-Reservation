@@ -41,6 +41,7 @@ final class Settings {
 			'currency'        => '$',
 			'boarding_rates'  => array( 'small' => '', 'large' => '', 'other' => '' ),
 			'services'        => Services::defaults(),
+			'groomers'        => array(),
 		);
 	}
 
@@ -111,7 +112,19 @@ final class Settings {
 			);
 		}
 
+		// Groomers: one name per line (or a list), trimmed, no blanks or repeats, order kept.
+		$raw      = $input['groomers'] ?? $current['groomers'] ?? array();
+		$names    = is_array( $raw ) ? $raw : explode( "\n", (string) $raw );
+		$groomers = array();
+		foreach ( $names as $name ) {
+			$name = mb_substr( sanitize_text_field( (string) $name ), 0, 60 );
+			if ( '' !== $name && ! in_array( mb_strtolower( $name ), array_map( 'mb_strtolower', $groomers ), true ) ) {
+				$groomers[] = $name;
+			}
+		}
+
 		return array(
+			'groomers'       => $groomers,
 			'currency'       => '' !== $currency ? $currency : '$',
 			'boarding_rates' => $rates,
 			'services'       => $services,
