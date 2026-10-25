@@ -112,11 +112,9 @@ final class Rest {
 		if ( $sid_key ) {
 			set_transient( $sid_key, $reference, 10 * MINUTE_IN_SECONDS );
 		}
-		if ( class_exists( Mailer::class ) ) {
-			$reservation = Reservations::find( $id );
-			if ( $reservation ) {
-				Mailer::reservation_received( $reservation );
-			}
+		$reservation = Reservations::find( $id );
+		if ( $reservation ) {
+			Mailer::reservation_received( $reservation );
 		}
 
 		return new \WP_REST_Response( array( 'reference' => $reference ), 201 );

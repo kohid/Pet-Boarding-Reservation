@@ -117,3 +117,9 @@ function wp_verify_nonce( $nonce, $action = -1 ) { return 'wp_rest' === $action 
 function wp_create_nonce( $action = -1 ) { return $GLOBALS['paw_valid_nonce']; }
 function current_time( $type, $gmt = 0 ) { return gmdate( 'Y-m-d H:i:s' ); }
 function absint( $v ) { return abs( (int) $v ); }
+$GLOBALS['paw_mail']        = array();
+$GLOBALS['paw_mail_result'] = true;
+function wp_mail( $to, $subject, $message, $headers = '', $attachments = array() ) {
+	$GLOBALS['paw_mail'][] = compact( 'to', 'subject', 'message', 'headers', 'attachments' );
+	return $GLOBALS['paw_mail_result'];
+}

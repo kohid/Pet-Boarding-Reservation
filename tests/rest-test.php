@@ -52,6 +52,7 @@ function private_files(): array {
 
 // Happy path.
 reset_state();
+$GLOBALS['paw_options']['admin_email'] = 'owner@example.com';
 $res = Rest::submit( request( $good ) );
 t( 'good submission → 201', $res instanceof WP_REST_Response && 201 === $res->get_status() );
 t( 'returns a valid reference', $res instanceof WP_REST_Response && Reference::is_valid( $res->get_data()['reference'] ) );
@@ -60,6 +61,7 @@ $row = $wpdb->rows[1] ?? array();
 t( 'row has owner email and pet', 'ada@example.com' === ( $row['owner_email'] ?? '' ) && 'Biscuit' === ( $row['pet_name'] ?? '' ) );
 t( 'row records the IP', '203.0.113.9' === ( $row['signed_ip'] ?? '' ) );
 t( 'file and signature stored privately', 2 === count( private_files() ) );
+t( 'owner and staff emailed', 2 === count( $GLOBALS['paw_mail'] ) && 'ada@example.com' === $GLOBALS['paw_mail'][0]['to'] );
 
 // Nonce, rate limit, honeypot.
 reset_state();
