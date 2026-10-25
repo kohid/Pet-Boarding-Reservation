@@ -39,19 +39,21 @@ final class Signature {
 		return $relative;
 	}
 
-	/** A canvas nobody drew on is one flat colour: sample a grid and look for a second one. */
+	/**
+	 * A canvas nobody drew on is one flat colour. Every second pixel is checked, because the
+	 * pen is at least 2.25 px wide, so even a tiny mark lands on a checked pixel.
+	 */
 	private static function is_blank( string $png ): bool {
 		$im = @imagecreatefromstring( $png );
 		if ( ! $im ) {
 			return true;
 		}
-		$w      = imagesx( $im );
-		$h      = imagesy( $im );
-		$colors = array();
-		for ( $x = 0; $x < 40; $x++ ) {
-			for ( $y = 0; $y < 40; $y++ ) {
-				$colors[ imagecolorat( $im, intdiv( $x * ( $w - 1 ), 39 ), intdiv( $y * ( $h - 1 ), 39 ) ) ] = true;
-				if ( count( $colors ) > 1 ) {
+		$w     = imagesx( $im );
+		$h     = imagesy( $im );
+		$first = imagecolorat( $im, 0, 0 );
+		for ( $y = 0; $y < $h; $y += 2 ) {
+			for ( $x = 0; $x < $w; $x += 2 ) {
+				if ( imagecolorat( $im, $x, $y ) !== $first ) {
 					return false;
 				}
 			}

@@ -17,6 +17,19 @@ function sig_error( $r ): ?string {
 $png = fixture_png_bytes();
 $ok  = Signature::decode( 'data:image/png;base64,' . base64_encode( $png ) );
 t( 'drawn signature decodes to the PNG bytes', $ok === $png );
+/** A 1020×540 transparent canvas (DPR 3) with one small mark drawn by $draw. */
+function canvas_with( callable $draw ): string {
+	$im = imagecreatetruecolor( 1020, 540 );
+	imagesavealpha( $im, true );
+	imagefill( $im, 0, 0, imagecolorallocatealpha( $im, 0, 0, 0, 127 ) );
+	imagesetthickness( $im, 6 );
+	$draw( $im, imagecolorallocate( $im, 44, 57, 71 ) );
+	ob_start();
+	imagepng( $im );
+	return 'data:image/png;base64,' . base64_encode( ob_get_clean() );
+}
+t( 'small check mark is a signature', is_string( Signature::decode( canvas_with( function ( $im, $c ) { imageline( $im, 500, 260, 515, 285, $c ); imageline( $im, 515, 285, 545, 255, $c ); } ) ) ) );
+t( 'thin stroke between sample rows is a signature', is_string( Signature::decode( canvas_with( function ( $im, $c ) { imagesetthickness( $im, 3 ); imageline( $im, 100, 21, 900, 21, $c ); } ) ) ) );
 t( 'blank canvas rejected', $msg === sig_error( Signature::decode( 'data:image/png;base64,' . base64_encode( fixture_png_bytes( 300, 150, true ) ) ) ) );
 t( 'jpeg data url rejected', $msg === sig_error( Signature::decode( 'data:image/jpeg;base64,' . base64_encode( fixture_jpeg_bytes() ) ) ) );
 t( 'jpeg bytes behind a png prefix rejected', $msg === sig_error( Signature::decode( 'data:image/png;base64,' . base64_encode( fixture_jpeg_bytes() ) ) ) );
