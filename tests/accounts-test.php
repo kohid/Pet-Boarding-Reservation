@@ -6,6 +6,7 @@
 require __DIR__ . '/bootstrap.php';
 require __DIR__ . '/wp-db-stubs.php';
 require __DIR__ . '/user-stubs.php';
+function home_url( $p = '' ) { return 'https://example.test/' . ltrim( $p, '/' ); }
 
 use Pawfectly\Accounts;
 use Pawfectly\Activator;
@@ -60,7 +61,18 @@ t( 'token works once', ! Accounts::verify( $id, $token ) );
 $old = Accounts::new_token( $id2 );
 update_user_meta( $id2, Accounts::META_EXPIRES, time() - 1 );
 t( 'expired token refused', ! Accounts::verify( $id2, $old ) && ! Accounts::is_verified( $id2 ) );
-t( 'verify link points at the REST route', str_contains( Accounts::verify_url( $id, 'abc' ), 'wp-json/pawfectly/v1/account/verify?u=' . $id . '&t=abc' ) );
+t( 'verify link opens a site page (where the sign-in cookie counts)', str_contains( Accounts::verify_url( $id2, 'abc' ), 'paw_verify_u=' . $id2 . '&paw_verify_t=abc' ) && ! str_contains( Accounts::verify_url( $id2, 'abc' ), 'wp-json' ) );
+
+// Confirming needs the account's own session: someone who signed up with your email can't have you confirm it.
+$t2 = Accounts::new_token( $id2 );
+t( 'signed out: asked to sign in, token kept', 'signin' === Accounts::verify_request( $id2, $t2, 0 ) && ! Accounts::is_verified( $id2 ) );
+t( 'signed in as someone else: refused, token kept', 'wrong_user' === Accounts::verify_request( $id2, $t2, $id ) && ! Accounts::is_verified( $id2 ) );
+t( 'signed in as the account: confirmed', 'ok' === Accounts::verify_request( $id2, $t2, $id2 ) && Accounts::is_verified( $id2 ) );
+t( 'used link: bad', 'bad' === Accounts::verify_request( $id2, $t2, $id2 ) );
+t( 'after confirming, sent on with paw_verified=1', str_contains( Accounts::verify_redirect( 'ok', $id2, $t2 ), 'paw_verified=1' ) );
+$to_signin = Accounts::verify_redirect( 'signin', $id2, $t2 );
+t( 'sign-in redirect keeps the link so it completes after signing in', str_contains( $to_signin, 'paw_verify_u=' . $id2 ) && str_contains( $to_signin, 'paw_verify_t=' . $t2 ) && str_contains( $to_signin, 'paw_verified=signin' ) );
+t( 'wrong account redirect says so', str_contains( Accounts::verify_redirect( 'wrong_user', $id2, $t2 ), 'paw_verified=wrong' ) );
 
 // Prefill: from the account when there is no reservation yet.
 $p = Accounts::prefill( $id );

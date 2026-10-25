@@ -44,6 +44,10 @@ final class Profile {
 		$flag = isset( $_GET['paw_verified'] ) ? sanitize_key( wp_unslash( $_GET['paw_verified'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification -- display only.
 		if ( '1' === $flag ) {
 			$html .= '<p class="paw-acct__notice">' . esc_html__( 'Thanks — your email is confirmed.', 'pawfectly-reservations' ) . '</p>';
+		} elseif ( 'signin' === $flag ) {
+			$html .= '<p class="paw-acct__notice">' . esc_html__( 'Sign in to confirm your email address.', 'pawfectly-reservations' ) . '</p>';
+		} elseif ( 'wrong' === $flag ) {
+			$html .= '<p class="paw-acct__notice paw-acct__notice--error">' . esc_html__( 'This confirmation link belongs to a different account. Log out, then open the link again.', 'pawfectly-reservations' ) . '</p>';
 		} elseif ( '0' === $flag ) {
 			$html .= '<p class="paw-acct__notice paw-acct__notice--error">' . esc_html__( 'That confirmation link has expired or was already used.', 'pawfectly-reservations' ) . '</p>';
 		}

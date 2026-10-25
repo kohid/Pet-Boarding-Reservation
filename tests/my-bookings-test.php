@@ -105,6 +105,12 @@ t( 'signed in: password form asks for the current one', str_contains( $html, 'na
 t( 'unverified: reminder with a resend button', str_contains( $html, 'data-paw-resend' ) );
 $_GET['paw_verified'] = '1';
 t( 'verified link notice', str_contains( Profile::render(), 'Thanks — your email is confirmed.' ) );
+$_GET['paw_verified'] = 'signin';
+wp_set_current_user( 0 );
+t( 'signed out on My Bookings: told to sign in to confirm', str_contains( MyBookings::render(), 'Sign in to confirm your email address.' ) );
+$_GET['paw_verified'] = 'wrong';
+t( 'wrong account notice', str_contains( Profile::render(), 'belongs to a different account' ) );
+wp_set_current_user( $zoe->ID );
 $_GET['paw_verified'] = '0';
 t( 'expired link notice', str_contains( MyBookings::render(), 'expired or was already used' ) );
 

@@ -135,8 +135,67 @@ final class Accounts {
 		delete_user_meta( $user_id, self::META_VERIFIED );
 	}
 
+	/**
+	 * The emailed link opens a normal site page (not REST), where the sign-in cookie counts, so
+	 * confirming can require the account's own session.
+	 */
 	public static function verify_url( int $user_id, string $token ): string {
-		return add_query_arg( array( 'u' => $user_id, 't' => $token ), rest_url( Rest::NS . '/account/verify' ) );
+		return add_query_arg( array( 'paw_verify_u' => $user_id, 'paw_verify_t' => $token ), home_url( '/' ) );
+	}
+
+	public static function init(): void {
+		add_action( 'template_redirect', array( self::class, 'handle_verify_link' ) );
+	}
+
+	/**
+	 * Confirms an email only for the signed-in owner of the account: otherwise someone who signed
+	 * up with your address could have you confirm it by clicking, and then see your reservations.
+	 *
+	 * @return string ok | signin | wrong_user | bad
+	 */
+	public static function verify_request( int $user_id, string $token, int $current_user_id ): string {
+		if ( 0 === $current_user_id ) {
+			return 'signin';
+		}
+		if ( $current_user_id !== $user_id ) {
+			return 'wrong_user';
+		}
+		return self::verify( $user_id, $token ) ? 'ok' : 'bad';
+	}
+
+	/** Where each outcome sends the visitor. "signin" keeps the link so it completes after signing in. */
+	public static function verify_redirect( string $outcome, int $user_id, string $token ): string {
+		$profile  = Pages::url( 'pawfectly_my_profile' );
+		$bookings = Pages::url( 'pawfectly_my_bookings' );
+		$home     = home_url( '/' );
+		switch ( $outcome ) {
+			case 'ok':
+				return add_query_arg( array( 'paw_verified' => '1' ), $bookings ?: ( $profile ?: $home ) );
+			case 'signin':
+				$args = array( 'paw_verify_u' => $user_id, 'paw_verify_t' => $token, 'paw_verified' => 'signin' );
+				return '' !== $profile ? add_query_arg( $args, $profile ) : wp_login_url( add_query_arg( $args, $home ) );
+			case 'wrong_user':
+				return add_query_arg( array( 'paw_verified' => 'wrong' ), $profile ?: $home );
+		}
+		return add_query_arg( array( 'paw_verified' => '0' ), $profile ?: ( $bookings ?: $home ) );
+	}
+
+	/** template_redirect: handles ?paw_verify_u=&paw_verify_t= from the email. */
+	public static function handle_verify_link(): void {
+		// phpcs:disable WordPress.Security.NonceVerification -- the token is the proof.
+		if ( ! isset( $_GET['paw_verify_u'], $_GET['paw_verify_t'] ) || ! is_string( $_GET['paw_verify_t'] ) ) {
+			return;
+		}
+		$current = get_current_user_id();
+		if ( 0 === $current && isset( $_GET['paw_verified'] ) ) {
+			return; // Already showing "sign in to confirm"; the link completes after signing in.
+		}
+		$user_id = absint( $_GET['paw_verify_u'] );
+		$token   = sanitize_key( wp_unslash( $_GET['paw_verify_t'] ) );
+		// phpcs:enable
+		$outcome = self::verify_request( $user_id, $token, $current );
+		wp_safe_redirect( self::verify_redirect( $outcome, $user_id, $token ) );
+		exit;
 	}
 
 	/** Starts verification: new token, emailed link. */

@@ -150,7 +150,7 @@ $new = get_user_by( 'email', 'new.owner@example.com' );
 t( 'create account: reservation saved and account made', $res instanceof WP_REST_Response && 201 === $res->get_status() && $new instanceof WP_User );
 t( 'create account: reservation linked and owner signed in', (string) $new->ID === ( $wpdb->rows[1]['user_id'] ?? '' ) && $new->ID === get_current_user_id() );
 t( 'create account: response says the account is ready', true === ( $res->get_data()['account'] ?? null ) );
-t( 'create account: verification and reservation emails sent', 3 === count( $GLOBALS['paw_mail'] ) && (bool) array_filter( $GLOBALS['paw_mail'], fn( $m ) => str_contains( $m['message'], 'account/verify' ) ) );
+t( 'create account: verification and reservation emails sent', 3 === count( $GLOBALS['paw_mail'] ) && (bool) array_filter( $GLOBALS['paw_mail'], fn( $m ) => str_contains( $m['message'], 'paw_verify_t=' ) ) );
 wp_set_current_user( 0 );
 
 reset_state();

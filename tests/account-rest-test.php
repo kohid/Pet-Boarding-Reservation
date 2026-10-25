@@ -33,7 +33,7 @@ $res = AccountRest::signup( req( array( 'first_name' => 'Zoë', 'last_name' => "
 t( 'sign-up succeeds and asks for a reload', 'ok' === code( $res ) && true === $res->get_data()['reload'] );
 $zoe = get_user_by( 'email', 'zoe@example.com' );
 t( 'sign-up signs the owner in', $zoe && $zoe->ID === get_current_user_id() );
-t( 'sign-up sends one verification email', 1 === count( $GLOBALS['paw_mail'] ) && 'zoe@example.com' === $GLOBALS['paw_mail'][0]['to'] && str_contains( $GLOBALS['paw_mail'][0]['message'], 'account/verify' ) );
+t( 'sign-up sends one verification email', 1 === count( $GLOBALS['paw_mail'] ) && 'zoe@example.com' === $GLOBALS['paw_mail'][0]['to'] && str_contains( $GLOBALS['paw_mail'][0]['message'], 'paw_verify_t=' ) );
 $dup = AccountRest::signup( req( array( 'first_name' => 'Z', 'last_name' => 'O', 'email' => 'zoe@example.com', 'password' => 'correct horse' ) ) );
 t( 'existing email → 409 on the email field', 409 === status( $dup ) && isset( $dup->get_error_data()['fields']['email'] ) );
 $bad = AccountRest::signup( req( array( 'first_name' => '', 'last_name' => 'O', 'email' => 'x@example.com', 'password' => 'short' ) ) );
@@ -72,13 +72,5 @@ t( 'email used by someone else → 409', 409 === status( AccountRest::profile( r
 t( 'wrong current password', isset( AccountRest::password( req( array( 'current' => 'nope', 'password' => 'brand new pass', 'confirm' => 'brand new pass' ) ) )->get_error_data()['fields']['current'] ) );
 t( 'mismatched confirmation', isset( AccountRest::password( req( array( 'current' => 'correct horse', 'password' => 'brand new pass', 'confirm' => 'brand new pas' ) ) )->get_error_data()['fields']['password'] ) );
 t( 'password changed', 'ok' === code( AccountRest::password( req( array( 'current' => 'correct horse', 'password' => 'brand new pass', 'confirm' => 'brand new pass' ) ) ) ) && wp_check_password( 'brand new pass', $zoe->user_pass ) );
-
-// Verification link.
-$token = Accounts::new_token( $zoe->ID );
-$r     = AccountRest::verify( req( array(), array( 'u' => (string) $zoe->ID, 't' => 'wrong' ) ) );
-t( 'bad link redirects with paw_verified=0', 302 === $r->get_status() && str_contains( $r->sent_headers['Location'], 'paw_verified=0' ) );
-$r = AccountRest::verify( req( array(), array( 'u' => (string) $zoe->ID, 't' => $token ) ) );
-t( 'good link verifies and redirects with paw_verified=1', 302 === $r->get_status() && str_contains( $r->sent_headers['Location'], 'paw_verified=1' ) && Accounts::is_verified( $zoe->ID ) );
-t( 'with no account pages it lands on the home page', str_starts_with( $r->sent_headers['Location'], 'https://example.test/?' ) );
 
 done();

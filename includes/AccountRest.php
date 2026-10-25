@@ -23,7 +23,6 @@ final class AccountRest {
 			array( '/account/profile', 'POST', 'profile' ),
 			array( '/account/password', 'POST', 'password' ),
 			array( '/account/resend', 'POST', 'resend' ),
-			array( '/account/verify', 'GET', 'verify' ),
 			array( '/account/reservations/(?P<id>\d+)/cancel', 'POST', 'cancel' ),
 		);
 		foreach ( $routes as $r ) {
@@ -157,18 +156,6 @@ final class AccountRest {
 		}
 		Accounts::send_verification( (int) $user->ID );
 		return new \WP_REST_Response( array( 'ok' => true, 'message' => __( 'We sent a new link. Please check your inbox.', 'pawfectly-reservations' ) ) );
-	}
-
-	/** GET link from the verification email: verifies, then sends the owner to their bookings. */
-	public static function verify( \WP_REST_Request $req ): \WP_REST_Response {
-		$ok     = Accounts::verify( absint( $req->get_param( 'u' ) ), (string) $req->get_param( 't' ) );
-		$target = Pages::url( 'pawfectly_my_bookings' );
-		$target = '' !== $target ? $target : Pages::url( 'pawfectly_my_profile' );
-		$target = '' !== $target ? $target : home_url( '/' );
-
-		$res = new \WP_REST_Response( null, 302 );
-		$res->header( 'Location', add_query_arg( array( 'paw_verified' => $ok ? '1' : '0' ), $target ) );
-		return $res;
 	}
 
 	/** Owner cancels one of their own reservations (see MyBookings::can_cancel). */
