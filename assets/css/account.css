@@ -302,7 +302,7 @@
 	font-weight: 600;
 }
 
-.paw-acct .paw-acct__field input {
+.paw-acct .paw-acct__field input:not(#paw-0) {
 	display: block;
 	width: 100%;
 	min-height: 2.75rem;
@@ -316,14 +316,14 @@
 	font: inherit;
 }
 
-.paw-acct .paw-acct__field input:focus {
+.paw-acct .paw-acct__field input:not(#paw-0):focus {
 	border-color: var(--paw-primary);
 	background: #fff;
 	box-shadow: var(--paw-ring);
 	outline: none;
 }
 
-.paw-acct .paw-acct__field.is-invalid input {
+.paw-acct .paw-acct__field.is-invalid input:not(#paw-0) {
 	border-color: var(--paw-danger);
 }
 

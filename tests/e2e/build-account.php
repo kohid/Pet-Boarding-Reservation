@@ -47,7 +47,8 @@ $config['rest'] = '/mock/';
 $page = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pawfectly account (e2e)</title><link rel="stylesheet" href="/assets/css/account.css">
 <style>body{margin:0;font-family:system-ui;background:#f4f4f4} header{display:flex;justify-content:space-between;padding:16px 24px;background:#fff} main{padding:24px} section{margin-bottom:32px}</style>
-</head><body>
+<style>/* Elementor Site Settings → Form Fields (kit rule, specificity 0,3,1). */ .elementor-kit-5 input:not([type="button"]):not([type="submit"]),.elementor-kit-5 textarea,.elementor-kit-5 select{border:2px solid #000;border-radius:6px;background:#fff}</style>
+</head><body class="elementor-kit-5">
 <header><div id="guest-menu">' . $guest_menu . '</div><div id="member-menu">' . $member_menu . '</div></header>
 <main>
 <section id="profile-out">' . $profile_out . '</section>

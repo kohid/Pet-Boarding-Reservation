@@ -89,6 +89,7 @@ function ok(name, cond) { assert.ok(cond, name); passed++; console.log('ok   - '
       profileHeaders = route.request().headers();
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, message: 'Your details are saved.' }) });
     });
+    ok('Elementor kit form styles do not override account inputs', (await page.evaluate(() => getComputedStyle(document.querySelector('#profile-in [name=first_name]')).borderTopWidth)) === '1px');
     ok('signed-in profile is filled in', (await page.inputValue('#profile-in [name=first_name]')) === 'Jay');
     await page.click('#profile-in form[data-paw-form="account/profile"] button[type=submit]');
     await page.waitForSelector('#profile-in [data-paw-msg]:not([hidden])');

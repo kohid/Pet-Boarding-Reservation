@@ -61,6 +61,7 @@ async function mock(page, log) {
     ok('reservations: text is not parsed as HTML', (await page.textContent('.paw-dash__table')).includes('<b>Luna</b>'));
     ok('reservations: address shows the view', page.url().includes('paw_view=reservations'));
     ok('reservations: status tabs with counts', (await page.textContent('[data-paw-status-tab="pending"]')).includes('1'));
+    ok('Elementor kit form styles do not override dashboard inputs', (await page.evaluate(() => getComputedStyle(document.querySelector('[data-paw-search]')).borderTopWidth)) === '1px');
     const before = log.list.length;
     await page.fill('[data-paw-search]', 'zoe');
     await page.waitForFunction(n => window.__pawListCalls === undefined || true, before);

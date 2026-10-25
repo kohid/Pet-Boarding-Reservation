@@ -29,7 +29,8 @@ $config         = Dashboard::config( 'overview' );
 $config['rest'] = '/mock/';
 
 $page = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pawfectly dashboard (e2e)</title><link rel="stylesheet" href="/assets/css/dashboard.css"><style>body{margin:0}</style></head><body>
+<title>Pawfectly dashboard (e2e)</title><link rel="stylesheet" href="/assets/css/dashboard.css"><style>body{margin:0}</style><style>/* Elementor Site Settings → Form Fields (kit rule, specificity 0,3,1). */ .elementor-kit-5 input:not([type="button"]):not([type="submit"]),.elementor-kit-5 textarea,.elementor-kit-5 select{border:2px solid #000;border-radius:6px;background:#fff}</style>
+</head><body class="elementor-kit-5">
 ' . $html . '
 <script>window.PAW_DASH = ' . json_encode( $config ) . ';</script>
 <script src="/assets/js/dashboard.js"></script>

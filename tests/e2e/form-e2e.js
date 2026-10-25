@@ -102,6 +102,7 @@ async function walkToWaiver(page, width, label, opts = {}) {
   ok(`${label}: valid step 1 → step 2`, (await visibleStep(page)) === '2');
   ok(`${label}: progress advanced`, (await page.getAttribute('.paw-progress', 'aria-valuenow')) === '2');
   ok(`${label}: progress bar sits above the step title`, await page.evaluate(() => document.querySelector('.paw-progress').getBoundingClientRect().top <= document.querySelector('[data-step="2"] h2').getBoundingClientRect().top));
+  ok(`${label}: Elementor kit form styles do not override the underline style either`, await page.evaluate(() => document.body.classList.contains('elementor-kit-5') && getComputedStyle(document.querySelector('[name=pet_breed]')).borderTopWidth === '0px'));
   ok(`${label}: theme input borders do not override the underline style`, await page.evaluate(() => { const s = getComputedStyle(document.querySelector('[name=pet_name]')); return s.borderTopWidth === '0px' && s.borderBottomWidth === '1px'; }));
   ok(`${label}: back/next follow the step content`, await page.evaluate(() => document.querySelector('.paw-nav').getBoundingClientRect().top > document.querySelector('[data-step="2"] .paw-card').getBoundingClientRect().bottom));
 

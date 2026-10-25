@@ -45,9 +45,10 @@ $page = '<!doctype html>
 <link rel="stylesheet" href="/assets/css/form.css">
 <style>body{margin:0}</style>
 </head>
-<body>
+<body class="elementor-kit-5">
 ' . $html . '
 <style>/* A theme that styles every input, like the one in the screenshot. */ input[type=text],input[type=email],input[type=tel],select,textarea{border:1px solid #000;background:#fff;border-radius:2px}</style>
+<style>/* Elementor Site Settings → Form Fields (kit rule, specificity 0,3,1). */ .elementor-kit-5 input:not([type="button"]):not([type="submit"]),.elementor-kit-5 textarea,.elementor-kit-5 select{border:2px solid #000;border-radius:6px;background:#fff}</style>
 <script>window.PAW_FORM = ' . json_encode( $config ) . ';</script>
 <script src="/assets/vendor/flatpickr/flatpickr.min.js"></script>
 <script src="/assets/js/signature-pad.js"></script>
