@@ -9,7 +9,7 @@ define( 'PAW_VERSION', 'test' );
 define( 'PAW_DB_VERSION', '1' );
 define( 'PAW_FILE', dirname( __DIR__ ) . '/pawfectly-reservations.php' );
 define( 'PAW_DIR', dirname( __DIR__ ) . '/' );
-define( 'PAW_URL', 'https://example.test/wp-content/plugins/pawfectly-reservations/' );
+defined( 'PAW_URL' ) || define( 'PAW_URL', 'https://example.test/wp-content/plugins/pawfectly-reservations/' );
 define( 'MINUTE_IN_SECONDS', 60 );
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'DAY_IN_SECONDS', 86400 );

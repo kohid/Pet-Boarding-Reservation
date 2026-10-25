@@ -53,21 +53,14 @@
 	display: none !important;
 }
 
-.paw-app h1,
-.paw-app h2,
-.paw-app p,
-.paw-app fieldset,
-.paw-app legend,
-.paw-app ul {
+/* Resets use :where() so they carry no extra weight against the component classes below. */
+.paw-app :where(h1, h2, p, fieldset, legend, ul) {
 	margin: 0;
 	padding: 0;
 	border: 0;
 }
 
-.paw-app button,
-.paw-app input,
-.paw-app select,
-.paw-app textarea {
+.paw-app :where(button, input, select, textarea) {
 	font: inherit;
 	color: inherit;
 	letter-spacing: normal;
@@ -211,6 +204,16 @@
 	font-size: 1rem;
 	font-weight: 500;
 	color: var(--paw-ink);
+}
+
+/* A floated legend sits inside the fieldset's padding like any other label. */
+legend.paw-label {
+	float: left;
+	width: 100%;
+}
+
+legend.paw-label + * {
+	clear: both;
 }
 
 .paw-field--half .paw-label {
