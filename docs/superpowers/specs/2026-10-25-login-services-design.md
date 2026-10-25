@@ -2,7 +2,8 @@
 
 - Status: **written for review**
   - Section 2 (login and access) was approved in conversation.
-  - Section 3 (services) and section 4 (dropdown) use the recommendations put to the user. They are open to change in this review.
+  - Section 4 (dropdown) was settled by the user: keep the current look and only add Admin Panel.
+  - Section 3 (services) uses the recommendations put to the user. It is open to change in this review.
 - Date: 2026-10-25
 - Builds on:
   - `docs/superpowers/specs/2026-10-25-pet-boarding-reservation-design.md` (v0.1)
@@ -17,7 +18,7 @@
    - the account whose email is the site's Administration Email Address
    - users with the Developer role
 
-   Those users see an **Admin Panel** item in the account dropdown, styled like the user's previous project.
+   Those users see an **Admin Panel** item in the existing account dropdown.
 4. Settings move into the front-end dashboard. They include an editable price for every service.
 5. The booking form offers boarding, grooming, or both, using Pawfectly's grooming services and memberships. It shows prices and an estimated total.
 6. Release as v0.3.0.
@@ -106,17 +107,11 @@ Consequence: staff who used the wp-admin Reservations screen now work in the fro
 - **Dashboard Overview:** a new card for "Grooming today" (appointments dated today).
 - **My Bookings:** the service name next to the dates.
 
-## 4. Account dropdown (like the previous project)
+## 4. Account dropdown
 
-- **Header:** avatar, name, email, and a small chip reading "Signed in with Email".
-- **Items:** each has a line icon (inline SVG, `currentColor`).
-  - Dashboard: grid icon.
-  - My Bookings: calendar icon.
-  - My Profile: pencil icon.
-  - Settings: sliders icon.
-  - **Admin Panel**: gear icon, linking to `admin_url()`.
-  - Log Out: exit icon.
-- **Dark Mode** is left out, because the theme controls page colors.
+The user is happy with the current dropdown, so its look stays as it is: avatar header, plain text items, separators.
+
+The only change is a new **Admin Panel** item linking to `admin_url()`. It appears only to the admin-email account and to Developers, the same check that guards wp-admin. It goes after Settings and before the Log Out separator.
 
 ## 5. Components
 
@@ -132,7 +127,7 @@ Consequence: staff who used the wp-admin Reservations screen now work in the fro
 | `StaffRest` | `GET/PUT /staff/settings` for settings managers. |
 | `Dashboard` + `dashboard.js` | Settings view with General and Pricing sections. |
 | `AccountRest` | Login for all roles, signup and password change with confirmation. |
-| `UserMenu` | Icons, chip, Admin Panel, the Settings target. |
+| `UserMenu` | Admin Panel item; Settings points to the dashboard view. |
 | `form.js`, `account.js` | Show/hide toggles, confirm checks, service cards, the live estimate. |
 
 ## 6. Errors and edge cases
