@@ -84,6 +84,16 @@ class Fake_WPDB {
 
 	public function get_results( $sql, $output = null ) {
 		$this->queries[] = $sql;
+		// Owner queries: keep only rows matching "user_id = N" (or, when present, the email).
+		if ( preg_match( '/user_id = (\d+)/', $sql, $u ) ) {
+			$email = preg_match( "/owner_email = '([^']*)'/", $sql, $e ) ? stripslashes( $e[1] ) : null;
+			return array_values(
+				array_filter(
+					$this->rows,
+					fn( $r ) => ( $r['user_id'] ?? '' ) === $u[1] || ( null !== $email && ( $r['owner_email'] ?? '' ) === $email )
+				)
+			);
+		}
 		return array_values( $this->rows );
 	}
 }

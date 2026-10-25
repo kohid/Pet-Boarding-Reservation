@@ -19,6 +19,8 @@ final class Plugin {
 		Shortcode::init();
 		Pages::init();
 		UserMenu::init();
+		Profile::init();
+		MyBookings::init();
 		Updater::init(); // Not admin-only: WordPress cron runs the update check too.
 		if ( is_admin() ) {
 			Admin::init();
