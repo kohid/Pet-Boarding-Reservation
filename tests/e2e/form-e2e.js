@@ -163,7 +163,7 @@ async function walkToWaiver(page, width, label) {
   ok(`${label}: step 7`, (await visibleStep(page)) === '7');
   ok(`${label}: → hidden on the last step`, await page.isHidden('[data-paw-next]'));
   ok(`${label}: waiver date defaults to today`, (await page.inputValue('input[name=signed_date]')) === window_today);
-  const sized = await page.evaluate(() => { const c = document.querySelector('[data-paw-signature]'); return c.width === Math.round(c.getBoundingClientRect().width * devicePixelRatio); });
+  const sized = await page.evaluate(() => { const c = document.querySelector('[data-paw-signature]'); return c.width === Math.round(c.getBoundingClientRect().width * Math.min(devicePixelRatio, 2)); });
   ok(`${label}: signature pad matches its displayed size`, sized);
 }
 
@@ -243,7 +243,7 @@ let window_today;
 
     // Phone width: the whole flow, plus a server-side error that sends the visitor back to the right step.
     {
-      const ctx = await browser.newContext({ viewport: { width: 375, height: 812 }, deviceScaleFactor: 2, hasTouch: true });
+      const ctx = await browser.newContext({ viewport: { width: 375, height: 812 }, deviceScaleFactor: 3, hasTouch: true });
       const page = await ctx.newPage();
       const errors = [];
       page.on('pageerror', e => errors.push(e.message));

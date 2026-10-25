@@ -48,7 +48,9 @@
 			if (!rect.width) {
 				return;
 			}
-			var ratio = Math.max(window.devicePixelRatio || 1, 1);
+			// Capped at 2: sharper adds nothing to a signature, and very dense screens would
+			// otherwise produce an image bigger than the server accepts.
+			var ratio = Math.min(Math.max(window.devicePixelRatio || 1, 1), 2);
 			this.canvas.width = Math.round(rect.width * ratio);
 			this.canvas.height = Math.round(rect.height * ratio);
 			this.ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
