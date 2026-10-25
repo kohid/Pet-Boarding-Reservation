@@ -59,6 +59,16 @@ class Fake_WPDB {
 		return 1;
 	}
 
+	public $posts = 'wp_posts';
+	public $postmeta = 'wp_postmeta';
+	/** @var array<int, array> Columns handed back by get_col(), in order. */
+	public $col_queue = array();
+
+	public function get_col( $sql ) {
+		$this->queries[] = $sql;
+		return array_shift( $this->col_queue ) ?? array();
+	}
+
 	public function get_var( $sql ) {
 		$this->queries[] = $sql;
 		return array_shift( $this->var_queue );
