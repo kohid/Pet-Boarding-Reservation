@@ -1,6 +1,8 @@
 # Pawfectly v0.4: services up front, several pets per booking, preferred groomer (design spec)
 
-- Status: **written for review**. The user approved recommendations 1–11 in conversation and chose groomer option (a).
+- Status: **approved**.
+  - The user approved recommendations 1–11 and chose groomer option (a).
+  - §3.3 (a shorter form for grooming-only bookings) was approved later in conversation.
 - Date: 2026-10-25
 - Builds on:
   - `2026-10-25-pet-boarding-reservation-design.md` (v0.1)
@@ -69,6 +71,30 @@
 - **Boarding + grooming:** a dog's grooming card adds a first choice, **No grooming for this pet**. Cats and other pets show no grooming card; they board only. At least one pet must have a service, otherwise the error is "Choose a service for at least one pet, or book Boarding only."
 - **Boarding:** there are no grooming cards.
 - A turned-off service or an unknown groomer name is refused by the server.
+
+### 3.3 The form follows the booking type (approved addendum)
+
+| Step | Boarding | Grooming | Boarding + grooming |
+|---|---|---|---|
+| Health & Vaccination Records | yes | **yes** | yes |
+| Special Care Instructions | yes | **skipped** | yes |
+| Emergency Contacts & Veterinarian | yes | **vet only**: vet name, clinic, phone and authorization; no emergency contact | yes |
+| Liability Waiver | boarding waiver | **grooming waiver** | both waivers |
+
+- **Fields:**
+  - Care fields and the three emergency-contact fields show only for Boarding and Boarding + grooming.
+  - A step with no field shown is skipped. The progress bar counts only the steps shown.
+  - For grooming bookings, the vet step's title reads "Veterinarian".
+- **Settings:**
+  - `grooming_waiver`: an editable text with a default draft covering:
+    - matted coats and shave-downs
+    - senior and health-compromised pets
+    - nicks and clipper irritation
+    - behaviour and the right to stop a groom
+    - the same vet-care authorization as boarding
+  - `grooming_needs_vaccines`: on by default. When off, vaccination files are optional for grooming-only bookings.
+  - "Vaccinations up to date" is still required either way.
+- **Stored waiver:** each booking keeps the waiver text(s) it was signed with: the grooming waiver for grooming, both for Boarding + grooming.
 
 ## 4. Data
 

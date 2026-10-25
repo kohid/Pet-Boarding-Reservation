@@ -274,6 +274,53 @@
 - [ ] **Step 4:** `bash bin/test.sh`. Expected: everything except `admin-test` passes.
 - [ ] **Step 5:** Commit `feat: welcome service menu, pet cards and per-pet sections in the form`.
 
+### Task 4b: The form follows the booking type (spec §3.3)
+
+**Files:**
+- Modify:
+  - `includes/Fields.php`
+  - `includes/Settings.php` (`defaults`, `sanitize`, wp-admin `page`)
+  - `includes/Rest.php`
+  - `templates/form.php` (waiver step)
+  - `templates/partials/dashboard-settings.php`
+  - `includes/Shortcode.php` (config)
+- Test:
+  - `tests/fields-test.php`
+  - `tests/settings-test.php`
+  - `tests/validator-test.php`
+  - `tests/rest-test.php`
+  - `tests/form-render-test.php`
+  - `tests/dashboard-render-test.php`
+
+**Interfaces:**
+- `Fields::steps()`:
+  - Every `care` field gets `show_if['booking_type'] = array( 'boarding', 'both' )`, merged into any existing `show_if`.
+  - `emergency_name`, `emergency_phone` and `emergency_relationship` get the same.
+  - The `emergency` step gains `'title_grooming' => 'Veterinarian'`.
+- Settings:
+  - `grooming_waiver` is a string sanitized like `waiver`, with a default draft.
+  - `grooming_needs_vaccines` is a bool, default true. A field not sent keeps its saved value; the dashboard form sends it as a checkbox.
+- `Rest::submit`:
+  - Vaccination files are optional for a pet when `booking_type` is `grooming` and `grooming_needs_vaccines` is false. No files is then no error; files that are sent are still checked.
+  - `details.waiver_text` is the boarding waiver for boarding, the grooming waiver for grooming, and both joined with `<hr>` for Boarding + grooming.
+- Template waiver step:
+  - `<div class="paw-waiver" data-paw-waiver="boarding">` and `<div class="paw-waiver" data-paw-waiver="grooming">`.
+  - The emergency step's `<h2>` carries `data-title-grooming`.
+- Config: `groomingNeedsVaccines` (bool).
+
+- [ ] **Step 1: Tests.**
+  - **fields:** `all()['feeding_schedule']['show_if']['booking_type'] === array( 'boarding', 'both' )`, `emergency_name` the same, and `vet_name` has no `booking_type` condition.
+  - **validator:** a grooming booking without any care or emergency-contact answers is valid, and `details.pets[0]` has no `feeding_schedule`.
+  - **settings:** the default `grooming_waiver` contains "matted", and `grooming_needs_vaccines` defaults to true.
+  - **rest:**
+    - A grooming booking with no files and the setting off → 201.
+    - The same with the setting on → `vaccination_files_0` error.
+    - Boarding + grooming stores both waivers.
+  - **render:** both waiver boxes are present, and the emergency title carries `data-title-grooming="Veterinarian"`.
+  - **dashboard-render:** the settings have `name="grooming_waiver"` and `name="grooming_needs_vaccines"`.
+- [ ] **Step 2:** Run. Expected: fail. Implement. Run `bash bin/test.sh`. Expected: all pass.
+- [ ] **Step 3:** Commit `feat: shorter form for grooming-only bookings, grooming waiver`.
+
 ### Task 5: form.js for several pets
 
 **Files:**
@@ -299,6 +346,11 @@
   - Grooming cards show only for dogs in Grooming or Both bookings. A cat's grooming card is hidden.
   - In Grooming bookings with any pet that isn't a dog, the dogs-only message shows under the booking type, and Next is blocked on the stay step.
 - **Estimate:** mirrors `Services::estimate` with per-pet lines.
+- **Steps by booking type (Task 4b):**
+  - A step whose fields are all hidden is skipped by Next and Back.
+  - The progress bar and "Step x of y" count only the steps shown.
+  - Waiver boxes show by booking type, and the emergency title switches to its `data-title-grooming` for grooming.
+  - Files are optional when `groomingNeedsVaccines` is false and the booking is Grooming.
 
 - [ ] **Step 1: E2E scenario "two pets".**
   - The welcome step shows the menu with 8 entries. The owner picks Boarding + grooming.
@@ -314,6 +366,10 @@
   - Waiver: tick consent and submit.
   - The sent body has `pets[1][pet_name]` = Tom, `vaccination_files_0[]` and `vaccination_files_1[]`, `pets[0][groomer]` = Ana and `contact_consent` = 1.
   - At 390px: no horizontal scroll.
+- [ ] **Step 1b: E2E "grooming is shorter".** A grooming booking for one dog goes Owner → Pets → Details → Health → Vet → Waiver:
+  - Care is never shown, and the progress bar reaches the end in 6 steps.
+  - The vet step shows no emergency-contact fields, and its title reads "Veterinarian".
+  - Only the grooming waiver shows.
 - [ ] **Step 2: Update existing scenarios to the new names.** Booking type moves to the welcome step; single-pet flows fill `pets[0][...]`.
 - [ ] **Step 3:** Run the form e2e. Expected: fail. Implement, then run again. Expected: all pass, with phone and desktop screenshots saved via `PAW_SHOTS`.
 - [ ] **Step 4:** `bash bin/test.sh`. Expected: everything except `admin-test` passes.
