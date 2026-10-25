@@ -4,6 +4,10 @@
  * Run: php tests/form-render-test.php
  */
 require __DIR__ . '/bootstrap.php';
+require __DIR__ . '/wp-db-stubs.php';
+require __DIR__ . '/user-stubs.php';
+function get_permalink( $id = 0 ) { return 'https://example.test/book/'; }
+function home_url( $p = '' ) { return 'https://example.test/' . ltrim( $p, '/' ); }
 
 use Pawfectly\Fields;
 use Pawfectly\Settings;
@@ -48,12 +52,24 @@ t( 'placeholder logo without a logo set', str_contains( $html, 'assets/img/paw.s
 $settings['logo_id'] = 7;
 t( 'chosen logo used', str_contains( Shortcode::markup( $settings ), 'https://example.test/logo-7.png' ) );
 
+t( 'signed out: sign-in link and create-account box', str_contains( $html, 'data-paw-signin-toggle' ) && str_contains( $html, 'name="create_account"' ) && str_contains( $html, 'name="account_password"' ) && str_contains( $html, 'autocomplete="new-password"' ) );
+t( 'account block sits in the owner step', strpos( $html, 'data-paw-account' ) > strpos( $html, 'data-step="1"' ) && strpos( $html, 'data-paw-account' ) < strpos( $html, 'data-step="2"' ) );
+t( 'lost password link', str_contains( $html, 'action=lostpassword' ) );
+$me = paw_test_user( 'jay@example.com', 'some pass1', array( 'paw_customer' ) );
+$me->display_name = 'Jay <Miralles>';
+wp_set_current_user( $me->ID );
+$in = Shortcode::markup( $settings );
+t( 'signed in: "signed in as" with escaped name, no account prompts', str_contains( $in, 'Jay &lt;Miralles&gt;' ) && ! str_contains( $in, 'name="create_account"' ) && ! str_contains( $in, 'data-paw-signin-toggle' ) && str_contains( $in, 'action=logout' ) );
+$cfg_in = Shortcode::config();
+t( 'signed in: config carries the prefill', true === $cfg_in['account']['signedIn'] && 'jay@example.com' === $cfg_in['account']['prefill']['owner_email'] );
+wp_set_current_user( 0 );
 $cfg = Shortcode::config();
 t( 'config: endpoints and nonce', 'https://example.test/wp-json/pawfectly/v1/reservations' === $cfg['restUrl'] && str_ends_with( $cfg['nonceUrl'], 'pawfectly/v1/nonce' ) && 'good-nonce' === $cfg['nonce'] );
 t( 'config: today from the site clock', gmdate( 'Y-m-d' ) === $cfg['today'] );
 t( 'config: limits', 3 === $cfg['maxFiles'] && \Pawfectly\Uploads::max_file_bytes() === $cfg['maxBytes'] && \Pawfectly\Uploads::max_request_bytes() === $cfg['maxTotal'] && 7 === $cfg['steps'] );
 t( 'config: size messages name the real limits', 'Each file must be 10 MB or smaller.' === $cfg['i18n']['fileSize'] && str_contains( $cfg['i18n']['tooLarge'], 'in total' ) );
 t( 'config: field rules without labels', isset( $cfg['fields']['owner_email']['type'] ) && ! isset( $cfg['fields']['owner_email']['label'] ) );
+t( 'signed out: no prefill sent to the browser', false === $cfg['account']['signedIn'] && array() === $cfg['account']['prefill'] && str_ends_with( $cfg['account']['loginRest'], 'pawfectly/v1/account/login' ) );
 t( 'config: messages', 'This field is required.' === $cfg['i18n']['required'] );
 
 done();

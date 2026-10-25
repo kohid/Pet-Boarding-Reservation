@@ -6,6 +6,8 @@
 require __DIR__ . '/bootstrap.php';
 require __DIR__ . '/wp-db-stubs.php';
 require __DIR__ . '/fixtures.php';
+require __DIR__ . '/user-stubs.php';
+function home_url( $p = '' ) { return 'https://example.test/' . ltrim( $p, '/' ); }
 
 use Pawfectly\Reference;
 use Pawfectly\Rest;
@@ -125,6 +127,35 @@ reset_state();
 $wpdb->var_queue = array( '1', null ); // First reference generated is already taken.
 $res = Rest::submit( request( $good ) );
 t( 'taken reference → a new one is generated', $res instanceof WP_REST_Response && 201 === $res->get_status() && 1 === inserts() );
+
+// Accounts from the owner step.
+reset_state();
+$GLOBALS['paw_mail'] = array();
+$ada = paw_test_user( 'ada@example.com', 'some pass1', array( 'paw_customer' ) );
+wp_set_current_user( $ada->ID );
+Rest::submit( request( $good ) );
+t( 'signed-in owner: reservation linked to the account', (string) $ada->ID === ( $wpdb->rows[1]['user_id'] ?? '' ) );
+wp_set_current_user( 0 );
+
+reset_state();
+$res = Rest::submit( request( $good, array( 'create_account' => '1', 'account_password' => 'short' ) ) );
+t( 'create account: short password → field error', is_wp_error( $res ) && 'Use at least 8 characters.' === ( $res->get_error_data()['fields']['account_password'] ?? '' ) && 0 === inserts() );
+$res = Rest::submit( request( $good, array( 'create_account' => '1', 'account_password' => 'correct horse' ) ) );
+t( 'create account: email already registered → field error on email', is_wp_error( $res ) && str_contains( $res->get_error_data()['fields']['owner_email'] ?? '', 'already uses this email' ) );
+
+reset_state();
+$GLOBALS['paw_mail'] = array();
+$res = Rest::submit( request( $good, array( 'owner_email' => 'new.owner@example.com', 'create_account' => '1', 'account_password' => 'correct horse' ) ) );
+$new = get_user_by( 'email', 'new.owner@example.com' );
+t( 'create account: reservation saved and account made', $res instanceof WP_REST_Response && 201 === $res->get_status() && $new instanceof WP_User );
+t( 'create account: reservation linked and owner signed in', (string) $new->ID === ( $wpdb->rows[1]['user_id'] ?? '' ) && $new->ID === get_current_user_id() );
+t( 'create account: response says the account is ready', true === ( $res->get_data()['account'] ?? null ) );
+t( 'create account: verification and reservation emails sent', 3 === count( $GLOBALS['paw_mail'] ) && (bool) array_filter( $GLOBALS['paw_mail'], fn( $m ) => str_contains( $m['message'], 'account/verify' ) ) );
+wp_set_current_user( 0 );
+
+reset_state();
+Rest::submit( request( $good, array( 'owner_email' => 'guest@example.com', 'account_password' => 'correct horse' ) ) );
+t( 'unticked box: no account even if a password was typed', ! email_exists( 'guest@example.com' ) && '' === ( $wpdb->rows[1]['user_id'] ?? 'x' ) );
 
 t( 'nonce endpoint', 'good-nonce' === Rest::nonce()->get_data()['nonce'] );
 

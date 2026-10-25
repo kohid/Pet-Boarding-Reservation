@@ -534,6 +534,53 @@
 	margin-top: 0.5rem;
 }
 
+/* ---------- Account (owner step) ---------- */
+
+.paw-app .paw-account {
+	margin-bottom: 1rem;
+	padding: 0.875rem 1.25rem;
+	border-left: 3px solid var(--paw-primary);
+	border-radius: var(--paw-radius);
+	background: var(--paw-card);
+	box-shadow: var(--paw-shadow);
+	font-size: 0.9375rem;
+}
+
+.paw-app .paw-account .paw-link,
+.paw-app .paw-account a {
+	color: var(--paw-primary-dark);
+	font-size: inherit;
+}
+
+.paw-app .paw-signin {
+	display: grid;
+	gap: 0.75rem;
+	margin-top: 0.875rem;
+}
+
+@media (min-width: 640px) {
+	.paw-app .paw-signin {
+		grid-template-columns: 1fr 1fr;
+		column-gap: 1.5rem;
+	}
+
+	.paw-app .paw-signin > .paw-error,
+	.paw-app .paw-signin__actions {
+		grid-column: 1 / -1;
+	}
+}
+
+.paw-app .paw-signin__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	align-items: center;
+}
+
+.paw-app .paw-signin__actions .paw-nav__btn {
+	min-width: 0;
+}
+
 /* ---------- Links, errors, submit ---------- */
 
 .paw-app .paw-link {

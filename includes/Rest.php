@@ -81,6 +81,8 @@ final class Rest {
 				$errors += $result->get_error_data()['fields'];
 			}
 		}
+		$account = self::account_request( $params, is_array( $clean ) ? $clean['columns']['owner_email'] : '' );
+		$errors += $account['errors'];
 		if ( $errors ) {
 			return new \WP_Error( 'paw_invalid', __( 'Please check the highlighted fields.', 'pawfectly-reservations' ), array( 'status' => 400, 'fields' => $errors ) );
 		}
@@ -105,7 +107,8 @@ final class Rest {
 
 		$ip  = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 		$row = Reservations::build_row( $clean, $reference, $stored, $signature_path, $ip, current_time( 'mysql', true ) );
-		$id  = Reservations::insert( $row );
+		$row['user_id'] = is_user_logged_in() ? get_current_user_id() : null;
+		$id             = Reservations::insert( $row );
 		if ( ! $id ) {
 			Uploads::delete( array_merge( $stored, array( array( 'path' => $signature_path ) ) ) );
 			error_log( '[pawfectly] reservation insert failed' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions
@@ -115,12 +118,48 @@ final class Rest {
 		if ( $sid_key ) {
 			set_transient( $sid_key, $reference, 10 * MINUTE_IN_SECONDS );
 		}
+		$made_account = $account['create'] && self::create_account( $id, $clean['columns'], $account['password'] );
 		$reservation = Reservations::find( $id );
 		if ( $reservation ) {
 			Mailer::reservation_received( $reservation );
 		}
 
-		return new \WP_REST_Response( array( 'reference' => $reference ), 201 );
+		return new \WP_REST_Response( array( 'reference' => $reference, 'account' => $made_account ), 201 );
+	}
+
+	/**
+	 * "Create an account with these details" on the owner step: only for visitors, only when ticked.
+	 *
+	 * @return array{create: bool, password: string, errors: array<string,string>}
+	 */
+	private static function account_request( array $params, string $email ): array {
+		$none = array( 'create' => false, 'password' => '', 'errors' => array() );
+		if ( is_user_logged_in() || '1' !== (string) ( $params['create_account'] ?? '' ) ) {
+			return $none;
+		}
+		$password = is_string( $params['account_password'] ?? null ) ? $params['account_password'] : '';
+		$errors   = array();
+		$problem  = AccountRules::password( $password, null );
+		if ( null !== $problem ) {
+			$errors['account_password'] = $problem;
+		}
+		if ( '' !== $email && email_exists( $email ) ) {
+			$errors['owner_email'] = __( "An account already uses this email. Sign in above, or untick 'Create an account'.", 'pawfectly-reservations' );
+		}
+		return array( 'create' => true, 'password' => $password, 'errors' => $errors );
+	}
+
+	/** Makes the account after the reservation is safely stored, links them, signs the owner in. */
+	private static function create_account( int $reservation_id, array $owner, string $password ): bool {
+		$user_id = Accounts::register( $owner['owner_first_name'], $owner['owner_last_name'], $owner['owner_email'], $owner['owner_phone'], $password );
+		if ( is_wp_error( $user_id ) ) {
+			error_log( '[pawfectly] account from reservation failed: ' . $user_id->get_error_code() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions
+			return false;
+		}
+		Reservations::link_user( $reservation_id, $user_id );
+		Accounts::start_session( $user_id );
+		Accounts::send_verification( $user_id );
+		return true;
 	}
 
 	/** A fresh nonce, for pages served from a cache with an expired one. */

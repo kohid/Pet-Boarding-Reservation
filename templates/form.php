@@ -8,6 +8,7 @@
  * @var array  $steps     Fields::steps().
  * @var array  $countries Fields::countries().
  * @var string $logo      Logo URL.
+ * @var array  $account   Shortcode::account().
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -45,6 +46,38 @@ $paw_count = count( $steps );
 				<?php if ( 'waiver' === $paw_step['id'] ) : ?>
 					<p class="paw-step__intro"><?php echo esc_html( $paw_step['intro'] ); ?></p>
 					<div class="paw-waiver"><?php echo wp_kses_post( $settings['waiver'] ); ?></div>
+				<?php endif; ?>
+
+				<?php if ( 'owner' === $paw_step['id'] ) : ?>
+					<?php if ( $account['signedIn'] ) : ?>
+						<p class="paw-account paw-account--in" data-paw-account>
+							<?php esc_html_e( 'Signed in as', 'pawfectly-reservations' ); ?> <strong><?php echo esc_html( $account['name'] ); ?></strong>.
+							<a href="<?php echo esc_url( $account['logoutUrl'] ); ?>"><?php esc_html_e( 'Not you? Log out', 'pawfectly-reservations' ); ?></a>
+						</p>
+					<?php else : ?>
+						<div class="paw-account" data-paw-account>
+							<p class="paw-account__lead">
+								<?php esc_html_e( 'Already have an account?', 'pawfectly-reservations' ); ?>
+								<button type="button" class="paw-link" data-paw-signin-toggle aria-expanded="false" aria-controls="paw-signin"><?php esc_html_e( 'Sign in', 'pawfectly-reservations' ); ?></button>
+								<?php esc_html_e( 'to use your saved details.', 'pawfectly-reservations' ); ?>
+							</p>
+							<div class="paw-signin" id="paw-signin" hidden>
+								<div class="paw-signin__row">
+									<label class="paw-label" for="paw-login-email"><?php esc_html_e( 'Email', 'pawfectly-reservations' ); ?></label>
+									<input class="paw-input" type="email" id="paw-login-email" autocomplete="username">
+								</div>
+								<div class="paw-signin__row">
+									<label class="paw-label" for="paw-login-password"><?php esc_html_e( 'Password', 'pawfectly-reservations' ); ?></label>
+									<input class="paw-input" type="password" id="paw-login-password" autocomplete="current-password">
+								</div>
+								<p class="paw-error" data-paw-signin-error role="alert" hidden></p>
+								<div class="paw-signin__actions">
+									<button type="button" class="paw-nav__btn" data-paw-signin><?php esc_html_e( 'Sign in', 'pawfectly-reservations' ); ?></button>
+									<a class="paw-link" href="<?php echo esc_url( $account['lostUrl'] ); ?>"><?php esc_html_e( 'Forgot your password?', 'pawfectly-reservations' ); ?></a>
+								</div>
+							</div>
+						</div>
+					<?php endif; ?>
 				<?php endif; ?>
 
 				<div class="paw-card">
@@ -157,6 +190,26 @@ $paw_count = count( $steps );
 							<p class="paw-error" id="<?php echo esc_attr( $paw_dom ); ?>-error" role="alert" hidden></p>
 						<?php echo $paw_group ? '</fieldset>' : '</div>'; ?>
 					<?php endforeach; ?>
+
+					<?php if ( 'owner' === $paw_step['id'] && ! $account['signedIn'] ) : ?>
+						<fieldset class="paw-field paw-field--agree" data-field="create_account">
+							<legend class="paw-label"><?php esc_html_e( 'Account (optional)', 'pawfectly-reservations' ); ?></legend>
+							<p class="paw-help"><?php esc_html_e( 'Save your details for next time and see your reservations online.', 'pawfectly-reservations' ); ?></p>
+							<div class="paw-options">
+								<label class="paw-option">
+									<input type="checkbox" name="create_account" value="1">
+									<span class="paw-option__text"><?php esc_html_e( 'Create an account with these details', 'pawfectly-reservations' ); ?></span>
+									<span class="paw-option__mark" aria-hidden="true"></span>
+								</label>
+							</div>
+						</fieldset>
+						<div class="paw-field paw-field--password" data-field="account_password" hidden>
+							<label class="paw-label" for="paw-account_password"><?php esc_html_e( 'Choose a password', 'pawfectly-reservations' ); ?><span class="paw-req" aria-hidden="true">*</span></label>
+							<p class="paw-help" id="paw-account_password-help"><?php esc_html_e( 'At least 8 characters.', 'pawfectly-reservations' ); ?></p>
+							<input class="paw-input" type="password" id="paw-account_password" name="account_password" autocomplete="new-password" aria-describedby="paw-account_password-error paw-account_password-help">
+							<p class="paw-error" id="paw-account_password-error" role="alert" hidden></p>
+						</div>
+					<?php endif; ?>
 				</div>
 
 				<?php if ( $paw_n === $paw_count ) : ?>

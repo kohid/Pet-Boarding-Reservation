@@ -185,6 +185,11 @@ final class Reservations {
 		);
 	}
 
+	public static function link_user( int $id, int $user_id ): bool {
+		global $wpdb;
+		return (bool) $wpdb->update( Activator::table(), array( 'user_id' => $user_id ), array( 'id' => $id ) );
+	}
+
 	public static function set_notes( int $id, string $notes ): bool {
 		global $wpdb;
 		return (bool) $wpdb->update(
