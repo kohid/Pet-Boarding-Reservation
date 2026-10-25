@@ -1,9 +1,6 @@
 # Pawfectly v0.3: one login page, Admin Panel access, grooming services and pricing (design spec)
 
-- Status: **written for review**
-  - Section 2 (login and access) was approved in conversation.
-  - Section 4 (dropdown) was settled by the user: keep the current look and only add Admin Panel.
-  - Section 3 (services) uses the recommendations put to the user. It is open to change in this review.
+- Status: **approved** (the user approved the spec and the service list, and asked for the plan)
 - Date: 2026-10-25
 - Builds on:
   - `docs/superpowers/specs/2026-10-25-pet-boarding-reservation-design.md` (v0.1)
@@ -48,15 +45,17 @@ Consequence: staff who used the wp-admin Reservations screen now work in the fro
 
 ### 3.1 The catalog (from the user's screenshots)
 
-| id | Name | Kind | Time | Small dog (< 25 lbs) | Large dog (25 lbs +) |
+| id | Name (as the user lists them, in this order) | Kind | Time | Small dog (< 25 lbs) | Large dog (25 lbs +) |
 |---|---|---|---|---|---|
-| `nail_trim` | Professional Nail Trimming | Single visit | Usually under 15 minutes | $15 | $20 |
-| `basic_bath` | Basic Bath | Single visit | — | price on request | price on request |
-| `deluxe_bath` | Deluxe Bath Experience | Single visit | About 2 hours | price on request | price on request |
-| `basic_haircut` | Basic Haircut | Single visit | 2–3 hours | price on request | price on request |
-| `premium_groom` | Premium Full-Service Grooming | Single visit | About 3 hours | price on request | price on request |
+| `nail_trim` | Nail Trimming | Single visit | Usually under 15 minutes | $15 | $20 |
 | `nail_membership` | Nail Membership | Monthly | Come in as often as you like | $15 / month | $20 / month |
-| `bath_membership` | Unlimited Dog Baths | Monthly | Unlimited visits | $59 / month | $59 / month |
+| `bath_membership` | Bath Membership | Monthly | Unlimited baths | $59 / month | $59 / month |
+| `basic_bath` | Basic Bath | Single visit | — | price on request | price on request |
+| `deluxe_bath` | Deluxe Bath | Single visit | About 2 hours | price on request | price on request |
+| `basic_haircut` | Basic Haircuts | Single visit | 2–3 hours | price on request | price on request |
+| `premium_haircut` | Premium Haircuts | Single visit | About 3 hours | price on request | price on request |
+
+On the form, the services are listed in the order above, which is also the order of the user's list. The detailed descriptions come from the screenshots: "Premium Haircuts" uses the Premium Full-Service Grooming copy, and "Bath Membership" uses the Unlimited Dog Baths copy.
 
 - Nail trim prices come from the membership card, which says its price is the same as a single trim. No other single-visit prices were given, so they start blank.
 - A blank price shows as "Price on request" and is left out of the estimate.
@@ -77,7 +76,7 @@ Consequence: staff who used the wp-admin Reservations screen now work in the fro
   - **Boarding + grooming**: check-in and check-out, plus a grooming day, which must fall within the stay.
   - Grooming is for dogs, matching the copy. For cats and other pets, only Boarding is offered, and the server rejects anything else.
 - **Service** (`service`) appears for Grooming and for Boarding + grooming:
-  - One choice, shown as cards in two groups: "Single visit" and "Monthly memberships".
+  - One choice, shown as cards in the catalog order. Each membership card carries a "Monthly" badge.
   - Each card shows the name, time, the price for the chosen dog size, and a collapsible "What's included".
   - Only one service is allowed, because the larger services already include the nail trim and bath, and the membership terms say they "cannot be combined with any other offer or service".
   - Turned-off services are not shown, and the server rejects them.
