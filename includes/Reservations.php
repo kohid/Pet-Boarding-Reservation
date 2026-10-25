@@ -160,6 +160,21 @@ final class Reservations {
 		);
 	}
 
+	/** Permanently removes a reservation and its private files (vaccination records and signature). */
+	public static function delete( int $id ): bool {
+		global $wpdb;
+		$reservation = self::find( $id );
+		if ( ! $reservation ) {
+			return false;
+		}
+		$files = (array) $reservation['files'];
+		if ( '' !== (string) $reservation['signature_path'] ) {
+			$files[] = array( 'path' => $reservation['signature_path'] );
+		}
+		Uploads::delete( $files );
+		return (bool) $wpdb->delete( Activator::table(), array( 'id' => $id ) );
+	}
+
 	private static function decode( array $row ): array {
 		$row['id'] = (int) $row['id'];
 		foreach ( self::JSON as $col ) {

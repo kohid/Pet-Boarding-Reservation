@@ -5,6 +5,7 @@
  */
 require __DIR__ . '/bootstrap.php';
 require __DIR__ . '/wp-db-stubs.php';
+function fixture_rmrf_simple( string $p ): void { if ( '' === $p || ! file_exists( $p ) ) { return; } if ( is_dir( $p ) ) { foreach ( array_diff( scandir( $p ), array( '.', '..' ) ) as $f ) { fixture_rmrf_simple( "$p/$f" ); } rmdir( $p ); } else { unlink( $p ); } }
 
 use Pawfectly\Reservations;
 
@@ -48,6 +49,17 @@ $wpdb->fail_insert = true;
 t( 'insert failure returns false', false === Reservations::insert( $row ) );
 $wpdb->fail_insert = false;
 
+// Deleting removes the row and its private files.
+$dir = \Pawfectly\Uploads::ensure_private_dir();
+@mkdir( $dir . '/2026/10', 0755, true );
+file_put_contents( $dir . '/2026/10/PAW-DDDDDD-a.pdf', 'pdf' );
+file_put_contents( $dir . '/2026/10/PAW-DDDDDD-sig-b.png', 'png' );
+$del_id = Reservations::insert( Reservations::build_row( $clean, 'PAW-DDDDDD', array( array( 'name' => 'a.pdf', 'path' => '2026/10/PAW-DDDDDD-a.pdf', 'mime' => 'application/pdf', 'size' => 3 ) ), '2026/10/PAW-DDDDDD-sig-b.png', '203.0.113.9', '2026-10-25 14:00:00' ) );
+t( 'delete succeeds', Reservations::delete( $del_id ) );
+t( 'deleted row is gone', null === Reservations::find( $del_id ) );
+t( 'deleted files are gone', ! file_exists( $dir . '/2026/10/PAW-DDDDDD-a.pdf' ) && ! file_exists( $dir . '/2026/10/PAW-DDDDDD-sig-b.png' ) );
+t( 'deleting a missing id fails', ! Reservations::delete( 999 ) );
+
 // The list query builds safe SQL.
 $wpdb->queries   = array();
 $wpdb->var_queue = array( 1 );
@@ -64,4 +76,5 @@ t( 'unknown status ignored', ! str_contains( implode( '', ( function () use ( $w
 } )() ), 'OR 1=1' ) );
 t( 'query returns rows and total', 1 === $res['total'] && is_array( $res['rows'] ) );
 
+fixture_rmrf_simple( $GLOBALS['paw_upload_base'] ?? '' );
 done();

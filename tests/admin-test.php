@@ -85,6 +85,7 @@ t( 'current status selected', str_contains( $html, '<option value="confirmed" se
 t( 'history names the staff member', str_contains( $html, 'Sam Staff' ) );
 t( 'notes form', str_contains( $html, 'name="action" value="paw_notes"' ) && str_contains( $html, 'Kennel 4' ) );
 t( 'print button', str_contains( $html, 'data-paw-print' ) );
+t( 'delete form with its own nonce', str_contains( $html, 'name="action" value="paw_delete"' ) && str_contains( $html, 'nonce-paw_delete_5' ) && str_contains( $html, 'data-paw-confirm' ) );
 t( 'detail shows the waiver as signed', str_contains( $html, '<p>Old waiver wording v1</p>' ) && ! str_contains( $html, '<script>x</script>' ) );
 t( 'waiver text is not exported as a CSV column', ! in_array( 'waiver_text', Admin::csv_keys(), true ) );
 

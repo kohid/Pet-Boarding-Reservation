@@ -22,6 +22,7 @@ final class Admin {
 		add_action( 'admin_post_paw_status', array( self::class, 'handle_status' ) );
 		add_action( 'admin_post_paw_notes', array( self::class, 'handle_notes' ) );
 		add_action( 'admin_post_paw_export', array( self::class, 'handle_export' ) );
+		add_action( 'admin_post_paw_delete', array( self::class, 'handle_delete' ) );
 	}
 
 	public static function menu(): void {
@@ -44,7 +45,7 @@ final class Admin {
 		}
 		wp_enqueue_style( 'paw-admin', PAW_URL . 'assets/css/admin.css', array(), PAW_VERSION );
 		wp_enqueue_script( 'paw-admin', PAW_URL . 'assets/js/admin.js', array(), PAW_VERSION, true );
-		wp_localize_script( 'paw-admin', 'PAW_ADMIN', array( 'chooseLogo' => __( 'Choose a logo', 'pawfectly-reservations' ), 'copied' => __( 'Copied', 'pawfectly-reservations' ) ) );
+		wp_localize_script( 'paw-admin', 'PAW_ADMIN', array( 'chooseLogo' => __( 'Choose a logo', 'pawfectly-reservations' ), 'copied' => __( 'Copied', 'pawfectly-reservations' ), 'confirmBulkDelete' => __( 'Delete the selected reservations and their files permanently? This cannot be undone.', 'pawfectly-reservations' ) ) );
 	}
 
 	public static function detail_url( int $id ): string {
@@ -199,6 +200,14 @@ final class Admin {
 		exit;
 	}
 
+	public static function handle_delete(): void {
+		$id = isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0;
+		self::guard( 'paw_delete_' . $id );
+		$ok = Reservations::delete( $id );
+		wp_safe_redirect( add_query_arg( 'paw_notice', $ok ? 'deleted' : 'error', admin_url( 'admin.php?page=' . self::MENU ) ) );
+		exit;
+	}
+
 	/** Streams the reservations matching the list's current filters as CSV. */
 	public static function handle_export(): void {
 		self::guard( 'paw_export', 'get' );
@@ -230,6 +239,7 @@ final class Admin {
 			'status' => __( 'Status updated.', 'pawfectly-reservations' ),
 			'notes'  => __( 'Notes saved.', 'pawfectly-reservations' ),
 			'bulk'   => __( 'Reservations updated.', 'pawfectly-reservations' ),
+			'deleted' => __( 'Reservation and its files deleted.', 'pawfectly-reservations' ),
 			'error'  => __( 'That change could not be saved.', 'pawfectly-reservations' ),
 		);
 		if ( isset( $messages[ $notice ] ) ) {

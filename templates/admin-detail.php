@@ -154,6 +154,16 @@ $paw_nights = ( new DateTimeImmutable( $r['check_in'] ) )->diff( new DateTimeImm
 					<?php endforeach; ?>
 				</ol>
 			</section>
+			<section class="paw-card paw-danger-zone">
+				<h2><?php esc_html_e( 'Delete', 'pawfectly-reservations' ); ?></h2>
+				<p class="paw-muted"><?php esc_html_e( 'Removes this reservation, its vaccination records and the signature for good.', 'pawfectly-reservations' ); ?></p>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" data-paw-confirm="<?php esc_attr_e( 'Delete this reservation and its files permanently? This cannot be undone.', 'pawfectly-reservations' ); ?>">
+					<input type="hidden" name="action" value="paw_delete">
+					<input type="hidden" name="id" value="<?php echo esc_attr( (string) $paw_id ); ?>">
+					<?php wp_nonce_field( 'paw_delete_' . $paw_id ); ?>
+					<button type="submit" class="button button-link-delete"><?php esc_html_e( 'Delete permanently', 'pawfectly-reservations' ); ?></button>
+				</form>
+			</section>
 		</aside>
 	</div>
 </div>

@@ -90,13 +90,14 @@ final class ListTable extends \WP_List_Table {
 			'confirmed' => __( 'Confirm', 'pawfectly-reservations' ),
 			'declined'  => __( 'Decline', 'pawfectly-reservations' ),
 			'cancelled' => __( 'Cancel', 'pawfectly-reservations' ),
+			'delete'    => __( 'Delete permanently', 'pawfectly-reservations' ),
 		);
 	}
 
 	/** Runs on the page's load hook, before any output, so it can redirect. */
 	public static function process_bulk(): void {
 		$action = isset( $_REQUEST['action'] ) && '-1' !== $_REQUEST['action'] ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : ( isset( $_REQUEST['action2'] ) ? sanitize_key( wp_unslash( $_REQUEST['action2'] ) ) : '' );
-		if ( ! in_array( $action, self::BULK, true ) || empty( $_REQUEST['reservation'] ) ) {
+		if ( ( ! in_array( $action, self::BULK, true ) && 'delete' !== $action ) || empty( $_REQUEST['reservation'] ) ) {
 			return;
 		}
 		check_admin_referer( 'bulk-reservations' );
@@ -104,9 +105,13 @@ final class ListTable extends \WP_List_Table {
 			wp_die( esc_html__( 'You are not allowed to do that.', 'pawfectly-reservations' ), '', array( 'response' => 403 ) );
 		}
 		foreach ( array_map( 'absint', (array) $_REQUEST['reservation'] ) as $id ) {
-			Reservations::set_status( $id, $action, get_current_user_id() );
+			if ( 'delete' === $action ) {
+				Reservations::delete( $id );
+			} else {
+				Reservations::set_status( $id, $action, get_current_user_id() );
+			}
 		}
-		wp_safe_redirect( add_query_arg( 'paw_notice', 'bulk', admin_url( 'admin.php?page=' . Admin::MENU ) ) );
+		wp_safe_redirect( add_query_arg( 'paw_notice', 'delete' === $action ? 'deleted' : 'bulk', admin_url( 'admin.php?page=' . Admin::MENU ) ) );
 		exit;
 	}
 

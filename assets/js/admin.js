@@ -1,8 +1,25 @@
-/* Pawfectly — wp-admin helpers: print, copy shortcode, choose logo. */
+/* Pawfectly — wp-admin helpers: confirm deletes, print, copy shortcode, choose logo. */
 (function () {
 	'use strict';
 
 	var L10N = window.PAW_ADMIN || {};
+
+	document.addEventListener('submit', function (e) {
+		var form = e.target.closest('[data-paw-confirm]');
+		if (form && !window.confirm(form.getAttribute('data-paw-confirm'))) {
+			e.preventDefault();
+		}
+	});
+
+	// Bulk "Delete permanently" asks first, too.
+	document.addEventListener('submit', function (e) {
+		var top = e.target.querySelector('#bulk-action-selector-top');
+		var bottom = e.target.querySelector('#bulk-action-selector-bottom');
+		var deleting = (top && top.value === 'delete') || (bottom && bottom.value === 'delete');
+		if (deleting && !window.confirm(L10N.confirmBulkDelete || '')) {
+			e.preventDefault();
+		}
+	});
 
 	document.addEventListener('click', function (e) {
 		var print = e.target.closest('[data-paw-print]');

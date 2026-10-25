@@ -48,6 +48,15 @@ class Fake_WPDB {
 		return 1;
 	}
 
+	public function delete( $table, $where, $format = null ) {
+		$this->queries[] = "DELETE $table";
+		if ( ! isset( $this->rows[ $where['id'] ] ) ) {
+			return 0;
+		}
+		unset( $this->rows[ $where['id'] ] );
+		return 1;
+	}
+
 	public function get_var( $sql ) {
 		$this->queries[] = $sql;
 		return array_shift( $this->var_queue );
