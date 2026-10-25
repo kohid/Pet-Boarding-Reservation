@@ -850,3 +850,218 @@ body.admin-bar .paw-dash--full {
 	box-shadow: 0 0.1rem 1rem 0.25rem rgba(44, 57, 71, 0.05);
 	text-align: center;
 }
+
+/* ---------- Settings ---------- */
+
+.paw-dash .paw-dash__settings {
+	display: grid;
+	gap: 1.25rem;
+}
+
+.paw-dash .paw-dash__warn {
+	margin: 0;
+	padding: 0.875rem 1rem;
+	border-left: 3px solid var(--paw-danger);
+	border-radius: 0.475rem;
+	background: #fdeaea;
+	color: var(--paw-danger);
+	font-weight: 600;
+}
+
+.paw-dash .paw-dash__hint {
+	margin: -0.5rem 0 1rem;
+	color: var(--paw-soft);
+}
+
+.paw-dash .paw-dash__subtitle {
+	margin: 1.5rem 0 0.75rem;
+	color: var(--paw-ink);
+	font-size: 0.9375rem;
+	font-weight: 700;
+}
+
+.paw-dash .paw-dash__fields {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1rem 1.25rem;
+}
+
+.paw-dash .paw-dash__fields--3 {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.paw-dash .paw-dash__fields--service {
+	grid-template-columns: 2fr 1.5fr 1fr 1fr;
+}
+
+.paw-dash .paw-dash__field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.paw-dash .paw-dash__field--wide {
+	grid-column: 1 / -1;
+}
+
+.paw-dash .paw-dash__field--narrow {
+	max-width: 8rem;
+}
+
+.paw-dash .paw-dash__field > span,
+.paw-dash .paw-dash__field > legend {
+	padding: 0;
+	color: var(--paw-ink);
+	font-size: 0.8125rem;
+	font-weight: 600;
+}
+
+.paw-dash .paw-dash__field small {
+	color: var(--paw-soft);
+	font-size: 0.75rem;
+}
+
+.paw-dash .paw-dash__field input[type="text"]:not(#paw-0) {
+	width: 100%;
+	min-height: 2.5rem;
+	margin: 0;
+	padding: 0.5rem 0.875rem;
+	border: 1px solid #e1e4ea;
+	border-radius: 0.475rem;
+	background: #f9fafb;
+	box-shadow: none;
+	color: var(--paw-ink);
+	font: inherit;
+}
+
+.paw-dash .paw-dash__field input[type="text"]:not(#paw-0):focus {
+	border-color: var(--paw-primary);
+	background: #fff;
+	box-shadow: var(--paw-ring);
+	outline: none;
+}
+
+.paw-dash .paw-dash__field textarea:not(#paw-0) {
+	margin-bottom: 0;
+}
+
+.paw-dash .paw-dash__field.is-invalid input:not(#paw-0) {
+	border-color: var(--paw-danger);
+}
+
+.paw-dash .paw-dash__field .paw-dash__error {
+	color: var(--paw-danger);
+	font-weight: 600;
+}
+
+.paw-dash .paw-dash__check {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+	color: var(--paw-text);
+}
+
+.paw-dash .paw-dash__check input,
+.paw-dash .paw-dash__switch input {
+	width: 1rem;
+	height: 1rem;
+	margin: 0;
+	accent-color: var(--paw-primary);
+}
+
+.paw-dash .paw-dash__logo-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	align-items: center;
+}
+
+.paw-dash .paw-dash__logo-row img {
+	width: 56px;
+	height: 56px;
+	border-radius: 0.475rem;
+	background: var(--paw-tint);
+	object-fit: contain;
+}
+
+.paw-dash .paw-dash__link {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--paw-primary-dark);
+	font: inherit;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.paw-dash .paw-dash__services {
+	display: grid;
+	gap: 0.75rem;
+}
+
+.paw-dash .paw-dash__service {
+	margin: 0;
+	padding: 1rem 1.25rem;
+	border: 1px solid var(--paw-line);
+	border-radius: 0.475rem;
+	background: #fff;
+}
+
+.paw-dash .paw-dash__service:has(.paw-dash__switch input:not(:checked)) {
+	background: var(--paw-page);
+}
+
+.paw-dash .paw-dash__service:has(.paw-dash__switch input:not(:checked)) .paw-dash__fields {
+	opacity: 0.6;
+}
+
+.paw-dash .paw-dash__switch {
+	display: inline-flex;
+	gap: 0.5rem;
+	align-items: center;
+	margin-bottom: 0.75rem;
+	color: var(--paw-ink);
+	font-weight: 600;
+}
+
+.paw-dash .paw-dash__savebar {
+	position: sticky;
+	bottom: 0;
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+	justify-content: flex-end;
+	padding: 0.875rem 1.25rem;
+	border-radius: 0.625rem;
+	background: #fff;
+	box-shadow: 0 -0.25rem 1rem rgba(44, 57, 71, 0.06);
+}
+
+.paw-dash .paw-dash__savemsg {
+	margin: 0;
+	font-weight: 600;
+}
+
+.paw-dash .paw-dash__savemsg.is-ok {
+	color: #037a5c;
+}
+
+.paw-dash .paw-dash__savemsg.is-error {
+	color: var(--paw-danger);
+}
+
+@media (max-width: 760px) {
+	.paw-dash .paw-dash__fields,
+	.paw-dash .paw-dash__fields--3,
+	.paw-dash .paw-dash__fields--service {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.paw-dash .paw-dash__field--narrow {
+		max-width: none;
+	}
+}

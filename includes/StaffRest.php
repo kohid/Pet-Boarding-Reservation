@@ -20,7 +20,21 @@ final class StaffRest {
 		return current_user_can( Activator::CAPABILITY );
 	}
 
+	public static function can_settings(): bool {
+		return Access::can_manage_settings( wp_get_current_user() );
+	}
+
 	public static function routes(): void {
+		register_rest_route(
+			Rest::NS,
+			'/staff/settings',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( self::class, 'save_settings' ),
+				'permission_callback' => array( self::class, 'can_settings' ),
+			)
+		);
+
 		$id     = '/staff/reservations/(?P<id>\d+)';
 		$routes = array(
 			array( '/staff/stats', 'GET', 'stats' ),
@@ -41,6 +55,42 @@ final class StaffRest {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Saves the dashboard's Settings view. Keys not sent keep their saved values; a price that is
+	 * not a number is reported on its field and nothing is saved.
+	 *
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public static function save_settings( \WP_REST_Request $req ) {
+		$in     = (array) $req->get_json_params();
+		$errors = array();
+		$bad    = __( 'Enter an amount like 45 or 45.50, or leave it blank for "Price on request".', 'pawfectly-reservations' );
+		foreach ( (array) ( $in['boarding_rates'] ?? array() ) as $key => $price ) {
+			if ( null === Services::clean_price( $price ) ) {
+				$errors[ 'boarding_rates.' . sanitize_key( (string) $key ) ] = $bad;
+			}
+		}
+		foreach ( (array) ( $in['services'] ?? array() ) as $id => $svc ) {
+			foreach ( array( 'small', 'large' ) as $size ) {
+				if ( is_array( $svc ) && array_key_exists( $size, $svc ) && null === Services::clean_price( $svc[ $size ] ) ) {
+					$errors[ 'services.' . sanitize_key( (string) $id ) . '.' . $size ] = $bad;
+				}
+			}
+		}
+		if ( $errors ) {
+			return new \WP_Error( 'paw_invalid', __( 'Please check the highlighted fields.', 'pawfectly-reservations' ), array( 'status' => 400, 'fields' => $errors ) );
+		}
+		$clean = Settings::sanitize( array_merge( Settings::get(), $in ) );
+		update_option( Settings::OPTION, $clean );
+		return new \WP_REST_Response( array( 'ok' => true, 'settings' => $clean ) );
+	}
+
+	/** True when nobody could open wp-admin: no account has the admin email and there is no Developer. */
+	public static function lockout_risk(): bool {
+		$admin = get_user_by( 'email', (string) get_option( 'admin_email' ) );
+		return ! $admin && ! get_users( array( 'role' => Access::DEVELOPER, 'number' => 1, 'fields' => 'ID' ) );
 	}
 
 	public static function stats( \WP_REST_Request $req ): \WP_REST_Response {

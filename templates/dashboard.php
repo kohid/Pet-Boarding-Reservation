@@ -44,7 +44,7 @@ $paw_tiles = array(
 				</a>
 			<?php endforeach; ?>
 			<?php if ( '' !== $config['urls']['settings'] ) : ?>
-				<a href="<?php echo esc_url( $config['urls']['settings'] ); ?>" class="paw-dash__nav-item" data-paw-nav="settings">
+				<a href="<?php echo esc_url( $config['urls']['settings'] ); ?>" class="paw-dash__nav-item" data-paw-nav="settings"<?php echo 'settings' === $view ? ' aria-current="page"' : ''; ?>>
 					<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><?php echo $paw_icon['settings']; // phpcs:ignore WordPress.Security.EscapeOutput ?></svg>
 					<span><?php esc_html_e( 'Settings', 'pawfectly-reservations' ); ?></span>
 				</a>
@@ -116,6 +116,13 @@ $paw_tiles = array(
 				</div>
 			</div>
 		</section>
+
+		<?php if ( '' !== $config['urls']['settings'] ) : ?>
+			<section data-paw-view="settings" aria-labelledby="paw-dash-settings"<?php echo 'settings' === $view ? '' : ' hidden'; ?>>
+				<h2 class="screen-reader-text" id="paw-dash-settings"><?php esc_html_e( 'Settings', 'pawfectly-reservations' ); ?></h2>
+				<?php include PAW_DIR . 'templates/partials/dashboard-settings.php'; ?>
+			</section>
+		<?php endif; ?>
 	</main>
 
 	<div class="paw-dash__overlay" data-paw-overlay hidden></div>

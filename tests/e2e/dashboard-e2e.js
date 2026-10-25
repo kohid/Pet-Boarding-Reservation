@@ -103,8 +103,38 @@ async function mock(page, log) {
     ok('a staff email link opens that reservation', (await page.textContent('[data-paw-panel-title]')).includes('PAW-7K3QX9'));
 
     await page.goto(URL);
-    await page.click('[data-paw-nav="settings"]', { noWaitAfter: true, trial: true });
-    ok('settings link goes to wp-admin', (await page.getAttribute('[data-paw-nav="settings"]', 'href')).includes('page=paw-settings'));
+    ok('settings link stays in the dashboard', (await page.getAttribute('[data-paw-nav="settings"]', 'href')).includes('paw_view=settings'));
+
+    // Settings: edit a price, save, see the confirmation; a bad price is shown on its field.
+    let saved = null;
+    let saves = 0;
+    await page.route('**/mock/staff/settings', r => {
+      saves++;
+      saved = r.request().postDataJSON();
+      if (saves === 1) {
+        return r.fulfill({ status: 400, json: { code: 'paw_invalid', message: 'Please check the highlighted fields.', data: { status: 400, fields: { 'services.basic_bath.small': 'Enter an amount like 45 or 45.50, or leave it blank for "Price on request".' } } } });
+      }
+      return r.fulfill({ json: { ok: true, settings: {} } });
+    });
+    await page.goto(URL + '?paw_view=settings');
+    ok('settings: the view opens from the address', await page.isVisible('[data-paw-view="settings"]') && await page.isHidden('[data-paw-view="overview"]'));
+    ok('settings: current prices shown', (await page.inputValue('[name="services[nail_trim][large]"]')) === '20.00' && (await page.inputValue('[name="services[basic_bath][small]"]')) === '');
+    await page.fill('[name="services[basic_bath][small]"]', '4o');
+    await page.click('[data-paw-settings] button[type=submit]');
+    await page.waitForSelector('[data-paw-setting="services.basic_bath.small"].is-invalid');
+    ok('settings: a bad price is marked on its field', (await page.textContent('[data-paw-setting="services.basic_bath.small"]')).includes('Enter an amount'));
+    await page.fill('[name="services[basic_bath][small]"]', '45');
+    await page.uncheck('[name="services[deluxe_bath][enabled]"]');
+    await page.fill('[name="boarding_rates[large]"]', '40');
+    await page.click('[data-paw-settings] button[type=submit]');
+    await page.waitForSelector('[data-paw-settings-msg]:not([hidden]).is-ok');
+    ok('settings: saved message', (await page.textContent('[data-paw-settings-msg]')).trim() === 'Settings saved.');
+    ok('settings: sent as nested JSON', saved && saved.services.basic_bath.small === '45' && saved.services.deluxe_bath.enabled === false && saved.services.nail_trim.enabled === true && saved.boarding_rates.large === '40' && Array.isArray(saved.roles) && !saved.roles.includes('administrator'));
+    ok('settings: the error clears after a good save', await page.locator('.paw-dash__field.is-invalid').count() === 0);
+    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'dash-settings.png'), fullPage: true });
+    await page.setViewportSize({ width: 375, height: 800 });
+    await page.waitForTimeout(100);
+    ok('settings: no horizontal scroll on a phone', (await page.evaluate(() => document.documentElement.scrollWidth)) <= 375);
     ok('no script errors', errors.length === 0 || (console.log(errors), false));
     console.log(`\nall ${passed} passed`);
   } finally {

@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 final class Dashboard {
 
 	public const TAG   = 'pawfectly_dashboard';
-	public const VIEWS = array( 'overview', 'reservations' );
+	public const VIEWS = array( 'overview', 'reservations', 'settings' );
 
 	public static function init(): void {
 		add_shortcode( self::TAG, array( self::class, 'render' ) );
@@ -35,6 +35,14 @@ final class Dashboard {
 		// The view in the address wins, so links and the browser's back button keep working.
 		$asked = isset( $_GET['paw_view'] ) ? sanitize_key( wp_unslash( $_GET['paw_view'] ) ) : $a['view']; // phpcs:ignore WordPress.Security.NonceVerification -- navigation only.
 		$view  = in_array( $asked, self::VIEWS, true ) ? $asked : 'overview';
+		$can_settings = Access::can_manage_settings( $user );
+		if ( 'settings' === $view && ! $can_settings ) {
+			$view = 'overview';
+		}
+		if ( $can_settings && current_user_can( 'upload_files' ) ) {
+			wp_enqueue_media(); // The logo picker.
+		}
+		$lockout = $can_settings && StaffRest::lockout_risk();
 
 		$config = self::config( $view );
 		wp_enqueue_style( 'paw-dashboard', PAW_URL . 'assets/css/dashboard.css', array(), PAW_VERSION );
@@ -68,11 +76,14 @@ final class Dashboard {
 			'urls'     => array(
 				'overview'     => add_query_arg( array( 'paw_view' => 'overview' ), $here ),
 				'reservations' => add_query_arg( array( 'paw_view' => 'reservations' ), $here ),
-				'settings'     => current_user_can( 'manage_options' ) ? admin_url( 'admin.php?page=' . Settings::PAGE ) : '',
+				'settings'     => Access::can_manage_settings( wp_get_current_user() ) ? add_query_arg( array( 'paw_view' => 'settings' ), $here ) : '',
 			),
 			'i18n'     => array(
 				'overview'      => __( 'Overview', 'pawfectly-reservations' ),
 				'reservations'  => __( 'Reservations', 'pawfectly-reservations' ),
+				'settings'      => __( 'Settings', 'pawfectly-reservations' ),
+				'settingsSaved' => __( 'Settings saved.', 'pawfectly-reservations' ),
+				'chooseLogo'    => __( 'Choose logo', 'pawfectly-reservations' ),
 				'all'           => __( 'All', 'pawfectly-reservations' ),
 				'loading'       => __( 'Loading…', 'pawfectly-reservations' ),
 				'failed'        => __( 'Something went wrong. Please try again.', 'pawfectly-reservations' ),
