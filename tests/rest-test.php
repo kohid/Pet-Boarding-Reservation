@@ -60,6 +60,8 @@ t( 'one row inserted', 1 === inserts() );
 $row = $wpdb->rows[1] ?? array();
 t( 'row has owner email and pet', 'ada@example.com' === ( $row['owner_email'] ?? '' ) && 'Biscuit' === ( $row['pet_name'] ?? '' ) );
 t( 'row records the IP', '203.0.113.9' === ( $row['signed_ip'] ?? '' ) );
+$saved = json_decode( $row['details'] ?? '{}', true );
+t( 'row keeps the exact waiver text that was signed', \Pawfectly\Settings::get()['waiver'] === ( $saved['waiver_text'] ?? null ) );
 t( 'file and signature stored privately', 2 === count( private_files() ) );
 t( 'owner and staff emailed', 2 === count( $GLOBALS['paw_mail'] ) && 'ada@example.com' === $GLOBALS['paw_mail'][0]['to'] );
 

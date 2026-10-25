@@ -92,7 +92,12 @@ $paw_nights = ( new DateTimeImmutable( $r['check_in'] ) )->diff( new DateTimeImm
 								</dd>
 							<?php elseif ( 'agree' === $paw_f['type'] ) : ?>
 								<dt><?php echo esc_html( $paw_f['label'] ); ?></dt>
-								<dd><?php esc_html_e( 'Agreed to the waiver', 'pawfectly-reservations' ); ?></dd>
+								<dd>
+									<?php esc_html_e( 'Agreed to the waiver below', 'pawfectly-reservations' ); ?>
+									<?php if ( ! empty( $r['details']['waiver_text'] ) ) : ?>
+										<div class="paw-waiver-signed"><?php echo wp_kses_post( $r['details']['waiver_text'] ); ?></div>
+									<?php endif; ?>
+								</dd>
 							<?php else : ?>
 								<?php
 								$paw_value = (string) ( $values[ $paw_id_f ] ?? '' );

@@ -40,7 +40,7 @@ $r = array(
 		'allergies' => 'no', 'feeding_schedule' => "Morning\nEvening", 'food_preference' => 'facility', 'dietary_notes' => '',
 		'behavior_notes' => '<script>alert(1)</script>', 'exercise_needs' => '', 'emergency_name' => 'Charles', 'emergency_phone' => '555 010 9999',
 		'emergency_relationship' => 'friend', 'vet_name' => 'Dr. Who', 'vet_clinic' => 'Tardis', 'vet_phone' => '555 010 1111', 'vet_authorization' => 'yes',
-		'signed_date' => '2026-10-25',
+		'signed_date' => '2026-10-25', 'waiver_text' => '<p>Old waiver wording v1</p><script>x</script>',
 	),
 	'files'            => array( array( 'name' => 'Rabies <1>.pdf', 'path' => '2026/10/x.pdf', 'mime' => 'application/pdf', 'size' => 2048 ) ),
 	'signature_path'   => '2026/10/x-sig.png',
@@ -85,5 +85,7 @@ t( 'current status selected', str_contains( $html, '<option value="confirmed" se
 t( 'history names the staff member', str_contains( $html, 'Sam Staff' ) );
 t( 'notes form', str_contains( $html, 'name="action" value="paw_notes"' ) && str_contains( $html, 'Kennel 4' ) );
 t( 'print button', str_contains( $html, 'data-paw-print' ) );
+t( 'detail shows the waiver as signed', str_contains( $html, '<p>Old waiver wording v1</p>' ) && ! str_contains( $html, '<script>x</script>' ) );
+t( 'waiver text is not exported as a CSV column', ! in_array( 'waiver_text', Admin::csv_keys(), true ) );
 
 done();
