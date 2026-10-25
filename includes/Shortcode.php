@@ -25,6 +25,7 @@ final class Shortcode {
 		wp_enqueue_script( 'paw-signature-pad', PAW_URL . 'assets/js/signature-pad.js', array(), $v, true );
 		wp_enqueue_script( 'paw-form', PAW_URL . 'assets/js/form.js', array( 'paw-flatpickr', 'paw-signature-pad' ), $v, true );
 		wp_add_inline_script( 'paw-form', 'window.PAW_FORM = ' . wp_json_encode( self::config() ) . ';', 'before' );
+		Login::password_toggle();
 
 		return self::markup( Settings::get() );
 	}
@@ -105,6 +106,7 @@ final class Shortcode {
 				'tooLarge'     => Uploads::total_message(),
 				'fileType'     => __( 'Only PDF, JPG or PNG files are accepted.', 'pawfectly-reservations' ),
 				'signature'    => __( 'Please sign in the box above.', 'pawfectly-reservations' ),
+				'mismatch'      => __( "The two passwords don't match.", 'pawfectly-reservations' ),
 				'passwordShort' => sprintf( /* translators: %d: minimum number of characters */ __( 'Use at least %d characters.', 'pawfectly-reservations' ), AccountRules::MIN_PASSWORD ),
 				'signinFailed'  => __( 'The email or password is not right.', 'pawfectly-reservations' ),
 				'signingIn'     => __( 'Signing in…', 'pawfectly-reservations' ),

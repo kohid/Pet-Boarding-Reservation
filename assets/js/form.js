@@ -23,6 +23,7 @@
 	var fileInput = root.querySelector('input[type=file]');
 	var createBox = form.querySelector('input[name=create_account]');
 	var accountField = root.querySelector('[data-field=account_password]');
+	var confirmField = root.querySelector('[data-field=account_password_confirm]');
 	var ACCOUNT = CFG.account || { signedIn: false, prefill: {} };
 	var N = CFG.steps;
 	var I18N = CFG.i18n;
@@ -179,7 +180,7 @@
 		if (CFG.fields[id]) {
 			return CFG.fields[id].step;
 		}
-		return id === 'account_password' ? 1 : null;
+		return id === 'account_password' || id === 'account_password_confirm' ? 1 : null;
 	}
 
 	/** Checks one step, shows its messages, and returns the first problem field id (or null). */
@@ -198,6 +199,12 @@
 			showError('account_password', bad);
 			if (bad && !first) {
 				first = 'account_password';
+			}
+			var again = form.querySelector('[name=account_password_confirm]').value;
+			var differs = creatingAccount() && !bad && again !== pw ? I18N.mismatch : null;
+			showError('account_password_confirm', differs);
+			if (differs && !first) {
+				first = 'account_password_confirm';
 			}
 		}
 		return first;
@@ -243,6 +250,7 @@
 		});
 		if (accountField) {
 			accountField.hidden = !creatingAccount();
+			confirmField.hidden = !creatingAccount();
 		}
 		nextBtn.disabled = warned();
 	}
@@ -563,6 +571,7 @@
 		if (!creatingAccount()) {
 			data.delete('create_account');
 			data.delete('account_password');
+			data.delete('account_password_confirm');
 		}
 		return data;
 	}

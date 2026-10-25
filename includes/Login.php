@@ -90,6 +90,21 @@ final class Login {
 		return self::takes_over() ? self::url_for( (string) $redirect ) : (string) $url;
 	}
 
+	/** The Show/Hide button on password boxes (booking form and account pages). */
+	public static function password_toggle(): void {
+		wp_enqueue_script( 'paw-password', PAW_URL . 'assets/js/password.js', array(), PAW_VERSION, true );
+		wp_add_inline_script(
+			'paw-password',
+			'window.PAW_PW = ' . wp_json_encode(
+				array(
+					'show' => __( 'Show password', 'pawfectly-reservations' ),
+					'hide' => __( 'Hide password', 'pawfectly-reservations' ),
+				)
+			) . ';',
+			'before'
+		);
+	}
+
 	/** The sign-in / create-account tabs. */
 	public static function panel( string $redirect_to = '' ): string {
 		Profile::enqueue();

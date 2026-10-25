@@ -72,11 +72,17 @@ function ok(name, cond) { assert.ok(cond, name); passed++; console.log('ok   - '
     await page.fill(`${out} #paw-acct-up-last_name`, "O'Brien");
     await page.fill(`${out} #paw-acct-up-email`, 'jay@example.com');
     await page.fill(`${out} #paw-acct-up-password`, 'correct horse');
+    await page.fill(`${out} #paw-acct-up-confirm`, 'correct horsf');
+    await page.click(`${out} #paw-panel-signup button[type=submit]`);
+    ok('sign-up: mismatched confirm caught before sending', signupCalls === 0 && (await page.textContent(`${out} #paw-panel-signup [data-paw-field=confirm] .paw-acct__error`)).includes("don't match"));
+    await page.click(`${out} #paw-panel-signup [data-paw-field=password] .paw-pw__toggle`);
+    ok('sign-up: show password works on the account page', (await page.getAttribute(`${out} #paw-acct-up-password`, 'type')) === 'text');
+    await page.fill(`${out} #paw-acct-up-confirm`, 'correct horse');
     await page.click(`${out} #paw-panel-signup button[type=submit]`);
     await page.waitForSelector(`${out} #paw-panel-signup [data-paw-field=email] .paw-acct__error:not([hidden])`);
     ok('server field error shown under the field', (await page.textContent(`${out} #paw-panel-signup [data-paw-field=email] .paw-acct__error`)).includes('already uses'));
     ok('sign-up sends no page nonce (cached pages must still work)', signupHeaders && !('x-wp-nonce' in signupHeaders));
-    ok('sign-up sends the typed details as JSON', signupBody && signupBody.first_name === 'Zoë' && signupBody.password === 'correct horse' && signupBody.website === '');
+    ok('sign-up sends the typed details as JSON', signupBody && signupBody.first_name === 'Zoë' && signupBody.password === 'correct horse' && signupBody.confirm === 'correct horse' && signupBody.website === '');
     await page.fill(`${out} #paw-acct-up-email`, 'zoe@example.com');
     await Promise.all([page.waitForEvent('load'), page.click(`${out} #paw-panel-signup button[type=submit]`)]);
     ok('successful sign-up reloads the page', signupCalls === 2);

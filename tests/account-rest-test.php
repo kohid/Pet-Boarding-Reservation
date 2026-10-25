@@ -29,21 +29,21 @@ function code( $r ): string { return is_wp_error( $r ) ? $r->get_error_code() : 
 function status( $r ): int { return is_wp_error( $r ) ? (int) $r->get_error_data()['status'] : $r->get_status(); }
 
 // Sign up.
-$res = AccountRest::signup( req( array( 'first_name' => 'Zoë', 'last_name' => "O'Brien", 'email' => 'zoe@example.com', 'phone' => '', 'password' => 'correct horse' ) ) );
+$res = AccountRest::signup( req( array( 'first_name' => 'Zoë', 'last_name' => "O'Brien", 'email' => 'zoe@example.com', 'phone' => '', 'password' => 'correct horse', 'confirm' => 'correct horse' ) ) );
 t( 'sign-up succeeds and asks for a reload', 'ok' === code( $res ) && true === $res->get_data()['reload'] );
 $zoe = get_user_by( 'email', 'zoe@example.com' );
 t( 'sign-up signs the owner in', $zoe && $zoe->ID === get_current_user_id() );
 t( 'sign-up sends one verification email', 1 === count( $GLOBALS['paw_mail'] ) && 'zoe@example.com' === $GLOBALS['paw_mail'][0]['to'] && str_contains( $GLOBALS['paw_mail'][0]['message'], 'paw_verify_t=' ) );
-$dup = AccountRest::signup( req( array( 'first_name' => 'Z', 'last_name' => 'O', 'email' => 'zoe@example.com', 'password' => 'correct horse' ) ) );
+$dup = AccountRest::signup( req( array( 'first_name' => 'Z', 'last_name' => 'O', 'email' => 'zoe@example.com', 'password' => 'correct horse', 'confirm' => 'correct horse' ) ) );
 t( 'existing email → 409 on the email field', 409 === status( $dup ) && isset( $dup->get_error_data()['fields']['email'] ) );
 $bad = AccountRest::signup( req( array( 'first_name' => '', 'last_name' => 'O', 'email' => 'x@example.com', 'password' => 'short' ) ) );
 t( 'invalid sign-up → 400 with field errors', 400 === status( $bad ) && isset( $bad->get_error_data()['fields']['password'], $bad->get_error_data()['fields']['first_name'] ) );
-$bot = AccountRest::signup( req( array( 'first_name' => 'B', 'last_name' => 'O', 'email' => 'bot@example.com', 'password' => 'correct horse', 'website' => 'x' ) ) );
+$bot = AccountRest::signup( req( array( 'first_name' => 'B', 'last_name' => 'O', 'email' => 'bot@example.com', 'password' => 'correct horse', 'confirm' => 'correct horse', 'website' => 'x' ) ) );
 t( 'honeypot refused, no account', is_wp_error( $bot ) && ! email_exists( 'bot@example.com' ) );
 
 // Sign in.
 wp_set_current_user( 0 );
-$ok = AccountRest::login( req( array( 'email' => 'zoe@example.com', 'password' => 'correct horse' ) ) );
+$ok = AccountRest::login( req( array( 'email' => 'zoe@example.com', 'password' => 'correct horse', 'confirm' => 'correct horse' ) ) );
 t( 'sign-in succeeds and asks for a reload', 'ok' === code( $ok ) && true === $ok->get_data()['reload'] && $zoe->ID === get_current_user_id() );
 t( 'owners are sent home: no My Bookings page, so the site home', 'https://example.test/' === $ok->get_data()['redirect'] );
 t( 'sign-in fires wp_login for security plugins', in_array( 'wp_login', $GLOBALS['paw_actions'], true ) );

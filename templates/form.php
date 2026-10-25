@@ -214,6 +214,11 @@ $paw_count = count( $steps );
 							<input class="paw-input" type="password" id="paw-account_password" name="account_password" autocomplete="new-password" aria-describedby="paw-account_password-error paw-account_password-help">
 							<p class="paw-error" id="paw-account_password-error" role="alert" hidden></p>
 						</div>
+						<div class="paw-field paw-field--password" data-field="account_password_confirm" hidden>
+							<label class="paw-label" for="paw-account_password_confirm"><?php esc_html_e( 'Confirm password', 'pawfectly-reservations' ); ?><span class="paw-req" aria-hidden="true">*</span></label>
+							<input class="paw-input" type="password" id="paw-account_password_confirm" name="account_password_confirm" autocomplete="new-password" aria-describedby="paw-account_password_confirm-error">
+							<p class="paw-error" id="paw-account_password_confirm-error" role="alert" hidden></p>
+						</div>
 					<?php endif; ?>
 				</div>
 

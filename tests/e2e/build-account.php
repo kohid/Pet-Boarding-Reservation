@@ -59,6 +59,7 @@ $page = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="
 <script>window.PAW_ACCOUNT = ' . json_encode( $config ) . ';</script>
 <script src="/assets/js/user-menu.js"></script>
 <script src="/assets/js/account.js"></script>
+<script src="/assets/js/password.js"></script>
 </body></html>';
 @mkdir( __DIR__ . '/out', 0755, true );
 file_put_contents( __DIR__ . '/out/account.html', $page );

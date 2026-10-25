@@ -112,6 +112,10 @@
 				form.querySelectorAll('input[name]').forEach(function (i) { body[i.name] = i.type === 'checkbox' ? (i.checked ? '1' : '') : i.value; });
 				clearErrors(form);
 				say(msg, '');
+				if ('confirm' in body && body.confirm !== body.password) {
+					fieldErrors(form, { confirm: I18N.mismatch }).focus();
+					return;
+				}
 				btn.disabled = true;
 				var label = btn.textContent;
 				btn.textContent = I18N.saving;

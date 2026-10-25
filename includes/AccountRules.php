@@ -17,7 +17,7 @@ final class AccountRules {
 	/** @return array{clean: array<string,string>, errors: array<string,string>} */
 	public static function signup( array $in ): array {
 		$r     = self::details( $in );
-		$error = self::password( is_string( $in['password'] ?? null ) ? $in['password'] : '', isset( $in['confirm'] ) && is_string( $in['confirm'] ) ? $in['confirm'] : null );
+		$error = self::password( is_string( $in['password'] ?? null ) ? $in['password'] : '', is_string( $in['confirm'] ?? null ) ? $in['confirm'] : '' );
 		if ( null !== $error ) {
 			$r['errors']['password'] = $error;
 		}

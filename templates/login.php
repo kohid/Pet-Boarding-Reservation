@@ -48,6 +48,7 @@ $paw_in    = 'signin' === $start;
 				<?php $paw_field( 'email', __( 'Email', 'pawfectly-reservations' ), 'email', '', 'email', 'up' ); ?>
 				<?php $paw_field( 'phone', __( 'Phone (optional)', 'pawfectly-reservations' ), 'tel', '', 'tel', 'up' ); ?>
 				<?php $paw_field( 'password', __( 'Password (at least 8 characters)', 'pawfectly-reservations' ), 'password', '', 'new-password', 'up' ); ?>
+				<?php $paw_field( 'confirm', __( 'Confirm password', 'pawfectly-reservations' ), 'password', '', 'new-password', 'up' ); ?>
 			</div>
 			<input type="hidden" name="redirect_to" value="<?php echo esc_attr( $redirect_to ); ?>">
 			<div class="paw-acct-hp" aria-hidden="true" style="position:absolute;left:-9999px"><input type="text" name="website" tabindex="-1" autocomplete="off"></div>

@@ -53,6 +53,7 @@ $page = '<!doctype html>
 <script src="/assets/vendor/flatpickr/flatpickr.min.js"></script>
 <script src="/assets/js/signature-pad.js"></script>
 <script src="/assets/js/form.js"></script>
+<script src="/assets/js/password.js"></script>
 </body>
 </html>
 ';

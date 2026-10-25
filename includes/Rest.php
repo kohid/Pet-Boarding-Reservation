@@ -139,9 +139,12 @@ final class Rest {
 		}
 		$password = is_string( $params['account_password'] ?? null ) ? $params['account_password'] : '';
 		$errors   = array();
+		$confirm  = is_string( $params['account_password_confirm'] ?? null ) ? $params['account_password_confirm'] : '';
 		$problem  = AccountRules::password( $password, null );
 		if ( null !== $problem ) {
 			$errors['account_password'] = $problem;
+		} elseif ( null !== AccountRules::password( $password, $confirm ) ) {
+			$errors['account_password_confirm'] = __( "The two passwords don't match.", 'pawfectly-reservations' );
 		}
 		if ( '' !== $email && email_exists( $email ) ) {
 			$errors['owner_email'] = __( "An account already uses this email. Sign in above, or untick 'Create an account'.", 'pawfectly-reservations' );

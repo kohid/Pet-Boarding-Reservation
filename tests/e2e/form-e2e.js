@@ -95,6 +95,15 @@ async function walkToWaiver(page, width, label, opts = {}) {
     await next(page);
     ok(`${label}: short account password blocks Next`, (await visibleStep(page)) === '1' && (await page.textContent('#paw-account_password-error')).trim() === 'Use at least 8 characters.');
     await page.fill('[name=account_password]', 'correct horse');
+    ok(`${label}: a confirm box appears with the password`, await page.isVisible('[name=account_password_confirm]'));
+    await page.fill('[name=account_password_confirm]', 'correct horsf');
+    await next(page);
+    ok(`${label}: mismatched confirm blocks Next`, (await visibleStep(page)) === '1' && (await page.textContent('#paw-account_password_confirm-error')).trim() === "The two passwords don't match.");
+    await page.click('[data-field=account_password] .paw-pw__toggle');
+    ok(`${label}: show password reveals what was typed`, (await page.getAttribute('[name=account_password]', 'type')) === 'text' && (await page.getAttribute('[data-field=account_password] .paw-pw__toggle', 'aria-pressed')) === 'true');
+    await page.click('[data-field=account_password] .paw-pw__toggle');
+    ok(`${label}: and hides it again`, (await page.getAttribute('[name=account_password]', 'type')) === 'password');
+    await page.fill('[name=account_password_confirm]', 'correct horse');
   }
   if (narrow) await noHorizontalScroll(page, width, `${label} step 1`);
   await shot(page, `${label}-1-owner`);

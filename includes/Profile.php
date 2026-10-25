@@ -23,6 +23,7 @@ final class Profile {
 		wp_enqueue_style( 'paw-account', PAW_URL . 'assets/css/account.css', array(), PAW_VERSION );
 		wp_enqueue_script( 'paw-account', PAW_URL . 'assets/js/account.js', array(), PAW_VERSION, true );
 		wp_add_inline_script( 'paw-account', 'window.PAW_ACCOUNT = ' . wp_json_encode( self::config() ) . ';', 'before' );
+		Login::password_toggle();
 	}
 
 	public static function config(): array {
@@ -33,6 +34,7 @@ final class Profile {
 				'failed'        => __( 'Something went wrong. Please try again.', 'pawfectly-reservations' ),
 				'network'       => __( "We couldn't reach the server. Please try again.", 'pawfectly-reservations' ),
 				'saving'        => __( 'Saving…', 'pawfectly-reservations' ),
+				'mismatch'      => __( "The two passwords don't match.", 'pawfectly-reservations' ),
 				'confirmCancel' => __( 'Cancel this reservation? This cannot be undone online.', 'pawfectly-reservations' ),
 			),
 		);

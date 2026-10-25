@@ -145,12 +145,14 @@ wp_set_current_user( 0 );
 reset_state();
 $res = Rest::submit( request( $good, array( 'create_account' => '1', 'account_password' => 'short' ) ) );
 t( 'create account: short password → field error', is_wp_error( $res ) && 'Use at least 8 characters.' === ( $res->get_error_data()['fields']['account_password'] ?? '' ) && 0 === inserts() );
-$res = Rest::submit( request( $good, array( 'create_account' => '1', 'account_password' => 'correct horse' ) ) );
+$res = Rest::submit( request( $good, array( 'create_account' => '1', 'account_password' => 'correct horse', 'account_password_confirm' => 'correct horsf' ) ) );
+t( 'create account: confirm must match → field error', is_wp_error( $res ) && "The two passwords don't match." === ( $res->get_error_data()['fields']['account_password_confirm'] ?? '' ) && 0 === inserts() );
+$res = Rest::submit( request( $good, array( 'create_account' => '1', 'account_password' => 'correct horse', 'account_password_confirm' => 'correct horse' ) ) );
 t( 'create account: email already registered → field error on email', is_wp_error( $res ) && str_contains( $res->get_error_data()['fields']['owner_email'] ?? '', 'already uses this email' ) );
 
 reset_state();
 $GLOBALS['paw_mail'] = array();
-$res = Rest::submit( request( $good, array( 'owner_email' => 'new.owner@example.com', 'create_account' => '1', 'account_password' => 'correct horse' ) ) );
+$res = Rest::submit( request( $good, array( 'owner_email' => 'new.owner@example.com', 'create_account' => '1', 'account_password' => 'correct horse', 'account_password_confirm' => 'correct horse' ) ) );
 $new = get_user_by( 'email', 'new.owner@example.com' );
 t( 'create account: reservation saved and account made', $res instanceof WP_REST_Response && 201 === $res->get_status() && $new instanceof WP_User );
 t( 'create account: reservation linked and owner signed in', (string) $new->ID === ( $wpdb->rows[1]['user_id'] ?? '' ) && $new->ID === get_current_user_id() );
