@@ -240,7 +240,7 @@ let window_today;
       ok('desktop: restored-progress note shown', await page.isVisible('[data-paw-draft]'));
       await page.click('[data-paw-restart]');
       ok('desktop: "Start over" empties the form', (await page.inputValue('[name=owner_last_name]')) === '' && await page.isHidden('[data-paw-draft]'));
-      ok('desktop: "Start over" forgets the draft', await page.evaluate(() => localStorage.getItem('paw_draft_v1') === null));
+      ok('desktop: "Start over" forgets the draft', await page.evaluate(() => localStorage.getItem('paw_draft_v2') === null));
       const shown = await page.evaluate(() => document.querySelector('input[name=signed_date]')._flatpickr.altInput.value);
       const [y, m, d] = window_today.split('-');
       ok('desktop: "Start over" keeps the waiver date showing today', shown === `${m}/${d}/${y}`);
@@ -269,7 +269,7 @@ let window_today;
       ok('payload dates are ISO', body.includes(`name="check_in"\r\n\r\n${day(3)}`));
       ok('payload drops the HEIC that was refused', !body.includes('rabies.heic'));
       ok('no account fields sent when the box is not ticked', !body.includes('name="account_password"') && !body.includes('name="create_account"'));
-      ok('draft cleared after submitting', await page.evaluate(() => localStorage.getItem('paw_draft_v1') === null));
+      ok('draft cleared after submitting', await page.evaluate(() => localStorage.getItem('paw_draft_v2') === null));
       ok('desktop: no script errors', errors.length === 0 || (console.log(errors), false));
       await ctx.close();
     }
@@ -367,9 +367,9 @@ let window_today;
       await page.waitForTimeout(700); // Let the draft save.
       // Stay on the page: the form's own click handler runs first, then this one stops the navigation.
       await page.evaluate(() => document.querySelector('.paw-account--in a').addEventListener('click', e => e.preventDefault()));
-      ok('sign-in: a draft exists before logging out', await page.evaluate(() => localStorage.getItem('paw_draft_v1') !== null));
+      ok('sign-in: a draft exists before logging out', await page.evaluate(() => localStorage.getItem('paw_draft_v2') !== null));
       await page.click('.paw-account--in a');
-      ok('sign-in: "Not you? Log out" clears the saved draft', await page.evaluate(() => localStorage.getItem('paw_draft_v1') === null));
+      ok('sign-in: "Not you? Log out" clears the saved draft', await page.evaluate(() => localStorage.getItem('paw_draft_v2') === null));
       ok('sign-in: no script errors', errors.length === 0 || (console.log(errors), false));
       await ctx.close();
     }
@@ -477,10 +477,17 @@ let window_today;
       await ctx.close();
     }
 
-    // Grooming only: a cat in the booking is caught before the server.
+    // Grooming only: a cat is caught before the server; for a dog the form is shorter.
     {
       const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
       const page = await ctx.newPage();
+      const errors = [];
+      page.on('pageerror', e => errors.push(e.message));
+      let body = '';
+      await page.route('**/mock/reservations', async route => {
+        body = route.request().postDataBuffer().toString('latin1');
+        await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ reference: 'PAW-GR00M3' }) });
+      });
       await page.goto(URL);
       await page.evaluate(() => localStorage.clear());
       await page.reload();
@@ -501,6 +508,39 @@ let window_today;
       await radio(page, 'appointment_time', 'morning');
       await next(page);
       ok('grooming: a cat is told grooming is for dogs', (await visibleStep(page)) === '3' && (await page.textContent('[data-paw-step-error]')).includes('Grooming is for dogs only'));
+      await page.click('[data-paw-prev]');
+      await radio(page, 'pets[0][pet_type]', 'dog');
+      await radio(page, 'pets[0][dog_size]', 'small');
+      await next(page);
+      ok('grooming: the step error clears once every pet is a dog', await page.isHidden('[data-paw-step-error]'));
+      await radio(page, 'pets[0][service]', 'nail_trim');
+      await radio(page, 'pets[0][grooming_frequency]', 'once');
+      await next(page);
+      ok('grooming: Health is still asked', (await visibleStep(page)) === '4');
+      ok('grooming: the step count is 6', (await page.getAttribute('.paw-progress', 'aria-valuetext')) === 'Step 4 of 6');
+      await radio(page, 'pets[0][vaccinations_current]', 'yes');
+      await radio(page, 'pets[0][medical_conditions]', 'no');
+      await radio(page, 'pets[0][medications]', 'no');
+      await radio(page, 'pets[0][allergies]', 'no');
+      await page.setInputFiles('input[name="vaccination_files_0[]"]', [{ name: 'rabies.png', mimeType: 'image/png', buffer: pngBuffer() }]);
+      await next(page);
+      ok('grooming: Special Care is skipped, straight to the vet', (await visibleStep(page)) === '6');
+      ok('grooming: the vet step is titled Veterinarian, with no emergency contact', (await page.textContent('[data-step="6"] h2')).trim() === 'Veterinarian' && await page.isHidden('[data-field=emergency_name]'));
+      await page.fill('[name=vet_name]', 'Dr. Who');
+      await page.fill('[name=vet_clinic]', 'Tardis Vets');
+      await page.fill('[name=vet_phone]', '555-010-1111');
+      await radio(page, 'vet_authorization', 'yes');
+      await next(page);
+      ok('grooming: only the grooming waiver', await page.isVisible('[data-paw-waiver=grooming]') && await page.isHidden('[data-paw-waiver=boarding]'));
+      await page.click('[data-paw-prev]');
+      ok('grooming: Back skips Special Care too', (await visibleStep(page)) === '6');
+      await next(page);
+      await page.click('input[name=waiver_agree] >> xpath=..');
+      await sign(page);
+      await page.click('[data-paw-submit]');
+      await page.waitForSelector('[data-step=done]:not([hidden])');
+      ok('grooming: no care or emergency-contact answers sent', !body.includes('name="pets[0][feeding_schedule]"\r\n\r\nT') && !/name="emergency_name"\r\n\r\n\S/.test(body));
+      ok('grooming: no script errors', errors.length === 0 || (console.log(errors), false));
       await ctx.close();
     }
 
