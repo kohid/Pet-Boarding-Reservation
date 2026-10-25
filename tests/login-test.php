@@ -62,6 +62,18 @@ $_GET['redirect_to'] = 'https://evil.test/"><script>';
 t( 'redirect_to is passed on escaped', ! str_contains( Login::render(), '"><script>' ) );
 unset( $_GET['tab'], $_GET['redirect_to'] );
 
+$menu = \Pawfectly\UserMenu::render();
+t( 'account menu: Sign In goes to the login page', str_contains( $menu, 'href="https://example.test/login/?redirect_to=' ) && ! str_contains( $menu, 'wp-login.php' ) );
+t( 'account menu: Sign Up opens Create account', str_contains( $menu, 'tab=signup' ) );
+$GLOBALS['paw_options']['admin_email'] = 'boss@example.com';
+$boss = paw_test_user( 'boss@example.com', 'pass word1', array( 'administrator' ) );
+wp_set_current_user( $boss->ID );
+$menu = \Pawfectly\UserMenu::render();
+t( 'account menu: Admin Panel for the admin-email account', str_contains( $menu, '>Admin Panel</a>' ) && str_contains( $menu, 'href="https://example.test/wp-admin/"' ) );
+t( 'account menu: Settings opens the dashboard view', str_contains( $menu, 'dashboard/?paw_view=settings' ) );
+wp_set_current_user( $staff->ID );
+t( 'account menu: no Admin Panel for staff', ! str_contains( \Pawfectly\UserMenu::render(), 'Admin Panel' ) );
+
 wp_set_current_user( $cust->ID );
 $in = Login::render();
 t( 'signed in: continue link and no forms', str_contains( $in, 'https://example.test/my-bookings/' ) && ! str_contains( $in, 'data-paw-form' ) );
