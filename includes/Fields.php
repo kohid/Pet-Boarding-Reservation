@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 final class Fields {
 
 	/** Field ids stored in their own table columns; everything else goes in `details`. */
-	public const COLUMNS = array( 'owner_first_name', 'owner_last_name', 'owner_email', 'owner_phone', 'pet_name', 'pet_type', 'check_in', 'check_out' );
+	public const COLUMNS = array( 'owner_first_name', 'owner_last_name', 'owner_email', 'owner_phone', 'pet_name', 'pet_type', 'booking_type', 'check_in', 'check_out', 'appointment_date', 'service' );
 
 	private const SHORT = 60;
 	private const LONG  = 2000;
@@ -64,6 +64,19 @@ final class Fields {
 							),
 						)
 					),
+					self::f(
+						'dog_size',
+						'choice',
+						__( 'Dog size', 'pawfectly-reservations' ),
+						array(
+							'options' => array(
+								'small' => __( 'Under 25 lbs', 'pawfectly-reservations' ),
+								'large' => __( '25 lbs & up', 'pawfectly-reservations' ),
+							),
+							'show_if' => array( 'pet_type' => 'dog' ),
+							'help'    => __( 'Grooming prices depend on size.', 'pawfectly-reservations' ),
+						)
+					),
 					self::f( 'pet_type_other', 'text', __( 'Please specify', 'pawfectly-reservations' ), array( 'show_if' => array( 'pet_type' => 'other' ) ) ),
 					self::f( 'pet_breed', 'text', __( 'Breed', 'pawfectly-reservations' ) ),
 					self::f( 'pet_age', 'text', __( 'Age', 'pawfectly-reservations' ), array( 'placeholder' => __( 'e.g., 3 years', 'pawfectly-reservations' ) ) ),
@@ -88,8 +101,37 @@ final class Fields {
 				'title'  => __( 'Reservation Details', 'pawfectly-reservations' ),
 				'intro'  => '',
 				'fields' => array(
-					self::f( 'check_in', 'date', __( 'Check-In Date', 'pawfectly-reservations' ), array( 'max' => 10 ) ),
-					self::f( 'check_out', 'date', __( 'Check-Out Date', 'pawfectly-reservations' ), array( 'max' => 10 ) ),
+					self::f(
+						'booking_type',
+						'choice',
+						__( 'What would you like to book?', 'pawfectly-reservations' ),
+						array(
+							'options'  => array(
+								'boarding' => __( 'Boarding', 'pawfectly-reservations' ),
+								'grooming' => __( 'Grooming', 'pawfectly-reservations' ),
+								'both'     => __( 'Boarding + grooming', 'pawfectly-reservations' ),
+							),
+							'default'  => 'boarding',
+							'dog_only' => array( 'grooming', 'both' ),
+							'max'      => 12,
+						)
+					),
+					self::f( 'check_in', 'date', __( 'Check-In Date', 'pawfectly-reservations' ), array( 'max' => 10, 'show_if' => array( 'booking_type' => array( 'boarding', 'both' ) ) ) ),
+					self::f( 'check_out', 'date', __( 'Check-Out Date', 'pawfectly-reservations' ), array( 'max' => 10, 'show_if' => array( 'booking_type' => array( 'boarding', 'both' ) ) ) ),
+					self::f( 'appointment_date', 'date', __( 'Grooming day', 'pawfectly-reservations' ), array( 'max' => 10, 'show_if' => array( 'booking_type' => array( 'grooming', 'both' ) ) ) ),
+					self::f(
+						'appointment_time',
+						'choice',
+						__( 'Preferred drop-off time', 'pawfectly-reservations' ),
+						array(
+							'options' => array(
+								'morning'   => __( 'Morning (8–12)', 'pawfectly-reservations' ),
+								'afternoon' => __( 'Afternoon (12–5)', 'pawfectly-reservations' ),
+							),
+							'show_if' => array( 'booking_type' => 'grooming' ),
+						)
+					),
+					self::f( 'service', 'service', __( 'Service', 'pawfectly-reservations' ), array( 'max' => 40, 'show_if' => array( 'booking_type' => array( 'grooming', 'both' ) ) ) ),
 					self::f( 'special_requests', 'textarea', __( 'Special Requests or Notes', 'pawfectly-reservations' ), array( 'required' => false, 'help' => __( "Any specific preferences for your pet's stay?", 'pawfectly-reservations' ) ) ),
 				),
 			),
@@ -205,6 +247,8 @@ final class Fields {
 				'half'        => false,
 				'readonly'    => false,
 				'warn'        => array(),
+				'default'     => '',
+				'dog_only'    => array(),
 			),
 			$extra
 		);

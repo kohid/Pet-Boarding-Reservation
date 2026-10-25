@@ -22,7 +22,7 @@ $pdf = fixture_file( 'rec.pdf', fixture_pdf_bytes() );
 $good = array(
 	'owner_first_name' => 'Ada', 'owner_last_name' => 'Lovelace', 'owner_email' => 'ada@example.com', 'owner_phone' => '555 010 2030',
 	'address_street' => '1 Main St', 'address_city' => '', 'address_state' => 'IL', 'address_postcode' => '62701', 'address_country' => 'US',
-	'pet_name' => 'Biscuit', 'pet_type' => 'dog', 'pet_breed' => 'Beagle', 'pet_age' => '3 years', 'pet_gender' => 'male', 'pet_weight' => '25 lbs',
+	'pet_name' => 'Biscuit', 'pet_type' => 'dog', 'dog_size' => 'large', 'booking_type' => 'boarding', 'pet_breed' => 'Beagle', 'pet_age' => '3 years', 'pet_gender' => 'male', 'pet_weight' => '25 lbs',
 	'pet_spayed' => 'yes', 'pet_microchipped' => 'no',
 	'check_in' => gmdate( 'Y-m-d', strtotime( '+3 days' ) ), 'check_out' => gmdate( 'Y-m-d', strtotime( '+5 days' ) ),
 	'vaccinations_current' => 'yes', 'medical_conditions' => 'no', 'medications' => 'no', 'allergies' => 'no',

@@ -20,6 +20,8 @@ $good  = array(
 	'address_country'        => 'US',
 	'pet_name'               => 'Biscuit',
 	'pet_type'               => 'dog',
+	'dog_size'               => 'large',
+	'booking_type'           => 'boarding',
 	'pet_breed'              => 'Beagle',
 	'pet_age'                => '3 years',
 	'pet_gender'             => 'male',
@@ -106,5 +108,29 @@ t( '61 characters are too many', only_error( array_merge( $good, array( 'owner_f
 t( 'markup kept as text (escaped when shown)', '<b>Biscuit</b>' === Validator::validate( array_merge( $good, array( 'pet_name' => '<b>Biscuit</b>' ) ), $today )['columns']['pet_name'] );
 t( 'arrays are not accepted as text', only_error( array_merge( $good, array( 'pet_name' => array( 'x' ) ) ), 'pet_name', 'This field is required.' ) );
 t( 'textarea keeps line breaks', "a\nb" === Validator::validate( array_merge( $good, array( 'feeding_schedule' => "a\nb" ) ), $today )['details']['feeding_schedule'] );
+
+// Booking type, dog size and grooming.
+$groom = array_merge( $good, array( 'booking_type' => 'grooming', 'dog_size' => 'small', 'service' => 'basic_bath', 'appointment_date' => '2026-10-26', 'appointment_time' => 'morning', 'check_in' => '', 'check_out' => '' ) );
+$g     = Validator::validate( $groom, $today );
+t( 'grooming only: valid without stay dates', is_array( $g ) );
+t( 'grooming only: the appointment fills check-in and check-out', is_array( $g ) && '2026-10-26' === $g['columns']['check_in'] && '2026-10-26' === $g['columns']['check_out'] && '2026-10-26' === $g['columns']['appointment_date'] );
+t( 'grooming only: service and type in columns', is_array( $g ) && 'basic_bath' === $g['columns']['service'] && 'grooming' === $g['columns']['booking_type'] );
+t( 'boarding: no grooming columns', '' === $ok['columns']['service'] && '' === $ok['columns']['appointment_date'] && 'boarding' === $ok['columns']['booking_type'] );
+t( 'grooming day in the past', only_error( array_merge( $groom, array( 'appointment_date' => '2026-10-24' ) ), 'appointment_date', "The grooming day can't be in the past." ) );
+t( 'grooming needs a service', only_error( array_merge( $groom, array( 'service' => '' ) ), 'service', 'This field is required.' ) );
+t( 'unknown service', only_error( array_merge( $groom, array( 'service' => 'teeth' ) ), 'service', 'Please choose one of the services.' ) );
+t( 'grooming needs a drop-off time', only_error( array_merge( $groom, array( 'appointment_time' => '' ) ), 'appointment_time', 'This field is required.' ) );
+t( 'cats cannot book grooming', only_error( array_merge( $groom, array( 'pet_type' => 'cat' ) ), 'booking_type', 'Grooming is for dogs only.' ) );
+t( 'cats board without a size', null === errors( array_merge( $good, array( 'pet_type' => 'cat', 'dog_size' => '' ) ) ) );
+t( 'dogs need a size', only_error( array_merge( $good, array( 'dog_size' => '' ) ), 'dog_size', 'This field is required.' ) );
+t( 'booking type is required', only_error( array_merge( $good, array( 'booking_type' => '' ) ), 'booking_type', 'This field is required.' ) );
+$both = array_merge( $good, array( 'booking_type' => 'both', 'service' => 'nail_trim', 'appointment_date' => '2026-10-29' ) );
+t( 'boarding + grooming: valid with the grooming day inside the stay', null === errors( $both ) );
+t( 'boarding + grooming: check-in day and check-out day count as inside', null === errors( array_merge( $both, array( 'appointment_date' => '2026-10-28' ) ) ) && null === errors( array_merge( $both, array( 'appointment_date' => '2026-10-30' ) ) ) );
+t( 'boarding + grooming: grooming day after check-out', only_error( array_merge( $both, array( 'appointment_date' => '2026-10-31' ) ), 'appointment_date', 'The grooming day must fall within the stay.' ) );
+t( 'boarding + grooming: no drop-off time asked', null === errors( array_merge( $both, array( 'appointment_time' => '' ) ) ) );
+$GLOBALS['paw_options'][ \Pawfectly\Settings::OPTION ] = array( 'services' => array( 'basic_bath' => array( 'enabled' => false ) ) );
+t( 'a turned-off service is refused', only_error( $groom, 'service', 'Please choose one of the services.' ) );
+unset( $GLOBALS['paw_options'][ \Pawfectly\Settings::OPTION ] );
 
 done();

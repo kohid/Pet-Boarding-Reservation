@@ -41,20 +41,7 @@ final class Validator {
 			$clean[ $id ] = $value;
 		}
 
-		if ( ! isset( $errors['check_in'] ) && '' !== $clean['check_in'] ) {
-			if ( $clean['check_in'] < $today->format( 'Y-m-d' ) ) {
-				$errors['check_in'] = __( "Check-in can't be in the past.", 'pawfectly-reservations' );
-			}
-		}
-		if ( ! isset( $errors['check_in'] ) && ! isset( $errors['check_out'] ) && '' !== $clean['check_out'] ) {
-			$nights = ( new \DateTimeImmutable( $clean['check_in'] ) )->diff( new \DateTimeImmutable( $clean['check_out'] ) );
-			if ( $clean['check_out'] <= $clean['check_in'] ) {
-				$errors['check_out'] = __( 'Check-out must be after check-in.', 'pawfectly-reservations' );
-			} elseif ( $nights->days > self::MAX_NIGHTS ) {
-				/* translators: %d: maximum number of nights */
-				$errors['check_out'] = sprintf( __( 'Stays are limited to %d nights.', 'pawfectly-reservations' ), self::MAX_NIGHTS );
-			}
-		}
+		$errors += self::booking_rules( $clean, $errors, $today->format( 'Y-m-d' ) );
 		if ( ! isset( $errors['vaccinations_current'] ) && 'yes' !== $clean['vaccinations_current'] ) {
 			$errors['vaccinations_current'] = __( 'All pets must have current vaccinations to board with us.', 'pawfectly-reservations' );
 		}
@@ -68,18 +55,63 @@ final class Validator {
 		}
 
 		unset( $clean['waiver_agree'] );
+		if ( 'grooming' === $clean['booking_type'] ) {
+			// One-day visit: lists and sorting keep working on check-in; booking_type keeps it out of boarding counts.
+			$clean['check_in']  = $clean['appointment_date'];
+			$clean['check_out'] = $clean['appointment_date'];
+		}
 		$columns = array();
 		foreach ( Fields::COLUMNS as $col ) {
-			$columns[ $col ] = $clean[ $col ];
+			$columns[ $col ] = $clean[ $col ] ?? '';
 			unset( $clean[ $col ] );
 		}
 		return array( 'columns' => $columns, 'details' => $clean );
 	}
 
-	/** A conditional field counts only while every field it depends on has the triggering value. */
+	/** Rules across fields: dates per booking type, grooming for dogs only. */
+	private static function booking_rules( array $clean, array $errors, string $today ): array {
+		$out  = array();
+		$type = $clean['booking_type'] ?? '';
+		if ( isset( $errors['booking_type'] ) ) {
+			return $out;
+		}
+		if ( 'boarding' !== $type && 'dog' !== ( $clean['pet_type'] ?? '' ) ) {
+			$out['booking_type'] = __( 'Grooming is for dogs only.', 'pawfectly-reservations' );
+			return $out;
+		}
+
+		$stay = in_array( $type, array( 'boarding', 'both' ), true );
+		if ( $stay && ! isset( $errors['check_in'] ) && '' !== $clean['check_in'] && $clean['check_in'] < $today ) {
+			$out['check_in'] = __( "Check-in can't be in the past.", 'pawfectly-reservations' );
+		}
+		$dates_ok = $stay && ! isset( $errors['check_in'] ) && ! isset( $errors['check_out'] ) && ! isset( $out['check_in'] ) && '' !== $clean['check_out'];
+		if ( $dates_ok ) {
+			$nights = ( new \DateTimeImmutable( $clean['check_in'] ) )->diff( new \DateTimeImmutable( $clean['check_out'] ) );
+			if ( $clean['check_out'] <= $clean['check_in'] ) {
+				$out['check_out'] = __( 'Check-out must be after check-in.', 'pawfectly-reservations' );
+				$dates_ok         = false;
+			} elseif ( $nights->days > self::MAX_NIGHTS ) {
+				/* translators: %d: maximum number of nights */
+				$out['check_out'] = sprintf( __( 'Stays are limited to %d nights.', 'pawfectly-reservations' ), self::MAX_NIGHTS );
+				$dates_ok         = false;
+			}
+		}
+
+		$day = $clean['appointment_date'] ?? '';
+		if ( 'boarding' !== $type && ! isset( $errors['appointment_date'] ) && '' !== $day ) {
+			if ( 'grooming' === $type && $day < $today ) {
+				$out['appointment_date'] = __( "The grooming day can't be in the past.", 'pawfectly-reservations' );
+			} elseif ( 'both' === $type && $dates_ok && ( $day < $clean['check_in'] || $day > $clean['check_out'] ) ) {
+				$out['appointment_date'] = __( 'The grooming day must fall within the stay.', 'pawfectly-reservations' );
+			}
+		}
+		return $out;
+	}
+
+	/** A conditional field counts only while every field it depends on has (one of) the triggering value(s). */
 	public static function is_shown( array $field, array $values ): bool {
 		foreach ( $field['show_if'] as $target => $wanted ) {
-			if ( ( $values[ $target ] ?? '' ) !== $wanted ) {
+			if ( ! in_array( $values[ $target ] ?? '', (array) $wanted, true ) ) {
 				return false;
 			}
 		}
@@ -135,6 +167,8 @@ final class Validator {
 				return '1' === $value ? null : __( 'Please agree to the terms to continue.', 'pawfectly-reservations' );
 			case 'country':
 				return isset( Fields::countries()[ $value ] ) ? null : __( 'Please choose one of the options.', 'pawfectly-reservations' );
+			case 'service':
+				return isset( Services::enabled()[ $value ] ) ? null : __( 'Please choose one of the services.', 'pawfectly-reservations' );
 			case 'date':
 				$date = \DateTimeImmutable::createFromFormat( '!Y-m-d', $value );
 				return ( $date && $date->format( 'Y-m-d' ) === $value ) ? null : __( 'Please enter a valid date.', 'pawfectly-reservations' );
