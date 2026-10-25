@@ -65,7 +65,21 @@ t( 'row records the IP', '203.0.113.9' === ( $row['signed_ip'] ?? '' ) );
 $saved = json_decode( $row['details'] ?? '{}', true );
 t( 'row keeps the exact waiver text that was signed', \Pawfectly\Settings::get()['waiver'] === ( $saved['waiver_text'] ?? null ) );
 t( 'file and signature stored privately', 2 === count( private_files() ) );
+
 t( 'owner and staff emailed', 2 === count( $GLOBALS['paw_mail'] ) && 'ada@example.com' === $GLOBALS['paw_mail'][0]['to'] );
+t( 'boarding row: type stored, no grooming day', 'boarding' === ( $row['booking_type'] ?? '' ) && array_key_exists( 'appointment_date', $row ) && null === $row['appointment_date'] );
+t( 'price snapshot stored with the reservation', isset( $saved['pricing']['lines'][0]['label'] ) && 'Boarding: 2 nights' === $saved['pricing']['lines'][0]['label'] );
+
+reset_state();
+$GLOBALS['paw_options'][ \Pawfectly\Settings::OPTION ] = array( 'services' => array( 'basic_bath' => array( 'small' => '45' ) ) );
+$res = Rest::submit( request( array_merge( $good, array( 'booking_type' => 'grooming', 'dog_size' => 'small', 'service' => 'basic_bath', 'appointment_date' => gmdate( 'Y-m-d', strtotime( '+1 day' ) ), 'appointment_time' => 'morning', 'check_in' => '', 'check_out' => '' ) ) ) );
+$grow  = $wpdb->rows[1] ?? array();
+$gsnap = json_decode( $grow['details'] ?? '{}', true )['pricing'] ?? array();
+t( 'grooming booking saved', $res instanceof WP_REST_Response && 'grooming' === ( $grow['booking_type'] ?? '' ) && 'basic_bath' === ( $grow['service'] ?? '' ) );
+t( 'grooming snapshot: service and price at booking time', 'Basic Bath' === ( $gsnap['lines'][0]['label'] ?? '' ) && 45.0 === (float) ( $gsnap['lines'][0]['amount'] ?? 0 ) );
+$GLOBALS['paw_options'][ \Pawfectly\Settings::OPTION ] = array( 'services' => array( 'basic_bath' => array( 'small' => '60' ) ) );
+t( 'a later price change does not touch the stored booking', 45.0 === (float) ( json_decode( $wpdb->rows[1]['details'], true )['pricing']['lines'][0]['amount'] ?? 0 ) );
+unset( $GLOBALS['paw_options'][ \Pawfectly\Settings::OPTION ] );
 
 // Nonce, rate limit, honeypot.
 reset_state();
@@ -139,7 +153,7 @@ reset_state();
 $staffer = paw_test_user( 'front@example.com', 'some pass1', array( 'administrator' ) );
 wp_set_current_user( $staffer->ID );
 Rest::submit( request( $good ) );
-t( 'staff booking for a customer: not linked to the staff account', '' === ( $wpdb->rows[1]['user_id'] ?? 'x' ) );
+t( 'staff booking for a customer: not linked to the staff account', null === $wpdb->rows[1]['user_id'] );
 wp_set_current_user( 0 );
 
 reset_state();
@@ -162,7 +176,7 @@ wp_set_current_user( 0 );
 
 reset_state();
 Rest::submit( request( $good, array( 'owner_email' => 'guest@example.com', 'account_password' => 'correct horse' ) ) );
-t( 'unticked box: no account even if a password was typed', ! email_exists( 'guest@example.com' ) && '' === ( $wpdb->rows[1]['user_id'] ?? 'x' ) );
+t( 'unticked box: no account even if a password was typed', ! email_exists( 'guest@example.com' ) && null === $wpdb->rows[1]['user_id'] );
 
 t( 'nonce endpoint', 'good-nonce' === Rest::nonce()->get_data()['nonce'] );
 

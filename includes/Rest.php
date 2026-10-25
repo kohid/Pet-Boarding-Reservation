@@ -104,6 +104,8 @@ final class Rest {
 
 		// Keep the exact waiver wording that was signed: Settings can change later.
 		$clean['details']['waiver_text'] = Settings::get()['waiver'];
+		// And the prices the owner saw: Settings can change later too.
+		$clean['details']['pricing'] = Services::estimate( $clean['columns'] + $clean['details'] );
 
 		$ip  = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 		$row = Reservations::build_row( $clean, $reference, $stored, $signature_path, $ip, current_time( 'mysql', true ) );

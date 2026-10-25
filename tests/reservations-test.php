@@ -26,6 +26,8 @@ $files = array( array( 'name' => 'Rabies.pdf', 'path' => '2026/10/PAW-7K3QX9-ab.
 $row   = Reservations::build_row( $clean, 'PAW-7K3QX9', $files, '2026/10/PAW-7K3QX9-sig-cd.png', '203.0.113.9', '2026-10-25 14:00:00' );
 
 t( 'columns copied', "O'Brien" === $row['owner_last_name'] && 'dog' === $row['pet_type'] && '2026-10-30' === $row['check_out'] );
+t( 'no grooming day: stored as NULL (DATE column)', array_key_exists( 'appointment_date', Reservations::build_row( array( 'columns' => $clean['columns'] + array( 'appointment_date' => '' ), 'details' => array() ), 'PAW-7K3QX8', array(), '', '', '2026-10-25 14:00:00' ) ) && null === Reservations::build_row( array( 'columns' => $clean['columns'] + array( 'appointment_date' => '' ), 'details' => array() ), 'PAW-7K3QX8', array(), '', '', '2026-10-25 14:00:00' )['appointment_date'] );
+t( 'a grooming day is kept', '2026-10-29' === Reservations::build_row( array( 'columns' => $clean['columns'] + array( 'appointment_date' => '2026-10-29' ), 'details' => array() ), 'PAW-7K3QX8', array(), '', '', '2026-10-25 14:00:00' )['appointment_date'] );
 t( 'reference and pending status', 'PAW-7K3QX9' === $row['reference'] && 'pending' === $row['status'] );
 t( 'details JSON round-trips emoji, quotes and newlines', $clean['details'] === json_decode( $row['details'], true ) );
 t( 'pet name with emoji kept', 'Biscuit 🐶' === $row['pet_name'] );

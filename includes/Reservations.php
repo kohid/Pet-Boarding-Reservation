@@ -38,12 +38,16 @@ final class Reservations {
 
 	/** @param array{columns: array, details: array} $clean Output of Validator::validate(). */
 	public static function build_row( array $clean, string $reference, array $files, string $signature_path, string $ip, string $now_utc ): array {
+		$columns = $clean['columns'];
+		if ( array_key_exists( 'appointment_date', $columns ) && '' === $columns['appointment_date'] ) {
+			$columns['appointment_date'] = null; // DATE column: no grooming day is NULL, not ''.
+		}
 		return array_merge(
 			array(
 				'reference' => $reference,
 				'status'    => 'pending',
 			),
-			$clean['columns'],
+			$columns,
 			array(
 				'details'        => wp_json_encode( $clean['details'], JSON_UNESCAPED_UNICODE ),
 				'files'          => wp_json_encode( $files, JSON_UNESCAPED_UNICODE ),
@@ -153,7 +157,7 @@ final class Reservations {
 		global $wpdb;
 		$until = ( new \DateTimeImmutable( $today ) )->modify( '+' . Stats::NIGHTS . ' days' )->format( 'Y-m-d' );
 		return (array) $wpdb->get_results(
-			$wpdb->prepare( 'SELECT status, check_in, check_out FROM ' . Activator::table() . " WHERE status = 'pending' OR ( check_out >= %s AND check_in <= %s )", $today, $until ),
+			$wpdb->prepare( 'SELECT status, check_in, check_out, booking_type, appointment_date FROM ' . Activator::table() . " WHERE status = 'pending' OR ( check_out >= %s AND check_in <= %s )", $today, $until ),
 			ARRAY_A
 		);
 	}
