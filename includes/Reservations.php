@@ -148,6 +148,16 @@ final class Reservations {
 		return $verified ? array( $user_id, $email, $limit ) : array( $user_id, $limit );
 	}
 
+	/** Rows the overview needs: every pending request, and stays touching the next 14 nights. */
+	public static function for_stats( string $today ): array {
+		global $wpdb;
+		$until = ( new \DateTimeImmutable( $today ) )->modify( '+' . Stats::NIGHTS . ' days' )->format( 'Y-m-d' );
+		return (array) $wpdb->get_results(
+			$wpdb->prepare( 'SELECT status, check_in, check_out FROM ' . Activator::table() . " WHERE status = 'pending' OR ( check_out >= %s AND check_in <= %s )", $today, $until ),
+			ARRAY_A
+		);
+	}
+
 	/** Every stored answer keyed by field id: table columns plus details. */
 	public static function values( array $r ): array {
 		$values = (array) $r['details'];

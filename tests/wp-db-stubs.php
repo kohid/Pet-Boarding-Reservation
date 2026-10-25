@@ -84,6 +84,13 @@ class Fake_WPDB {
 
 	public function get_results( $sql, $output = null ) {
 		$this->queries[] = $sql;
+		if ( str_contains( $sql, 'GROUP BY status' ) ) {
+			$n = array();
+			foreach ( $this->rows as $r ) {
+				$n[ $r['status'] ] = ( $n[ $r['status'] ] ?? 0 ) + 1;
+			}
+			return array_map( fn( $k, $v ) => array( 'status' => $k, 'n' => (string) $v ), array_keys( $n ), $n );
+		}
 		// Owner queries: keep only rows matching "user_id = N" (or, when present, the email).
 		if ( preg_match( '/user_id = (\d+)/', $sql, $u ) ) {
 			$email = preg_match( "/owner_email = '([^']*)'/", $sql, $e ) ? stripslashes( $e[1] ) : null;

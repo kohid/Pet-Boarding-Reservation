@@ -15,6 +15,7 @@ final class Plugin {
 		load_plugin_textdomain( 'pawfectly-reservations', false, dirname( plugin_basename( PAW_FILE ) ) . '/languages' );
 		Rest::init();
 		AccountRest::init();
+		StaffRest::init();
 		Uploads::init();
 		Shortcode::init();
 		Pages::init();
