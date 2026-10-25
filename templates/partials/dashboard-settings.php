@@ -59,6 +59,15 @@ $paw_saved = (array) $settings['services'];
 				<textarea name="waiver" rows="8"><?php echo esc_textarea( $settings['waiver'] ); ?></textarea>
 				<small><?php esc_html_e( 'Shown on the last step. You can use paragraphs, bold, italic and lists.', 'pawfectly-reservations' ); ?></small>
 			</label>
+			<label class="paw-dash__field paw-dash__field--wide" data-paw-setting="grooming_waiver">
+				<span><?php esc_html_e( 'Grooming waiver', 'pawfectly-reservations' ); ?></span>
+				<textarea name="grooming_waiver" rows="8"><?php echo esc_textarea( $settings['grooming_waiver'] ); ?></textarea>
+				<small><?php esc_html_e( 'Shown instead of the boarding waiver for grooming-only bookings, and after it for boarding + grooming.', 'pawfectly-reservations' ); ?></small>
+			</label>
+			<label class="paw-dash__check paw-dash__field--wide" data-paw-setting="grooming_needs_vaccines">
+				<input type="checkbox" name="grooming_needs_vaccines"<?php echo $settings['grooming_needs_vaccines'] ? ' checked' : ''; ?>>
+				<?php esc_html_e( 'Require vaccination records for grooming-only bookings', 'pawfectly-reservations' ); ?>
+			</label>
 			<label class="paw-dash__field" data-paw-setting="default_country">
 				<span><?php esc_html_e( 'Default country', 'pawfectly-reservations' ); ?></span>
 				<select name="default_country">
@@ -98,6 +107,15 @@ $paw_saved = (array) $settings['services'];
 					<input type="text" inputmode="decimal" name="boarding_rates[<?php echo esc_attr( $paw_key ); ?>]" value="<?php echo esc_attr( (string) $settings['boarding_rates'][ $paw_key ] ); ?>" placeholder="<?php esc_attr_e( 'On request', 'pawfectly-reservations' ); ?>">
 				</label>
 			<?php endforeach; ?>
+		</div>
+
+		<h4 class="paw-dash__subtitle"><?php esc_html_e( 'Groomers', 'pawfectly-reservations' ); ?></h4>
+		<div class="paw-dash__fields">
+			<label class="paw-dash__field paw-dash__field--wide" data-paw-setting="groomers">
+				<span><?php esc_html_e( 'One name per line', 'pawfectly-reservations' ); ?></span>
+				<textarea name="groomers" rows="4"><?php echo esc_textarea( implode( "\n", (array) $settings['groomers'] ) ); ?></textarea>
+				<small><?php esc_html_e( 'Owners can ask for one of these groomers, or choose "Any / Flexible".', 'pawfectly-reservations' ); ?></small>
+			</label>
 		</div>
 
 		<h4 class="paw-dash__subtitle"><?php esc_html_e( 'Grooming services', 'pawfectly-reservations' ); ?></h4>

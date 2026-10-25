@@ -53,7 +53,9 @@ $r = array(
 );
 
 $header = Admin::csv_header();
-$row    = Admin::csv_row( $r );
+$rows   = Admin::csv_rows( $r );
+$row    = $rows[0];
+t( 'an older one-pet booking is one CSV row', 1 === count( $rows ) );
 t( 'header and row line up', count( $header ) === count( $row ) );
 t( 'starts with reference and status', 'PAW-7K3QX9' === $row[0] && 'Confirmed' === $row[1] );
 $col = array_flip( Admin::csv_keys() );
@@ -66,7 +68,7 @@ t( 'files counted', '1' === $row[ $col['files_count'] ] );
 t( 'estimated total is the last column', 'Estimated total' === end( $header ) );
 $rp = $r;
 $rp['details']['pricing'] = array( 'lines' => array( array( 'label' => 'Boarding: 2 nights', 'amount' => 80.0, 'monthly' => false ), array( 'label' => 'Basic Bath', 'amount' => null, 'monthly' => false ) ), 'total' => 80.0, 'on_request' => true, 'currency' => '€' );
-$prow = Admin::csv_row( $rp );
+$prow = Admin::csv_rows( $rp )[0];
 t( 'estimated total in the snapshot currency, flagged when part is on request', '€80 + price on request' === end( $prow ) );
 t( 'no snapshot (older bookings): empty', '' === end( $row ) );
 t( 'service answer shows the service name', 'Premium Haircuts' === Admin::answer_text( Fields::all()['service'], 'premium_haircut' ) );
@@ -101,5 +103,44 @@ t( 'print button', str_contains( $html, 'data-paw-print' ) );
 t( 'delete form with its own nonce', str_contains( $html, 'name="action" value="paw_delete"' ) && str_contains( $html, 'nonce-paw_delete_5' ) && str_contains( $html, 'data-paw-confirm' ) );
 t( 'detail shows the waiver as signed', str_contains( $html, '<p>Old waiver wording v1</p>' ) && ! str_contains( $html, '<script>x</script>' ) );
 t( 'waiver text is not exported as a CSV column', ! in_array( 'waiver_text', Admin::csv_keys(), true ) );
+
+// Two pets.
+$two                      = $r;
+$two['pet_name']          = 'Rex + Tom';
+$two['pet_count']         = '2';
+$two['details']['pets']   = array(
+	array( 'pet_name' => 'Rex', 'pet_type' => 'dog', 'dog_size' => 'large', 'pet_breed' => 'Beagle', 'vaccinations_current' => 'yes', 'service' => 'nail_trim', 'groomer' => 'Ana' ),
+	array( 'pet_name' => 'Tom', 'pet_type' => 'cat', 'pet_breed' => 'Tabby', 'vaccinations_current' => 'yes' ),
+);
+$two['details']['pricing'] = array( 'lines' => array( array( 'label' => 'Rex: Boarding, 2 nights', 'amount' => 80.0, 'monthly' => false ) ), 'total' => 80.0, 'on_request' => false, 'currency' => '$' );
+$two['files']             = array( array( 'name' => 'rex.pdf', 'path' => 'a/rex.pdf', 'mime' => 'application/pdf', 'size' => 9, 'pet' => 0 ), array( 'name' => 'tom.pdf', 'path' => 'a/tom.pdf', 'mime' => 'application/pdf', 'size' => 9, 'pet' => 1 ) );
+$crows = Admin::csv_rows( $two );
+$ccol  = array_flip( Admin::csv_keys() );
+t( 'CSV: a row per pet', 2 === count( $crows ) && '1' === $crows[0][ $ccol['pet_number'] ] && '2' === $crows[1][ $ccol['pet_number'] ] );
+t( 'CSV: each row has its own pet', 'Beagle' === $crows[0][ $ccol['pet_breed'] ] && 'Tabby' === $crows[1][ $ccol['pet_breed'] ] );
+t( 'CSV: the estimate only on the first row', '$80' === end( $crows[0] ) && '' === end( $crows[1] ) );
+t( 'CSV: Pet # header', in_array( 'Pet #', Admin::csv_header(), true ) );
+ob_start();
+Admin::render_detail( $two );
+$dhtml = ob_get_clean();
+t( 'detail: a section per pet, named', str_contains( $dhtml, 'Pet 1: Rex' ) && str_contains( $dhtml, 'Pet 2: Tom' ) );
+t( 'detail: each pet lists its own file', strpos( $dhtml, 'rex.pdf' ) < strpos( $dhtml, 'Pet 2: Tom' ) && strpos( $dhtml, 'tom.pdf' ) > strpos( $dhtml, 'Pet 2: Tom' ) );
+t( 'detail: the groomer is shown', str_contains( $dhtml, 'Ana' ) );
+
+// Contact consent and booking type in the staff view.
+$yes = $two;
+$yes['booking_type'] = 'both';
+$yes['details']['contact_consent'] = '1';
+ob_start();
+Admin::render_detail( $yes );
+$yhtml = ob_get_clean();
+t( 'staff view: booking type shown', str_contains( $yhtml, 'What would you like to book?' ) && str_contains( $yhtml, 'Boarding + grooming' ) );
+t( 'staff view: consent given reads Yes, waiver shown once', str_contains( $yhtml, 'Contact (optional)' ) && 1 === substr_count( $yhtml, 'Agreed to the waiver below' ) );
+$no = $two;
+ob_start();
+Admin::render_detail( $no );
+$nhtml = ob_get_clean();
+t( 'staff view: no consent reads No', (bool) preg_match( '/Contact \(optional\)<\/dt>\s*<dd>\s*No\s*<\/dd>/', $nhtml ) );
+t( 'CSV: consent as Yes / No', 'Yes' === Admin::answer_text( Fields::all()['contact_consent'], '1' ) && 'No' === Admin::answer_text( Fields::all()['contact_consent'], '' ) );
 
 done();

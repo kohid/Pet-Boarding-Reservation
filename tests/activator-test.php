@@ -40,7 +40,8 @@ foreach ( array(
 	'KEY user_id (user_id)',
 	"booking_type VARCHAR(12) NOT NULL DEFAULT 'boarding'",
 	'appointment_date DATE NULL',
-	"service VARCHAR(40) NOT NULL DEFAULT ''",
+	"service VARCHAR(255) NOT NULL DEFAULT ''",
+	'pet_count TINYINT UNSIGNED NOT NULL DEFAULT 1',
 ) as $needle ) {
 	t( "has: $needle", str_contains( $sql, $needle ) );
 }

@@ -157,7 +157,7 @@ final class Reservations {
 		global $wpdb;
 		$until = ( new \DateTimeImmutable( $today ) )->modify( '+' . Stats::NIGHTS . ' days' )->format( 'Y-m-d' );
 		return (array) $wpdb->get_results(
-			$wpdb->prepare( 'SELECT status, check_in, check_out, booking_type, appointment_date FROM ' . Activator::table() . " WHERE status = 'pending' OR ( check_out >= %s AND check_in <= %s )", $today, $until ),
+			$wpdb->prepare( 'SELECT status, check_in, check_out, booking_type, appointment_date, pet_count, service FROM ' . Activator::table() . " WHERE status = 'pending' OR ( check_out >= %s AND check_in <= %s )", $today, $until ),
 			ARRAY_A
 		);
 	}
@@ -174,6 +174,28 @@ final class Reservations {
 		return $values;
 	}
 
+	/**
+	 * Each pet's answers, with that pet's files under 'files'. Bookings from before several pets
+	 * read as one pet built from their flat answers.
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	public static function pets( array $r ): array {
+		$details = (array) ( $r['details'] ?? array() );
+		$files   = (array) ( $r['files'] ?? array() );
+		if ( isset( $details['pets'] ) && is_array( $details['pets'] ) ) {
+			$out = array();
+			foreach ( array_values( $details['pets'] ) as $n => $pet ) {
+				// Files keep their index in the booking's list: download links use it.
+				$out[] = (array) $pet + array( 'files' => array_filter( $files, static fn( $f ): bool => (int) ( $f['pet'] ?? 0 ) === $n ) );
+			}
+			return $out;
+		}
+		$values = self::values( $r );
+		$pet    = array_intersect_key( $values, Fields::pet_fields() );
+		return array( $pet + array( 'files' => $files ) );
+	}
+
 	/** When it happens, as a person reads it: "10/28/2026 → 10/30/2026", or a grooming day and time. */
 	public static function when( array $r ): string {
 		if ( 'grooming' === ( $r['booking_type'] ?? '' ) ) {
@@ -183,10 +205,14 @@ final class Reservations {
 		return Mailer::date( (string) $r['check_in'] ) . ' → ' . Mailer::date( (string) $r['check_out'] );
 	}
 
-	/** The booked service's name, or '' for boarding only. */
-	public static function service_name( array $r ): string {
-		$id = (string) ( $r['service'] ?? '' );
-		return '' !== $id ? (string) ( Services::catalog()[ $id ]['name'] ?? $id ) : '';
+	/** The booked services' names ("Nail Trimming, Basic Bath"), or '' for boarding only. */
+	public static function service_names( array $r ): string {
+		$catalog = Services::catalog();
+		$names   = array();
+		foreach ( array_filter( explode( ',', (string) ( $r['service'] ?? '' ) ) ) as $id ) {
+			$names[] = (string) ( $catalog[ $id ]['name'] ?? $id );
+		}
+		return implode( ', ', $names );
 	}
 
 	/** @return array<string, int> Count per status, every status present. */

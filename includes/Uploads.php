@@ -115,7 +115,7 @@ final class Uploads {
 	 *
 	 * @return array<int, array{name: string, path: string, mime: string, size: int}>|\WP_Error
 	 */
-	public static function store( string $reference, array $checked ) {
+	public static function store( string $reference, array $checked, int $pet = 0 ) {
 		$stored = array();
 		foreach ( $checked as $file ) {
 			$relative = self::new_path( $reference, $file['ext'] );
@@ -128,6 +128,7 @@ final class Uploads {
 				'path' => $relative,
 				'mime' => $file['mime'],
 				'size' => $file['size'],
+				'pet'  => $pet,
 			);
 		}
 		return $stored;

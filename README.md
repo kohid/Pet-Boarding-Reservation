@@ -2,7 +2,7 @@
 
 A WordPress plugin for Pawfectly's boarding and grooming reservations. Owners fill in a 7-step form: owner details, pet, what they're booking (boarding, grooming, or both) with an estimated price, health and vaccination records, care instructions, emergency contacts and vet, and a signed liability waiver. Staff review, confirm and export reservations in the front-end dashboard.
 
-Requires WordPress 6.0+ and PHP 8.0+. This is v0.3. See `docs/superpowers/specs/` for what is and is not built.
+Requires WordPress 6.0+ and PHP 8.0+. This is v0.4. See `docs/superpowers/specs/` for what is and is not built.
 
 ## Install
 
@@ -52,14 +52,31 @@ Put `[pawfectly_dashboard]` on a page, for example `/dashboard/`.
 - **Overview:** today's check-ins and check-outs, pets boarding tonight, grooming appointments today, requests to review, and a 14-night chart of pets per night.
 - **Reservations:** search, status tabs, a check-in date range, and a side panel with every answer, the vaccination files, the signature, status change (optionally emailing the owner), staff notes, history and delete.
 
-- **Export CSV** on the Reservations view downloads the current filter.
+- **Export CSV** on the Reservations view downloads the current filter, one row per pet.
 - **Settings** (administrators, Developers and the admin-email account): everything below, including prices.
 
 The **Pawfectly staff** role can use the dashboard. Give it to front-desk people under **Users**. You can also tick other roles in **Settings → Who can manage reservations**.
 
-## Grooming services and prices
+## Booking several pets
 
-The booking form asks what the owner wants to book: **Boarding**, **Grooming**, or **Boarding + grooming**. Grooming is for dogs, and asks the dog's size (under 25 lbs, or 25 lbs & up), a grooming day, and for grooming only, a morning or afternoon drop-off. One service per booking:
+One booking holds up to 5 pets. The owner adds pets with "+ Add another pet" and can remove any after the first. Each pet has its own details, vaccination records, health and care answers, and, when groomed, its own service. The booking gets one reference ("Biscuit + Luna"), and the estimate adds up every pet. Staff see a section per pet, and the CSV export has one row per pet.
+
+## The form follows the booking
+
+The welcome screen asks what the owner wants to book (**Boarding**, **Grooming**, or **Boarding + grooming**) and shows the service menu with prices.
+
+| Step | Boarding | Grooming | Boarding + grooming |
+|---|---|---|---|
+| Health & vaccination records | ✓ | ✓ | ✓ |
+| Special care (feeding, exercise) | ✓ | skipped | ✓ |
+| Emergency contact and vet | ✓ | vet only | ✓ |
+| Waiver | boarding waiver | grooming waiver | both |
+
+Vaccination records are required for grooming too, unless you turn that off in Settings.
+
+## Grooming services, groomers and prices
+
+Grooming is for dogs. For each dog, the owner picks one service, a preferred groomer ("Any / Flexible" or a name from your **Groomers** list in Settings), how often they'd like grooming, a preferred day and time for repeat visits, the last groom date and notes. In Boarding + grooming, a dog can also choose "No grooming for this pet"; cats and other pets just board. Pick-up details: a grooming day, and for grooming-only bookings, a morning or afternoon drop-off. The services:
 
 | Service | Starts at |
 |---|---|
@@ -73,6 +90,10 @@ In **Dashboard → Settings → Pricing** you can turn each service on or off an
 The form shows an estimated total, labelled as an estimate: payment is taken at Pawfectly and staff confirm the final price. Each booking keeps the prices it was made with, so later price changes don't alter it.
 
 ## Settings (Dashboard → Settings)
+
+- **Groomers**, one name per line.
+- **Grooming waiver**, shown for grooming bookings, and **Require vaccination records for grooming-only bookings** (on by default).
+- The waiver step also offers an optional "I consent to be contacted…" checkbox; the answer is saved with the booking.
 
 The general settings (not the prices) are also on **Pawfectly → Settings** in wp-admin, for the accounts that can open it, along with the Shortcodes list and the private-files check.
 

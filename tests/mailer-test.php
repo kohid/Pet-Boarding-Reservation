@@ -68,9 +68,32 @@ Mailer::reservation_received(
 	)
 );
 $g = $GLOBALS['paw_mail'][0]['message'] ?? '';
+$GLOBALS['paw_mail'] = array();
+Mailer::reservation_received( array_merge( $reservation, array( 'booking_type' => 'grooming', 'appointment_date' => '2026-10-29', 'check_in' => '2026-10-29', 'check_out' => '2026-10-29', 'service' => 'basic_bath', 'details' => array( 'appointment_time' => 'morning', 'pets' => array( array( 'pet_name' => 'Rex', 'service' => 'basic_bath', 'groomer' => 'Ana' ) ) ) ) ) );
+t( 'one pet: the requested groomer is in the email', str_contains( $GLOBALS['paw_mail'][0]['message'] ?? '', 'Basic Bath, groomer Ana' ) );
+$GLOBALS['paw_mail'] = array();
+Mailer::reservation_received(
+	array_merge(
+		$reservation,
+		array(
+			'booking_type'     => 'grooming',
+			'appointment_date' => '2026-10-29',
+			'check_in'         => '2026-10-29',
+			'check_out'        => '2026-10-29',
+			'service'          => 'basic_bath',
+			'details'          => array( 'appointment_time' => 'afternoon', 'pricing' => array( 'lines' => array( array( 'label' => 'Basic Bath', 'amount' => 45.0, 'monthly' => false ) ), 'total' => 45.0, 'on_request' => false, 'currency' => '$' ) ),
+		)
+	)
+);
+$g = $GLOBALS['paw_mail'][0]['message'] ?? '';
 t( 'grooming email: appointment instead of check-in/out', str_contains( $g, 'Appointment' ) && str_contains( $g, '10/29/2026 · Afternoon (12–5)' ) && ! str_contains( $g, 'Check-out' ) );
 t( 'grooming email: service and estimate', str_contains( $g, 'Basic Bath' ) && str_contains( $g, '$45' ) && str_contains( $g, 'staff confirm the final price' ) );
 t( 'grooming staff subject names the day', str_contains( $GLOBALS['paw_mail'][1]['subject'] ?? '', '(10/29/2026 · Afternoon (12–5))' ) );
+
+$GLOBALS['paw_mail'] = array();
+Mailer::reservation_received( array_merge( $reservation, array( 'pet_name' => 'Rex + Tom', 'booking_type' => 'both', 'appointment_date' => '2026-10-29', 'service' => 'nail_trim', 'details' => array( 'pets' => array( array( 'pet_name' => 'Rex', 'service' => 'nail_trim', 'groomer' => 'Ana' ), array( 'pet_name' => 'Tom' ) ) ) ) ) );
+$m2 = $GLOBALS['paw_mail'][0]['message'] ?? '';
+t( 'two pets: both listed, with the service and groomer', str_contains( $m2, 'Rex: Nail Trimming, groomer Ana' ) && str_contains( $m2, 'Tom' ) );
 
 $GLOBALS['paw_mail'] = array();
 Mailer::status_changed( array_merge( $reservation, array( 'status' => 'confirmed' ) ) );

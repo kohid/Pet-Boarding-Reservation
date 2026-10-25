@@ -18,19 +18,21 @@ final class Validator {
 	private const SKIP = array( 'file', 'signature' );
 
 	/**
+	 * Booking answers stay flat; per-pet answers arrive as pets[N][field] and come back in
+	 * details['pets'], with errors keyed "pets.N.field".
+	 *
 	 * @param array              $params Request body values (REST delivers them already unslashed).
 	 * @param \DateTimeImmutable $today  Today in the site's timezone.
-	 * @return array{columns: array<string,string>, details: array<string,string>}|\WP_Error
+	 * @return array{columns: array<string,string>, details: array<string,mixed>}|\WP_Error
 	 */
 	public static function validate( array $params, \DateTimeImmutable $today ) {
-		$clean  = array();
-		$errors = array();
+		$clean   = array();
+		$errors  = array();
+		$per_pet = Fields::pet_fields();
+		$day     = $today->format( 'Y-m-d' );
 
 		foreach ( Fields::all() as $id => $field ) {
-			if ( in_array( $field['type'], self::SKIP, true ) ) {
-				continue;
-			}
-			if ( ! self::is_shown( $field, $clean ) ) {
+			if ( in_array( $field['type'], self::SKIP, true ) || isset( $per_pet[ $id ] ) || ! self::is_shown( $field, $clean ) ) {
 				continue;
 			}
 			$value = self::read( $params[ $id ] ?? '', $field['type'] );
@@ -41,10 +43,34 @@ final class Validator {
 			$clean[ $id ] = $value;
 		}
 
-		$errors += self::booking_rules( $clean, $errors, $today->format( 'Y-m-d' ) );
-		if ( ! isset( $errors['vaccinations_current'] ) && 'yes' !== $clean['vaccinations_current'] ) {
-			$errors['vaccinations_current'] = __( 'All pets must have current vaccinations to board with us.', 'pawfectly-reservations' );
+		$raw  = $params['pets'] ?? null;
+		$pets = array();
+		if ( ! is_array( $raw ) || ! $raw || count( $raw ) > Fields::MAX_PETS || array_keys( $raw ) !== range( 0, count( $raw ) - 1 ) ) {
+			$errors['pets'] = __( 'Please check the highlighted fields.', 'pawfectly-reservations' );
+		} else {
+			foreach ( $raw as $n => $answers ) {
+				$answers = is_array( $answers ) ? $answers : array();
+				$pet     = array();
+				foreach ( $per_pet as $id => $field ) {
+					if ( in_array( $field['type'], self::SKIP, true ) || ! self::is_shown( $field, $pet + $clean ) ) {
+						continue;
+					}
+					$value = self::read( $answers[ $id ] ?? '', $field['type'] );
+					if ( '' === $value && '' !== $field['default'] ) {
+						$value = $field['default']; // The groomer left at "Any / Flexible".
+					}
+					$error = self::pet_check( $field, $value, $clean, $day );
+					if ( null !== $error ) {
+						$errors[ "pets.$n.$id" ] = $error;
+					}
+					$pet[ $id ] = $value;
+				}
+				$pets[] = $pet;
+			}
 		}
+
+		$errors += self::booking_rules( $clean, $errors, $day );
+		$errors += self::pet_rules( $clean, $pets, $errors );
 
 		if ( $errors ) {
 			return new \WP_Error(
@@ -60,12 +86,50 @@ final class Validator {
 			$clean['check_in']  = $clean['appointment_date'];
 			$clean['check_out'] = $clean['appointment_date'];
 		}
+		$names                = implode( ' + ', array_column( $pets, 'pet_name' ) );
+		$clean['pet_name']    = mb_strlen( $names ) > 60 ? mb_substr( $names, 0, 59 ) . '…' : $names;
+		$clean['pet_type']    = $pets[0]['pet_type'];
+		$clean['pet_count']   = (string) count( $pets );
+		$clean['service']     = implode( ',', array_filter( array_column( $pets, 'service' ), static fn( string $s ): bool => '' !== $s && 'none' !== $s ) );
 		$columns = array();
 		foreach ( Fields::COLUMNS as $col ) {
 			$columns[ $col ] = $clean[ $col ] ?? '';
 			unset( $clean[ $col ] );
 		}
+		$clean['pets'] = $pets;
 		return array( 'columns' => $columns, 'details' => $clean );
+	}
+
+	/** One per-pet value: the usual checks, plus "No grooming" in Both bookings and no future last-groom date. */
+	private static function pet_check( array $field, string $value, array $booking, string $today ): ?string {
+		if ( 'service' === $field['type'] && 'none' === $value ) {
+			return 'both' === ( $booking['booking_type'] ?? '' ) ? null : __( 'Please choose one of the services.', 'pawfectly-reservations' );
+		}
+		$error = self::check( $field, $value );
+		if ( null === $error && $field['past'] && '' !== $value && $value > $today ) {
+			return __( "The last groom date can't be in the future.", 'pawfectly-reservations' );
+		}
+		return $error;
+	}
+
+	/** Rules across pets: current vaccinations, grooming for dogs only, at least one groomed pet. */
+	private static function pet_rules( array $booking, array $pets, array $errors ): array {
+		$out  = array();
+		$type = $booking['booking_type'] ?? '';
+		foreach ( $pets as $n => $pet ) {
+			if ( ! isset( $errors[ "pets.$n.vaccinations_current" ] ) && 'yes' !== ( $pet['vaccinations_current'] ?? '' ) ) {
+				$out[ "pets.$n.vaccinations_current" ] = __( 'All pets must have current vaccinations to board with us.', 'pawfectly-reservations' );
+			}
+		}
+		if ( isset( $errors['booking_type'] ) || isset( $errors['pets'] ) || 'boarding' === $type ) {
+			return $out;
+		}
+		if ( 'grooming' === $type && array_filter( $pets, static fn( array $p ): bool => 'dog' !== ( $p['pet_type'] ?? '' ) ) ) {
+			$out['booking_type'] = __( 'Grooming is for dogs only. Choose Boarding + grooming to board your other pets.', 'pawfectly-reservations' );
+		} elseif ( 'both' === $type && ! array_filter( $pets, static fn( array $p ): bool => '' !== ( $p['service'] ?? '' ) && 'none' !== $p['service'] ) && ! preg_grep( '/^pets\.\d+\.service$/', array_keys( $errors ) ) ) {
+			$out['booking_type'] = __( 'Choose a service for at least one pet, or book Boarding only.', 'pawfectly-reservations' );
+		}
+		return $out;
 	}
 
 	/** Rules across fields: dates per booking type, grooming for dogs only. */
@@ -75,11 +139,6 @@ final class Validator {
 		if ( isset( $errors['booking_type'] ) ) {
 			return $out;
 		}
-		if ( 'boarding' !== $type && 'dog' !== ( $clean['pet_type'] ?? '' ) ) {
-			$out['booking_type'] = __( 'Grooming is for dogs only.', 'pawfectly-reservations' );
-			return $out;
-		}
-
 		$stay = in_array( $type, array( 'boarding', 'both' ), true );
 		if ( $stay && ! isset( $errors['check_in'] ) && '' !== $clean['check_in'] && $clean['check_in'] < $today ) {
 			$out['check_in'] = __( "Check-in can't be in the past.", 'pawfectly-reservations' );

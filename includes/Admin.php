@@ -103,6 +103,10 @@ final class Admin {
 
 	/** An answer as a person reads it: option labels, country names, m/d/Y dates. Not escaped. */
 	public static function answer_text( array $field, string $value ): string {
+		if ( 'agree' === $field['type'] ) {
+			// An unticked box is a real answer: staff need to see "No" (e.g. no consent to texts).
+			return '1' === $value ? __( 'Yes', 'pawfectly-reservations' ) : __( 'No', 'pawfectly-reservations' );
+		}
 		if ( '' === $value ) {
 			return '';
 		}
@@ -120,15 +124,24 @@ final class Admin {
 		return $value;
 	}
 
-	/** Field ids exported as CSV columns, after reference/status/submitted, then two summary columns. */
+	/**
+	 * CSV columns: reference, status and submitted, the booking's answers, "Pet #" and that pet's
+	 * answers, then files, signing time and the estimate. One row per pet.
+	 */
 	public static function csv_keys(): array {
-		$keys = array( 'reference', 'status', 'created_at' );
+		$booking = array( 'reference', 'status', 'created_at' );
+		$pet     = array( 'pet_number' );
 		foreach ( Fields::all() as $id => $field ) {
-			if ( ! in_array( $field['type'], self::NOT_ANSWERS, true ) ) {
-				$keys[] = $id;
+			if ( in_array( $field['type'], self::NOT_ANSWERS, true ) ) {
+				continue;
+			}
+			if ( $field['per_pet'] ) {
+				$pet[] = $id;
+			} else {
+				$booking[] = $id;
 			}
 		}
-		return array_merge( $keys, array( 'files_count', 'signed_at', 'estimate' ) );
+		return array_merge( $booking, $pet, array( 'files_count', 'signed_at', 'estimate' ) );
 	}
 
 	public static function csv_header(): array {
@@ -137,6 +150,7 @@ final class Admin {
 			'reference'   => __( 'Reference', 'pawfectly-reservations' ),
 			'status'      => __( 'Status', 'pawfectly-reservations' ),
 			'created_at'  => __( 'Submitted (UTC)', 'pawfectly-reservations' ),
+			'pet_number'  => __( 'Pet #', 'pawfectly-reservations' ),
 			'files_count' => __( 'Vaccination files', 'pawfectly-reservations' ),
 			'signed_at'   => __( 'Signed (UTC)', 'pawfectly-reservations' ),
 			'estimate'    => __( 'Estimated total', 'pawfectly-reservations' ),
@@ -144,33 +158,42 @@ final class Admin {
 		return array_map( fn( $key ) => $labels[ $key ] ?? $all[ $key ]['label'], self::csv_keys() );
 	}
 
-	public static function csv_row( array $r ): array {
-		$all    = Fields::all();
-		$values = self::values( $r );
-		$row    = array();
-		foreach ( self::csv_keys() as $key ) {
-			switch ( $key ) {
-				case 'reference':
-				case 'created_at':
-				case 'signed_at':
-					$cell = (string) $r[ $key ];
-					break;
-				case 'status':
-					$cell = Reservations::label( (string) $r['status'] );
-					break;
-				case 'files_count':
-					$cell = (string) count( (array) $r['files'] );
-					break;
-				case 'estimate':
-					$cell = Services::total_text( (array) ( $r['details']['pricing'] ?? array() ) );
-					break;
-				default:
-					$field = $all[ $key ];
-					$cell  = Validator::is_shown( $field, $values ) ? self::answer_text( $field, (string) ( $values[ $key ] ?? '' ) ) : '';
+	/** @return list<list<string>> One row per pet; the estimate is on the first row only. */
+	public static function csv_rows( array $r ): array {
+		$all     = Fields::all();
+		$booking = self::values( $r );
+		$rows    = array();
+		foreach ( Reservations::pets( $r ) as $n => $pet ) {
+			$values = array_merge( $booking, $pet );
+			$row    = array();
+			foreach ( self::csv_keys() as $key ) {
+				switch ( $key ) {
+					case 'reference':
+					case 'created_at':
+					case 'signed_at':
+						$cell = (string) $r[ $key ];
+						break;
+					case 'status':
+						$cell = Reservations::label( (string) $r['status'] );
+						break;
+					case 'pet_number':
+						$cell = (string) ( $n + 1 );
+						break;
+					case 'files_count':
+						$cell = (string) count( (array) $pet['files'] );
+						break;
+					case 'estimate':
+						$cell = 0 === $n ? Services::total_text( (array) ( $r['details']['pricing'] ?? array() ) ) : '';
+						break;
+					default:
+						$field = $all[ $key ];
+						$cell  = Validator::is_shown( $field, $values ) ? self::answer_text( $field, (string) ( $values[ $key ] ?? '' ) ) : '';
+				}
+				$row[] = self::csv_cell( $cell );
 			}
-			$row[] = self::csv_cell( $cell );
+			$rows[] = $row;
 		}
-		return $row;
+		return $rows;
 	}
 
 	/** Stops spreadsheet apps from running a cell as a formula. */
@@ -221,7 +244,9 @@ final class Admin {
 		fwrite( $out, "\xEF\xBB\xBF" ); // So Excel reads UTF-8 names correctly.
 		fputcsv( $out, self::csv_header() );
 		foreach ( $result['rows'] as $r ) {
-			fputcsv( $out, self::csv_row( $r ) );
+			foreach ( self::csv_rows( $r ) as $row ) {
+				fputcsv( $out, $row );
+			}
 		}
 		fclose( $out );
 		exit;

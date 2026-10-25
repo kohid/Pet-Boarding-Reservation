@@ -73,12 +73,28 @@ final class Rest {
 		}
 
 		$clean     = Validator::validate( $params, new \DateTimeImmutable( 'today', wp_timezone() ) );
-		$checked   = Uploads::check( (array) ( $files['vaccination_files'] ?? array() ) );
 		$signature = Signature::decode( is_string( $params['signature'] ?? null ) ? $params['signature'] : '' );
 		$errors    = array();
-		foreach ( array( $clean, $checked, $signature ) as $result ) {
+		foreach ( array( $clean, $signature ) as $result ) {
 			if ( is_wp_error( $result ) ) {
 				$errors += $result->get_error_data()['fields'];
+			}
+		}
+		// Each pet brings its own vaccination files: vaccination_files_N.
+		$pet_count = is_array( $params['pets'] ?? null ) ? min( count( $params['pets'] ), Fields::MAX_PETS ) : 0;
+		$checked   = array();
+		$settings       = Settings::get();
+		$files_optional = 'grooming' === ( $params['booking_type'] ?? '' ) && ! $settings['grooming_needs_vaccines'];
+		for ( $n = 0; $n < $pet_count; $n++ ) {
+			$field = (array) ( $files[ 'vaccination_files_' . $n ] ?? array() );
+			if ( $files_optional && ! array_filter( (array) ( $field['name'] ?? array() ), 'strlen' ) ) {
+				continue; // Grooming without records, as Settings allow.
+			}
+			$result = Uploads::check( $field );
+			if ( is_wp_error( $result ) ) {
+				$errors[ 'vaccination_files_' . $n ] = $result->get_error_data()['fields']['vaccination_files'];
+			} else {
+				$checked[ $n ] = $result;
 			}
 		}
 		$account = self::account_request( $params, is_array( $clean ) ? $clean['columns']['owner_email'] : '' );
@@ -92,9 +108,14 @@ final class Rest {
 			$reference = Reference::generate();
 		}
 
-		$stored = Uploads::store( $reference, $checked );
-		if ( is_wp_error( $stored ) ) {
-			return $stored;
+		$stored = array();
+		foreach ( $checked as $n => $pet_files ) {
+			$result = Uploads::store( $reference, $pet_files, $n );
+			if ( is_wp_error( $result ) ) {
+				Uploads::delete( $stored );
+				return $result;
+			}
+			$stored = array_merge( $stored, $result );
 		}
 		$signature_path = Signature::store( $reference, $signature );
 		if ( is_wp_error( $signature_path ) ) {
@@ -103,7 +124,9 @@ final class Rest {
 		}
 
 		// Keep the exact waiver wording that was signed: Settings can change later.
-		$clean['details']['waiver_text'] = Settings::get()['waiver'];
+		$type                            = $clean['columns']['booking_type'];
+		$clean['details']['waiver_text'] = 'grooming' === $type ? $settings['grooming_waiver']
+			: ( 'both' === $type ? $settings['waiver'] . '<hr>' . $settings['grooming_waiver'] : $settings['waiver'] );
 		// And the prices the owner saw: Settings can change later too.
 		$clean['details']['pricing'] = Services::estimate( $clean['columns'] + $clean['details'] );
 

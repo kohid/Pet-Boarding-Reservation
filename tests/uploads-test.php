@@ -79,6 +79,9 @@ t( 'store returns one entry per file', is_array( $stored ) && 3 === count( $stor
 $first = $stored[0];
 t( 'stored name uses the reference, not the original name', (bool) preg_match( '#^\d{4}/\d{2}/PAW-7K3QX9-[0-9a-f]{16}\.pdf$#', $first['path'] ) );
 t( 'stored file exists', is_file( $dir . '/' . $first['path'] ) );
+t( 'stored entry belongs to pet 1 by default', 0 === $first['pet'] );
+$second = Uploads::store( 'PAW-7K3QX8', array_slice( Uploads::check( fixture_files_field( array( 'b.pdf' => fixture_file( 'b.pdf', fixture_pdf_bytes() ) ) ) ), 0, 1 ), 1 );
+t( 'stored entry records which pet it belongs to', is_array( $second ) && 1 === $second[0]['pet'] );
 t( 'stored entry keeps name, mime and size', 'Rabies.pdf' === $first['name'] && 'application/pdf' === $first['mime'] && $first['size'] > 0 );
 t( 'resolve finds a stored file', Uploads::resolve( $first['path'] ) === realpath( $dir . '/' . $first['path'] ) );
 t( 'resolve refuses traversal', null === Uploads::resolve( '../../wp-config.php' ) );
@@ -100,4 +103,5 @@ t( 'failed move returns paw_storage', is_wp_error( $failed ) && 'paw_storage' ==
 t( 'failed move leaves no partial files', array() === glob( $dir . '/*/*/PAW-AAAAAA-*' ) );
 
 fixture_rmrf( $GLOBALS['paw_upload_base'] );
+
 done();

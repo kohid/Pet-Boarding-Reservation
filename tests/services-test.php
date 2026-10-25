@@ -46,4 +46,13 @@ t( 'estimate: grooming only, price on request', 1 === count( $groom['lines'] ) &
 $cat = Services::estimate( array( 'booking_type' => 'boarding', 'pet_type' => 'cat', 'check_in' => '2026-11-01', 'check_out' => '2026-11-02' ) );
 t( 'estimate: a cat with no rate set', 'Boarding: 1 night' === $cat['lines'][0]['label'] && true === $cat['on_request'] );
 
+// Several pets.
+$GLOBALS['paw_options'][ Settings::OPTION ] = array( 'boarding_rates' => array( 'small' => '', 'large' => '40', 'other' => '25' ) );
+$multi = Services::estimate( array( 'booking_type' => 'both', 'check_in' => '2026-11-01', 'check_out' => '2026-11-04', 'pets' => array( array( 'pet_name' => 'Rex', 'pet_type' => 'dog', 'dog_size' => 'large', 'service' => 'nail_trim' ), array( 'pet_name' => 'Tom', 'pet_type' => 'cat' ) ) ) );
+t( 'estimate: a line per pet and service', array( 'Rex: Boarding, 3 nights', 'Rex: Nail Trimming', 'Tom: Boarding, 3 nights' ) === array_column( $multi['lines'], 'label' ) && array( 120.0, 20.0, 75.0 ) === array_column( $multi['lines'], 'amount' ) );
+t( 'estimate: total over every pet', 215.0 === $multi['total'] && false === $multi['on_request'] );
+t( 'estimate: "No grooming for this pet" adds nothing', 1 === count( Services::estimate( array( 'booking_type' => 'both', 'check_in' => '2026-11-01', 'check_out' => '2026-11-02', 'pets' => array( array( 'pet_name' => 'Rex', 'pet_type' => 'dog', 'dog_size' => 'large', 'service' => 'none' ) ) ) )['lines'] ) );
+t( 'estimate: older single-pet input still works', 'Boarding: 3 nights' === Services::estimate( array( 'booking_type' => 'boarding', 'pet_type' => 'dog', 'dog_size' => 'large', 'check_in' => '2026-11-01', 'check_out' => '2026-11-04' ) )['lines'][0]['label'] );
+t( 'groomers come from Settings', array() === Services::groomers() );
+
 done();

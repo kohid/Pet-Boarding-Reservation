@@ -73,3 +73,64 @@ function fixture_files_field( array $files, array $errors = array() ): array {
 	}
 	return $field;
 }
+
+/** A valid one-pet boarding submission in the v0.4 shape (per-pet answers under pets[0]). */
+function paw_valid_params(): array {
+	$flat = array(
+		'booking_type'           => 'boarding',
+		'owner_first_name'       => 'Ada',
+		'owner_last_name'        => 'Lovelace',
+		'owner_email'            => 'ada@example.com',
+		'owner_phone'            => '+1 (555) 010-2030',
+		'address_street'         => '1 Main St',
+		'address_city'           => 'Springfield',
+		'address_state'          => 'IL',
+		'address_postcode'       => '62701',
+		'address_country'        => 'US',
+		'pet_name'               => 'Biscuit',
+		'pet_type'               => 'dog',
+		'dog_size'               => 'large',
+		'pet_breed'              => 'Beagle',
+		'pet_age'                => '3 years',
+		'pet_gender'             => 'male',
+		'pet_weight'             => '25 lbs',
+		'pet_spayed'             => 'yes',
+		'pet_microchipped'       => 'no',
+		'check_in'               => gmdate( 'Y-m-d', strtotime( '+3 days' ) ),
+		'check_out'              => gmdate( 'Y-m-d', strtotime( '+5 days' ) ),
+		'vaccinations_current'   => 'yes',
+		'medical_conditions'     => 'no',
+		'medications'            => 'no',
+		'allergies'              => 'no',
+		'feeding_schedule'       => 'Twice a day, one cup',
+		'food_preference'        => 'own',
+		'emergency_name'         => 'Charles Babbage',
+		'emergency_phone'        => '555 010 9999',
+		'emergency_relationship' => 'friend',
+		'vet_name'               => 'Dr. Who',
+		'vet_clinic'             => 'Tardis Vets',
+		'vet_phone'              => '555-010-1111',
+		'vet_authorization'      => 'yes',
+		'waiver_agree'           => '1',
+		'signed_date'            => gmdate( 'Y-m-d' ),
+	);
+	return paw_with( array( 'pets' => array( array() ) ), $flat );
+}
+
+/**
+ * Overrides for a submission: per-pet field ids go to pets[$n], everything else to the booking.
+ * A 'pets' key replaces the pet list.
+ */
+function paw_with( array $params, array $over, int $n = 0 ): array {
+	$per_pet = \Pawfectly\Fields::pet_fields();
+	foreach ( $over as $key => $value ) {
+		if ( 'pets' === $key ) {
+			$params['pets'] = $value;
+		} elseif ( isset( $per_pet[ $key ] ) ) {
+			$params['pets'][ $n ][ $key ] = $value;
+		} else {
+			$params[ $key ] = $value;
+		}
+	}
+	return $params;
+}

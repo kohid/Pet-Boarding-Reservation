@@ -87,7 +87,8 @@ $last = array(
 );
 $wpdb->row_queue = array( $last );
 $p = Accounts::prefill( $id );
-t( 'prefill pet from the last reservation', 'Biscuit' === $p['pet_name'] && 'Beagle' === $p['pet_breed'] && 'Twice' === $p['feeding_schedule'] && 'Dr. Who' === $p['vet_name'] );
+t( 'prefill pet from the last reservation (an older one-pet booking)', 'Biscuit' === ( $p['pets'][0]['pet_name'] ?? '' ) && 'Beagle' === $p['pets'][0]['pet_breed'] && 'Twice' === $p['pets'][0]['feeding_schedule'] && 'Dr. Who' === $p['vet_name'] );
+t( 'prefill never includes health answers', ! array_key_exists( 'vaccinations_current', $p['pets'][0] ) );
 t( 'prefill uses the current account email', 'zoe+dogs@example.com' === $p['owner_email'] );
 t( 'prefill keeps the reservation phone', '555 999 0000' === $p['owner_phone'] );
 foreach ( array( 'check_in', 'check_out', 'vaccinations_current', 'signature', 'waiver_agree', 'signed_date', 'waiver_text', 'vaccination_files' ) as $never ) {
@@ -107,5 +108,13 @@ t( 'verified: also reservations made with that email', str_contains( $sql, 'user
 Accounts::add_roles();
 t( 'customer role can only read', array( 'read' => true ) === $GLOBALS['paw_added_roles'][ Accounts::ROLE ] );
 t( 'staff role manages reservations', ! empty( $GLOBALS['paw_added_roles'][ Accounts::STAFF_ROLE ][ Activator::CAPABILITY ] ) );
+
+// Prefill from a two-pet booking.
+$two = $last;
+$two['details'] = json_encode( array( 'vet_name' => 'Dr. Who', 'pets' => array( array( 'pet_name' => 'Rex', 'pet_type' => 'dog', 'feeding_schedule' => 'Once', 'vaccinations_current' => 'yes', 'service' => 'nail_trim', 'groomer' => 'Ana' ), array( 'pet_name' => 'Tom', 'pet_type' => 'cat', 'feeding_schedule' => 'Twice' ) ) ) );
+$wpdb->row_queue = array( $two );
+$p2 = Accounts::prefill( $id );
+t( 'prefill: every pet', 2 === count( $p2['pets'] ) && 'Rex' === $p2['pets'][0]['pet_name'] && 'Twice' === $p2['pets'][1]['feeding_schedule'] );
+t( 'prefill: no health or grooming choices', ! isset( $p2['pets'][0]['vaccinations_current'] ) && ! isset( $p2['pets'][0]['service'] ) && ! isset( $p2['pets'][0]['groomer'] ) );
 
 done();

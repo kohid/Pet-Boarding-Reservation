@@ -45,6 +45,15 @@ t( 'grooming today: visits and stays with a grooming day today', 3 === $groom['g
 t( 'grooming visits are not check-ins or check-outs', 1 === $groom['check_ins'] && 0 === $groom['check_outs'] );
 t( 'grooming visits do not count as boarding nights; boarding + grooming does', 2 === $groom['boarding'] && 2 === $groom['nights'][0]['count'] );
 t( 'pending grooming still counts as a pending request', 1 === $groom['pending'] );
+$byPet = Stats::overview(
+	array(
+		array( 'status' => 'confirmed', 'check_in' => '2026-10-24', 'check_out' => '2026-10-27', 'booking_type' => 'boarding', 'appointment_date' => null, 'pet_count' => '2', 'service' => '' ),
+		array( 'status' => 'confirmed', 'check_in' => '2026-10-25', 'check_out' => '2026-10-25', 'booking_type' => 'grooming', 'appointment_date' => '2026-10-25', 'pet_count' => '2', 'service' => 'nail_trim,basic_bath' ),
+	),
+	'2026-10-25'
+);
+t( 'pets boarding tonight counts pets, not bookings', 2 === $byPet['boarding'] && 2 === $byPet['nights'][0]['count'] );
+t( 'grooming today counts groomed pets', 2 === $byPet['grooming'] );
 t( 'empty input', 0 === Stats::overview( array(), '2026-10-25' )['boarding'] );
 
 done();
