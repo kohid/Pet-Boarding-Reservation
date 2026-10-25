@@ -94,11 +94,16 @@ t( 'empty city passes', is_array( $no_city ) && '' === $no_city['details']['addr
 t( 'optional notes may be left out', is_array( $no_city ) && '' === $no_city['details']['special_requests'] );
 t( 'unknown country', only_error( array_merge( $good, array( 'address_country' => 'XX' ) ), 'address_country', 'Please choose one of the options.' ) );
 
-$slashed = Validator::validate( array_merge( $good, array( 'owner_last_name' => "O\\'Brien" ) ), $today );
-t( 'slashed apostrophe stored as typed', "O'Brien" === $slashed['columns']['owner_last_name'] );
+// REST hands over body params already unslashed; nothing typed may be altered.
+$typed = Validator::validate( array_merge( $good, array( 'owner_last_name' => "O'Brien", 'feeding_schedule' => "1\\2 cup, 50%Beef\nLoves treats <3" ) ), $today );
+t( 'apostrophe stored as typed', "O'Brien" === $typed['columns']['owner_last_name'] );
+t( 'backslash, percent-hex and < kept as typed', "1\\2 cup, 50%Beef\nLoves treats <3" === $typed['details']['feeding_schedule'] );
+t( 'control characters removed', 'Biscuit' === Validator::validate( array_merge( $good, array( 'pet_name' => "Bis\x00cu\x07it" ) ), $today )['columns']['pet_name'] );
+t( 'line breaks folded in one-line fields', 'A B' === Validator::validate( array_merge( $good, array( 'pet_breed' => "A\r\nB" ) ), $today )['details']['pet_breed'] );
+t( 'invalid UTF-8 rejected as empty', only_error( array_merge( $good, array( 'pet_name' => "\xC3\x28" ) ), 'pet_name', 'This field is required.' ) );
 t( '60 accented characters fit', null === errors( array_merge( $good, array( 'owner_first_name' => str_repeat( 'ë', 60 ) ) ) ) );
 t( '61 characters are too many', only_error( array_merge( $good, array( 'owner_first_name' => str_repeat( 'ë', 61 ) ) ), 'owner_first_name', 'Please keep this under 60 characters.' ) );
-t( 'tags are stripped', 'Biscuit' === Validator::validate( array_merge( $good, array( 'pet_name' => '<b>Biscuit</b>' ) ), $today )['columns']['pet_name'] );
+t( 'markup kept as text (escaped when shown)', '<b>Biscuit</b>' === Validator::validate( array_merge( $good, array( 'pet_name' => '<b>Biscuit</b>' ) ), $today )['columns']['pet_name'] );
 t( 'arrays are not accepted as text', only_error( array_merge( $good, array( 'pet_name' => array( 'x' ) ) ), 'pet_name', 'This field is required.' ) );
 t( 'textarea keeps line breaks', "a\nb" === Validator::validate( array_merge( $good, array( 'feeding_schedule' => "a\nb" ) ), $today )['details']['feeding_schedule'] );
 

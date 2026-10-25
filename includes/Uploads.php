@@ -67,7 +67,7 @@ final class Uploads {
 
 			$checked[] = array(
 				'tmp'  => $tmp,
-				'name' => sanitize_text_field( wp_unslash( (string) $name ) ),
+				'name' => sanitize_text_field( (string) $name ),
 				'mime' => $mime,
 				'size' => $size,
 				'ext'  => $ext,

@@ -18,7 +18,7 @@ final class Validator {
 	private const SKIP = array( 'file', 'signature' );
 
 	/**
-	 * @param array              $params Raw request values (still slashed, as WordPress delivers them).
+	 * @param array              $params Request body values (REST delivers them already unslashed).
 	 * @param \DateTimeImmutable $today  Today in the site's timezone.
 	 * @return array{columns: array<string,string>, details: array<string,string>}|\WP_Error
 	 */
@@ -86,12 +86,25 @@ final class Validator {
 		return true;
 	}
 
+	/**
+	 * Keeps what the visitor typed: only invalid UTF-8 and control characters are removed.
+	 * No HTML filtering here, so "<3" or "50%Beef" survive; every output escapes instead.
+	 * REST body params arrive already unslashed.
+	 */
 	private static function read( $raw, string $type ): string {
 		if ( ! is_scalar( $raw ) ) {
 			return '';
 		}
-		$raw = wp_unslash( (string) $raw );
-		return 'textarea' === $type ? sanitize_textarea_field( $raw ) : sanitize_text_field( $raw );
+		$value = (string) $raw;
+		if ( ! mb_check_encoding( $value, 'UTF-8' ) ) {
+			return '';
+		}
+		$value = str_replace( "\r\n", "\n", $value );
+		$value = preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value );
+		if ( 'textarea' !== $type ) {
+			$value = preg_replace( '/[\r\n\t]+/', ' ', $value );
+		}
+		return trim( $value );
 	}
 
 	/** The first problem with one value, or null. */

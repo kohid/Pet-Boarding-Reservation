@@ -56,7 +56,7 @@ final class Rest {
 		}
 
 		// A retried or double-clicked submission gets the reference of the first one.
-		$sid      = strtolower( (string) ( $params['submission_id'] ?? '' ) );
+		$sid      = is_string( $params['submission_id'] ?? null ) ? strtolower( $params['submission_id'] ) : '';
 		$sid_key  = preg_match( self::UUID_V4, $sid ) ? 'paw_sub_' . md5( $sid ) : '';
 		$previous = $sid_key ? get_transient( $sid_key ) : false;
 		if ( $previous ) {
@@ -68,13 +68,13 @@ final class Rest {
 		}
 
 		// Bots fill the hidden field; tell them it worked and keep nothing.
-		if ( '' !== trim( (string) ( $params['website'] ?? '' ) ) ) {
+		if ( ! empty( $params['website'] ) ) {
 			return new \WP_REST_Response( array( 'reference' => Reference::generate() ), 201 );
 		}
 
 		$clean     = Validator::validate( $params, new \DateTimeImmutable( 'today', wp_timezone() ) );
 		$checked   = Uploads::check( (array) ( $files['vaccination_files'] ?? array() ) );
-		$signature = Signature::decode( wp_unslash( (string) ( $params['signature'] ?? '' ) ) );
+		$signature = Signature::decode( is_string( $params['signature'] ?? null ) ? $params['signature'] : '' );
 		$errors    = array();
 		foreach ( array( $clean, $checked, $signature ) as $result ) {
 			if ( is_wp_error( $result ) ) {

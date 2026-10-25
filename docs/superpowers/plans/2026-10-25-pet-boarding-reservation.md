@@ -188,7 +188,7 @@ Labels, help text, and placeholders are exactly as in the requirements doc. Max 
   - `check_in = '2026-10-25'` (today) passes. *(Review Focus 3)*
   - `medications = 'yes'` without details → error on `medications_details`. With `medications = 'no'` and details sent, `details` has no `medications_details` key.
   - `address_city` empty passes.
-  - `owner_last_name = "O\\'Brien"` (slashed, as WordPress delivers it) is stored as `O'Brien`. A 60-character name with accents (`str_repeat('ë', 60)`) passes, and 61 characters fails. *(Review Focus 5)*
+  - `owner_last_name = "O'Brien"` is stored as `O'Brien`. (REST hands body params over already unslashed, so the Validator must not unslash again; a typed backslash must survive.) A 60-character name with accents (`str_repeat('ë', 60)`) passes, and 61 characters fails. *(Review Focus 5)*
   - `address_country = 'XX'` fails.
 - [ ] **Step 2:** Run it. Expected: FAIL.
 - [ ] **Step 3:** Implement. Phone rule: strip `[\s+\-().]` and require 7–20 digits and nothing else. Dates are parsed with `DateTimeImmutable::createFromFormat('!Y-m-d', …)` and must round-trip exactly.
