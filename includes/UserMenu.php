@@ -88,7 +88,7 @@ final class UserMenu {
 				'wp_admin'  => $wp_admin,
 				'urls'      => array(
 					'login'     => $login,
-					'signup'    => add_query_arg( array( 'tab' => 'signup' ), $login ),
+					'signup'    => '' !== Login::url() ? add_query_arg( array( 'tab' => 'signup' ), $login ) : '',
 					'profile'   => '' !== $profile ? $profile : ( $wp_admin ? get_edit_profile_url() : '' ),
 					'bookings'  => Pages::url( MyBookings::TAG ),
 					'dashboard' => $dash,

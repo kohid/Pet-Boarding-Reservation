@@ -37,6 +37,8 @@ foreach ( array( array( 'PAW-7K3QX9', 'Biscuit', 'confirmed', '2030-01-10' ), ar
 	$row['user_id'] = $jay->ID;
 	Reservations::insert( $row );
 }
+// A My Profile page exists (customers can't use wp-admin's profile screen any more).
+set_transient( 'paw_pg_' . md5( Profile::TAG ), '/tests/e2e/out/account.html#profile-in' );
 $member_menu = UserMenu::render();
 $profile_in  = Profile::render();
 $bookings    = MyBookings::render();

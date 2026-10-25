@@ -79,6 +79,8 @@ $in = Login::render();
 t( 'signed in: continue link and no forms', str_contains( $in, 'https://example.test/my-bookings/' ) && ! str_contains( $in, 'data-paw-form' ) );
 
 $page( Login::TAG, '' );
+wp_set_current_user( 0 );
+t( 'no login page: the menu has no Sign Up (wp-login.php cannot open it)', ! str_contains( \Pawfectly\UserMenu::render(), 'Sign Up' ) );
 t( 'no login page: wp-login.php is left alone', null === Login::wp_login_redirect( array(), 'GET' ) );
 t( 'no login page: url_for falls back to wp-login.php', str_starts_with( Login::url_for( '' ), 'https://example.test/wp-login.php' ) );
 
