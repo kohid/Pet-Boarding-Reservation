@@ -48,7 +48,8 @@ t( 'chosen logo used', str_contains( Shortcode::markup( $settings ), 'https://ex
 $cfg = Shortcode::config();
 t( 'config: endpoints and nonce', 'https://example.test/wp-json/pawfectly/v1/reservations' === $cfg['restUrl'] && str_ends_with( $cfg['nonceUrl'], 'pawfectly/v1/nonce' ) && 'good-nonce' === $cfg['nonce'] );
 t( 'config: today from the site clock', gmdate( 'Y-m-d' ) === $cfg['today'] );
-t( 'config: limits', 3 === $cfg['maxFiles'] && 10485760 === $cfg['maxBytes'] && 7 === $cfg['steps'] );
+t( 'config: limits', 3 === $cfg['maxFiles'] && \Pawfectly\Uploads::max_file_bytes() === $cfg['maxBytes'] && \Pawfectly\Uploads::max_request_bytes() === $cfg['maxTotal'] && 7 === $cfg['steps'] );
+t( 'config: size messages name the real limits', 'Each file must be 10 MB or smaller.' === $cfg['i18n']['fileSize'] && str_contains( $cfg['i18n']['tooLarge'], 'in total' ) );
 t( 'config: field rules without labels', isset( $cfg['fields']['owner_email']['type'] ) && ! isset( $cfg['fields']['owner_email']['label'] ) );
 t( 'config: messages', 'This field is required.' === $cfg['i18n']['required'] );
 

@@ -31,6 +31,35 @@ final class Uploads {
 		add_action( 'admin_post_paw_file', array( self::class, 'download' ) );
 	}
 
+	/** Largest single file: 10 MB, or less if this server's PHP accepts less. */
+	public static function max_file_bytes(): int {
+		return (int) min( self::MAX_BYTES, wp_max_upload_size() );
+	}
+
+	/** Largest total of files in one submission: PHP's post_max_size, minus room for the other answers. */
+	public static function max_request_bytes(): int {
+		$post = Rest::ini_bytes( (string) ini_get( 'post_max_size' ) );
+		return $post > 0 ? max( 1, $post - 65536 ) : self::MAX_FILES * self::max_file_bytes();
+	}
+
+	/** "2 MB", "1.5 MB", "500 KB". */
+	public static function human( int $bytes ): string {
+		if ( $bytes >= 1048576 ) {
+			return rtrim( rtrim( number_format( $bytes / 1048576, 1, '.', '' ), '0' ), '.' ) . ' MB';
+		}
+		return (int) round( $bytes / 1024 ) . ' KB';
+	}
+
+	public static function size_message(): string {
+		/* translators: %s: size such as "10 MB" */
+		return sprintf( __( 'Each file must be %s or smaller.', 'pawfectly-reservations' ), self::human( self::max_file_bytes() ) );
+	}
+
+	public static function total_message(): string {
+		/* translators: %s: size such as "8 MB" */
+		return sprintf( __( 'Your files are too large to send together. Please choose smaller files (%s in total at most).', 'pawfectly-reservations' ), self::human( self::max_request_bytes() ) );
+	}
+
 	/**
 	 * Checks the PHP multi-file array for the vaccination_files field.
 	 *
@@ -46,15 +75,15 @@ final class Uploads {
 				continue;
 			}
 			if ( UPLOAD_ERR_INI_SIZE === $error || UPLOAD_ERR_FORM_SIZE === $error ) {
-				return self::error( __( 'Each file must be 10 MB or smaller.', 'pawfectly-reservations' ) );
+				return self::error( self::size_message() );
 			}
 			$tmp = (string) ( $field['tmp_name'][ $i ] ?? '' );
 			if ( UPLOAD_ERR_OK !== $error || '' === $tmp || ! ( self::$is_uploaded )( $tmp ) ) {
 				return self::type_error();
 			}
 			$size = (int) filesize( $tmp );
-			if ( $size > self::MAX_BYTES ) {
-				return self::error( __( 'Each file must be 10 MB or smaller.', 'pawfectly-reservations' ) );
+			if ( $size > self::max_file_bytes() ) {
+				return self::error( self::size_message() );
 			}
 
 			$ext = strtolower( pathinfo( (string) $name, PATHINFO_EXTENSION ) );

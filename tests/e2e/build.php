@@ -16,6 +16,7 @@ $config            = Shortcode::config();
 $config['restUrl'] = '/mock/reservations';
 $config['nonceUrl'] = '/mock/nonce';
 $config['today']   = gmdate( 'Y-m-d' );
+$config['maxTotal'] = 200000; // Small, so the e2e test can exercise the combined-size check.
 
 $html = Shortcode::markup( Settings::get() );
 $page = '<!doctype html>

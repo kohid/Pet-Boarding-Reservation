@@ -460,10 +460,13 @@
 			var error = null;
 			Array.prototype.forEach.call(fileInput.files, function (file) {
 				var ext = (file.name.split('.').pop() || '').toLowerCase();
+				var total = files.reduce(function (sum, f) { return sum + f.size; }, 0);
 				if (!ALLOWED[ext] || (file.type && file.type !== ALLOWED[ext])) {
 					error = I18N.fileType;
 				} else if (file.size > CFG.maxBytes) {
 					error = I18N.fileSize;
+				} else if (total + file.size > CFG.maxTotal) {
+					error = I18N.tooLarge;
 				} else if (files.length >= CFG.maxFiles) {
 					error = format(I18N.fileCount, CFG.maxFiles);
 				} else {
@@ -600,7 +603,7 @@
 			showFormError(
 				r.status === 429 ? I18N.tooMany
 					: r.status === 403 ? I18N.expired
-						: r.status === 413 && r.body.message ? r.body.message
+						: r.status === 413 ? I18N.tooLarge
 							: I18N.failed
 			);
 		}).catch(function () {

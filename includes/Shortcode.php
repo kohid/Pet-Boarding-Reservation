@@ -63,7 +63,8 @@ final class Shortcode {
 			'steps'    => count( Fields::steps() ),
 			'fields'   => $fields,
 			'maxFiles' => Uploads::MAX_FILES,
-			'maxBytes' => Uploads::MAX_BYTES,
+			'maxBytes' => Uploads::max_file_bytes(),
+			'maxTotal' => Uploads::max_request_bytes(),
 			'maxNights' => Validator::MAX_NIGHTS,
 			'i18n'     => array(
 				'required'     => __( 'This field is required.', 'pawfectly-reservations' ),
@@ -80,7 +81,8 @@ final class Shortcode {
 				'agree'        => __( 'Please agree to the terms to continue.', 'pawfectly-reservations' ),
 				/* translators: %d: maximum number of files */
 				'fileCount'    => __( 'Please upload between 1 and %d files.', 'pawfectly-reservations' ),
-				'fileSize'     => __( 'Each file must be 10 MB or smaller.', 'pawfectly-reservations' ),
+				'fileSize'     => Uploads::size_message(),
+				'tooLarge'     => Uploads::total_message(),
 				'fileType'     => __( 'Only PDF, JPG or PNG files are accepted.', 'pawfectly-reservations' ),
 				'signature'    => __( 'Please sign in the box above.', 'pawfectly-reservations' ),
 				'remove'       => __( 'Remove', 'pawfectly-reservations' ),

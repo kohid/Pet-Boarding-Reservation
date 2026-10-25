@@ -109,7 +109,7 @@ $empty                     = new WP_REST_Request();
 $empty->headers            = array( 'x_wp_nonce' => 'good-nonce' );
 $res = Rest::submit( $empty );
 t( 'oversized body → 413 paw_too_large', is_wp_error( $res ) && 'paw_too_large' === $res->get_error_code() && 413 === $res->get_error_data()['status'] );
-t( 'oversized message names the limit', is_wp_error( $res ) && str_contains( $res->get_error_message(), '10 MB' ) );
+t( 'oversized message names the real total limit', is_wp_error( $res ) && str_contains( $res->get_error_message(), Uploads::human( Uploads::max_request_bytes() ) . ' in total' ) );
 unset( $_SERVER['CONTENT_LENGTH'] );
 t( 'post_max_size parsing', 8 * 1024 * 1024 === Rest::ini_bytes( '8M' ) && 1024 === Rest::ini_bytes( '1k' ) && 2 * 1024 ** 3 === Rest::ini_bytes( '2G' ) && 500 === Rest::ini_bytes( '500' ) );
 

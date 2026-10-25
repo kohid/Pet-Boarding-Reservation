@@ -49,6 +49,17 @@ Vaccination records and signatures are stored in `wp-content/uploads/pawfectly-p
 
   Settings shows **Protected** once direct access is blocked.
 
+## Upload size on your server
+
+The form allows up to 3 vaccination files of 10 MB each, but never more than your server accepts. It reads PHP's limits and tells visitors the real numbers. To allow the full 3 × 10 MB, raise these (your host's control panel, `php.ini` or `.user.ini`):
+
+```ini
+upload_max_filesize = 10M
+post_max_size = 32M
+```
+
+On Nginx, also set `client_max_body_size 32m;`. On Apache, check that `LimitRequestBody` is unset or above 32 MB. If the web server turns a submission away as too large, the form says so instead of failing silently.
+
 ## How the form protects itself
 
 - Every answer is checked again on the server; the browser is never trusted.

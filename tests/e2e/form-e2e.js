@@ -133,6 +133,13 @@ async function walkToWaiver(page, width, label) {
   ok(`${label}: "Yes" hides the warning and enables →`, (await page.isHidden('[data-paw-warn=vaccinations_current]')) && !(await page.isDisabled('[data-paw-next]')));
   await page.setInputFiles('input[name="vaccination_files[]"]', [{ name: 'rabies.heic', mimeType: 'image/heic', buffer: Buffer.from('xx') }]);
   ok(`${label}: HEIC refused in the browser`, (await page.textContent('#paw-vaccination_files-error')).trim() === 'Only PDF, JPG or PNG files are accepted.');
+  await page.setInputFiles('input[name="vaccination_files[]"]', [
+    { name: 'big-a.png', mimeType: 'image/png', buffer: Buffer.alloc(150000) },
+    { name: 'big-b.png', mimeType: 'image/png', buffer: Buffer.alloc(150000) },
+  ]);
+  ok(`${label}: files over the request total refused in the browser`, (await page.textContent('#paw-vaccination_files-error')).includes('in total'));
+  ok(`${label}: only the files that fit are kept`, (await page.locator('.paw-file__item').count()) === 1);
+  await page.click('.paw-file__item button');
   await page.setInputFiles('input[name="vaccination_files[]"]', [{ name: 'rabies.png', mimeType: 'image/png', buffer: pngBuffer() }]);
   ok(`${label}: chosen file listed`, (await page.textContent('[data-paw-file-list]')).includes('rabies.png'));
   await radio(page, 'medical_conditions', 'no');
@@ -251,6 +258,9 @@ let window_today;
       await page.route('**/mock/reservations', route => {
         calls++;
         if (calls === 1) {
+          return route.fulfill({ status: 413, contentType: 'text/html', body: '<html><body><h1>413 Request Entity Too Large</h1></body></html>' });
+        }
+        if (calls === 2) {
           return route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ code: 'paw_invalid', message: 'Please check the highlighted fields.', data: { status: 400, fields: { owner_email: 'Please enter a valid email address.' } } }) });
         }
         return route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ reference: 'PAW-ABCDEF' }) });
@@ -261,6 +271,9 @@ let window_today;
       await page.click('input[name=waiver_agree] >> xpath=..');
       await sign(page);
       await noHorizontalScroll(page, 375, 'phone step 7');
+      await page.click('[data-paw-submit]');
+      await page.waitForSelector('[data-paw-form-error]:not([hidden])');
+      ok('phone: a web-server 413 (HTML body) says the files are too large', (await page.textContent('[data-paw-form-error]')).includes('too large'));
       await page.click('[data-paw-submit]');
       await page.waitForFunction(() => !document.querySelector('[data-step="1"]').hidden);
       ok('phone: server field error returns to its step', (await visibleStep(page)) === '1');

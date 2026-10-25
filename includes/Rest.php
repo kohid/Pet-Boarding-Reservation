@@ -48,7 +48,7 @@ final class Rest {
 		// PHP silently empties the whole request when it is bigger than post_max_size.
 		$length = isset( $_SERVER['CONTENT_LENGTH'] ) ? (int) $_SERVER['CONTENT_LENGTH'] : 0;
 		if ( ! $params && ! $files && $length > self::ini_bytes( (string) ini_get( 'post_max_size' ) ) ) {
-			return new \WP_Error( 'paw_too_large', __( 'Your files are too large to send. Please upload smaller files (10 MB each at most).', 'pawfectly-reservations' ), array( 'status' => 413 ) );
+			return new \WP_Error( 'paw_too_large', Uploads::total_message(), array( 'status' => 413 ) );
 		}
 
 		if ( ! wp_verify_nonce( (string) $request->get_header( 'X-WP-Nonce' ), 'wp_rest' ) ) {

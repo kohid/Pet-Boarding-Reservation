@@ -54,6 +54,20 @@ t( 'not an uploaded file', $type_msg === field_error( ( function () use ( $pdf )
 	return $r;
 } )() ) );
 
+// Limits follow the server's real PHP settings, never above 10 MB.
+t( 'per-file limit capped at 10 MB', 10485760 === Uploads::max_file_bytes() );
+$GLOBALS['paw_max_upload'] = 2 * 1024 * 1024;
+t( 'per-file limit follows a 2 MB host', 2097152 === Uploads::max_file_bytes() );
+$three = fixture_file( 'three.pdf', fixture_pdf_bytes() );
+$fh    = fopen( $three, 'r+' );
+ftruncate( $fh, 3 * 1024 * 1024 );
+fclose( $fh );
+t( '3 MB file on a 2 MB host names the real limit', 'Each file must be 2 MB or smaller.' === field_error( Uploads::check( fixture_files_field( array( 'three.pdf' => $three ) ) ) ) );
+t( 'php ini size error names the real limit', 'Each file must be 2 MB or smaller.' === field_error( Uploads::check( fixture_files_field( array( 'a.pdf' => $pdf ), array( UPLOAD_ERR_INI_SIZE ) ) ) ) );
+unset( $GLOBALS['paw_max_upload'] );
+t( 'request limit leaves room for the other answers', \Pawfectly\Rest::ini_bytes( (string) ini_get( 'post_max_size' ) ) - 65536 === Uploads::max_request_bytes() );
+t( 'sizes read like people write them', '2 MB' === Uploads::human( 2097152 ) && '10 MB' === Uploads::human( 10485760 ) && '1.5 MB' === Uploads::human( 1572864 ) && '500 KB' === Uploads::human( 512000 ) );
+
 // Storage.
 $dir = Uploads::ensure_private_dir();
 t( 'private dir created', is_dir( $dir ) );
