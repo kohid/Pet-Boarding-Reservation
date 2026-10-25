@@ -16,5 +16,9 @@ final class Plugin {
 		Rest::init();
 		Uploads::init();
 		Shortcode::init();
+		if ( is_admin() ) {
+			Admin::init();
+			Settings::init();
+		}
 	}
 }

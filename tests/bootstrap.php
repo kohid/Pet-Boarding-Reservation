@@ -123,3 +123,4 @@ function wp_mail( $to, $subject, $message, $headers = '', $attachments = array()
 	$GLOBALS['paw_mail'][] = compact( 'to', 'subject', 'message', 'headers', 'attachments' );
 	return $GLOBALS['paw_mail_result'];
 }
+function size_format( $b ) { return round( $b / 1024 ) . ' KB'; }

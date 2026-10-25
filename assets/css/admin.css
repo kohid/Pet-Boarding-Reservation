@@ -1,0 +1,244 @@
+/*
+ * Pawfectly — wp-admin screens. Metronic-style cards and badges in the Pawfectly palette,
+ * scoped under .paw-admin so other admin screens are untouched.
+ */
+
+.paw-admin {
+	--paw-primary: #ff7f50;
+	--paw-ink: #2c3947;
+	--paw-muted: #6b7280;
+	--paw-line: #eef0f4;
+}
+
+.paw-admin .paw-card {
+	margin: 0 0 20px;
+	padding: 20px 24px;
+	border: 0;
+	border-radius: 0.475rem;
+	background: #fff;
+	box-shadow: 0 0.1rem 1rem 0.25rem rgba(44, 57, 71, 0.05);
+}
+
+.paw-admin .paw-card h2 {
+	margin: 0 0 12px;
+	color: var(--paw-ink);
+	font-size: 15px;
+}
+
+.paw-admin .paw-card--note {
+	max-width: 760px;
+}
+
+.paw-admin .paw-copy {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.paw-admin .paw-copy code {
+	padding: 6px 10px;
+	font-size: 14px;
+}
+
+.paw-admin .paw-muted {
+	color: var(--paw-muted);
+}
+
+/* Status badges: one brand colour per status. */
+.paw-badge {
+	display: inline-block;
+	padding: 2px 10px;
+	border-radius: 2rem;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.7;
+	vertical-align: middle;
+	white-space: nowrap;
+}
+
+.paw-badge--pending { background: #e6f5ff; color: #0b6fae; }
+.paw-badge--confirmed { background: #e3faf3; color: #037a5c; }
+.paw-badge--declined { background: #fbe6e6; color: #bc0202; }
+.paw-badge--checked_in { background: #e7ecfa; color: #0f42c0; }
+.paw-badge--completed { background: #e8f0f5; color: #3b7597; }
+.paw-badge--cancelled { background: #f1f1f4; color: #6b7280; }
+
+.paw-chip {
+	display: inline-block;
+	margin-left: 4px;
+	padding: 0 8px;
+	border-radius: 2rem;
+	background: #fff1eb;
+	color: #b4471f;
+	font-size: 11px;
+	line-height: 1.8;
+}
+
+.paw-admin .paw-range {
+	display: flex;
+	gap: 6px;
+	align-items: center;
+}
+
+/* Detail view. */
+.paw-detail .paw-back {
+	margin: 12px 0 4px;
+}
+
+.paw-detail__head {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	align-items: flex-start;
+	justify-content: space-between;
+	margin: 8px 0 20px;
+}
+
+.paw-detail__title {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	margin: 0;
+	padding: 0 !important;
+	color: var(--paw-ink);
+	font-size: 26px;
+}
+
+.paw-detail__meta {
+	margin: 6px 0 0;
+	color: var(--paw-muted);
+	font-size: 14px;
+}
+
+.paw-detail__meta strong {
+	margin-right: 8px;
+	color: var(--paw-ink);
+}
+
+.paw-detail__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+}
+
+.paw-status-form {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+}
+
+.paw-notify {
+	color: var(--paw-muted);
+}
+
+.paw-detail__grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 20px;
+}
+
+@media (min-width: 1100px) {
+	.paw-detail__grid {
+		grid-template-columns: minmax(0, 1fr) 320px;
+	}
+}
+
+.paw-answers {
+	display: grid;
+	grid-template-columns: minmax(140px, 34%) 1fr;
+	margin: 0;
+}
+
+.paw-answers dt,
+.paw-answers dd {
+	margin: 0;
+	padding: 8px 0;
+	border-bottom: 1px solid var(--paw-line);
+}
+
+.paw-answers dt {
+	padding-right: 16px;
+	color: var(--paw-muted);
+}
+
+.paw-answers dd {
+	color: var(--paw-ink);
+	overflow-wrap: anywhere;
+}
+
+.paw-flag {
+	padding: 1px 8px;
+	border-radius: 2rem;
+	background: #fff1eb;
+	color: #b4471f;
+	font-weight: 600;
+}
+
+.paw-files {
+	margin: 0;
+}
+
+.paw-signature {
+	display: block;
+	max-width: 320px;
+	width: 100%;
+	border: 1px solid var(--paw-line);
+	border-radius: 4px;
+	background: #fff;
+}
+
+.paw-history {
+	margin: 0;
+	list-style: none;
+}
+
+.paw-history li {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin: 0 0 10px;
+}
+
+.paw-logo-pick {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+}
+
+.paw-logo-pick img {
+	border-radius: 50%;
+	background: #f6e7d4;
+	object-fit: contain;
+}
+
+/* Print: just the reservation. */
+@media print {
+	#adminmenumain,
+	#wpadminbar,
+	#wpfooter,
+	.paw-back,
+	.paw-detail__actions,
+	.paw-detail__side form,
+	.notice,
+	#screen-meta-links {
+		display: none !important;
+	}
+
+	#wpcontent,
+	#wpbody-content {
+		margin: 0 !important;
+		padding: 0 !important;
+	}
+
+	.paw-admin .paw-card {
+		box-shadow: none;
+		border: 1px solid #ddd;
+		break-inside: avoid;
+	}
+
+	.paw-detail__grid {
+		display: block;
+	}
+}
