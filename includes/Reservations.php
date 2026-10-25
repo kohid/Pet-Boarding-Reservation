@@ -157,7 +157,7 @@ final class Reservations {
 		global $wpdb;
 		$until = ( new \DateTimeImmutable( $today ) )->modify( '+' . Stats::NIGHTS . ' days' )->format( 'Y-m-d' );
 		return (array) $wpdb->get_results(
-			$wpdb->prepare( 'SELECT status, check_in, check_out, booking_type, appointment_date FROM ' . Activator::table() . " WHERE status = 'pending' OR ( check_out >= %s AND check_in <= %s )", $today, $until ),
+			$wpdb->prepare( 'SELECT status, check_in, check_out, booking_type, appointment_date, pet_count, service FROM ' . Activator::table() . " WHERE status = 'pending' OR ( check_out >= %s AND check_in <= %s )", $today, $until ),
 			ARRAY_A
 		);
 	}
@@ -172,6 +172,27 @@ final class Reservations {
 			$values['booking_type'] = 'boarding'; // Booked before grooming existed.
 		}
 		return $values;
+	}
+
+	/**
+	 * Each pet's answers, with that pet's files under 'files'. Bookings from before several pets
+	 * read as one pet built from their flat answers.
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	public static function pets( array $r ): array {
+		$details = (array) ( $r['details'] ?? array() );
+		$files   = (array) ( $r['files'] ?? array() );
+		if ( isset( $details['pets'] ) && is_array( $details['pets'] ) ) {
+			$out = array();
+			foreach ( array_values( $details['pets'] ) as $n => $pet ) {
+				$out[] = (array) $pet + array( 'files' => array_values( array_filter( $files, static fn( $f ): bool => (int) ( $f['pet'] ?? 0 ) === $n ) ) );
+			}
+			return $out;
+		}
+		$values = self::values( $r );
+		$pet    = array_intersect_key( $values, Fields::pet_fields() );
+		return array( $pet + array( 'files' => array_values( $files ) ) );
 	}
 
 	/** When it happens, as a person reads it: "10/28/2026 → 10/30/2026", or a grooming day and time. */

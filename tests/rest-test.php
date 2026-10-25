@@ -19,25 +19,22 @@ Uploads::$mover       = static fn( string $from, string $to ): bool => copy( $fr
 $_SERVER['REMOTE_ADDR'] = '203.0.113.9';
 $pdf = fixture_file( 'rec.pdf', fixture_pdf_bytes() );
 
-$good = array(
-	'owner_first_name' => 'Ada', 'owner_last_name' => 'Lovelace', 'owner_email' => 'ada@example.com', 'owner_phone' => '555 010 2030',
-	'address_street' => '1 Main St', 'address_city' => '', 'address_state' => 'IL', 'address_postcode' => '62701', 'address_country' => 'US',
-	'pet_name' => 'Biscuit', 'pet_type' => 'dog', 'dog_size' => 'large', 'booking_type' => 'boarding', 'pet_breed' => 'Beagle', 'pet_age' => '3 years', 'pet_gender' => 'male', 'pet_weight' => '25 lbs',
-	'pet_spayed' => 'yes', 'pet_microchipped' => 'no',
-	'check_in' => gmdate( 'Y-m-d', strtotime( '+3 days' ) ), 'check_out' => gmdate( 'Y-m-d', strtotime( '+5 days' ) ),
-	'vaccinations_current' => 'yes', 'medical_conditions' => 'no', 'medications' => 'no', 'allergies' => 'no',
-	'feeding_schedule' => 'Twice a day', 'food_preference' => 'own',
-	'emergency_name' => 'Charles', 'emergency_phone' => '555 010 9999', 'emergency_relationship' => 'friend',
-	'vet_name' => 'Dr. Who', 'vet_clinic' => 'Tardis Vets', 'vet_phone' => '555-010-1111', 'vet_authorization' => 'yes',
-	'waiver_agree' => '1', 'signed_date' => gmdate( 'Y-m-d' ),
-	'signature' => 'data:image/png;base64,' . base64_encode( fixture_png_bytes() ),
+$good = paw_with(
+	paw_valid_params(),
+	array(
+		'address_city'     => '',
+		'feeding_schedule' => 'Twice a day',
+		'emergency_name'   => 'Charles',
+		'owner_phone'      => '555 010 2030',
+		'signature'        => 'data:image/png;base64,' . base64_encode( fixture_png_bytes() ),
+	)
 );
 
 function request( array $params, array $override = array(), ?array $files = null, string $nonce = 'good-nonce' ): WP_REST_Request {
 	global $pdf;
 	$r          = new WP_REST_Request();
-	$r->params  = array_merge( $params, $override );
-	$r->files   = $files ?? array( 'vaccination_files' => fixture_files_field( array( 'Rabies.pdf' => $pdf ) ) );
+	$r->params  = paw_with( $params, $override );
+	$r->files   = $files ?? array( 'vaccination_files_0' => fixture_files_field( array( 'Rabies.pdf' => $pdf ) ) );
 	$r->headers = array( 'x_wp_nonce' => $nonce );
 	return $r;
 }
@@ -68,15 +65,15 @@ t( 'file and signature stored privately', 2 === count( private_files() ) );
 
 t( 'owner and staff emailed', 2 === count( $GLOBALS['paw_mail'] ) && 'ada@example.com' === $GLOBALS['paw_mail'][0]['to'] );
 t( 'boarding row: type stored, no grooming day', 'boarding' === ( $row['booking_type'] ?? '' ) && array_key_exists( 'appointment_date', $row ) && null === $row['appointment_date'] );
-t( 'price snapshot stored with the reservation', isset( $saved['pricing']['lines'][0]['label'] ) && 'Boarding: 2 nights' === $saved['pricing']['lines'][0]['label'] );
+t( 'price snapshot stored with the reservation', isset( $saved['pricing']['lines'][0]['label'] ) && 'Biscuit: Boarding, 2 nights' === $saved['pricing']['lines'][0]['label'] );
 
 reset_state();
 $GLOBALS['paw_options'][ \Pawfectly\Settings::OPTION ] = array( 'services' => array( 'basic_bath' => array( 'small' => '45' ) ) );
-$res = Rest::submit( request( array_merge( $good, array( 'booking_type' => 'grooming', 'dog_size' => 'small', 'service' => 'basic_bath', 'appointment_date' => gmdate( 'Y-m-d', strtotime( '+1 day' ) ), 'appointment_time' => 'morning', 'check_in' => '', 'check_out' => '' ) ) ) );
+$res = Rest::submit( request( paw_with( $good, array( 'booking_type' => 'grooming', 'dog_size' => 'small', 'service' => 'basic_bath', 'grooming_frequency' => 'once', 'appointment_date' => gmdate( 'Y-m-d', strtotime( '+1 day' ) ), 'appointment_time' => 'morning', 'check_in' => '', 'check_out' => '' ) ) ) );
 $grow  = $wpdb->rows[1] ?? array();
 $gsnap = json_decode( $grow['details'] ?? '{}', true )['pricing'] ?? array();
 t( 'grooming booking saved', $res instanceof WP_REST_Response && 'grooming' === ( $grow['booking_type'] ?? '' ) && 'basic_bath' === ( $grow['service'] ?? '' ) );
-t( 'grooming snapshot: service and price at booking time', 'Basic Bath' === ( $gsnap['lines'][0]['label'] ?? '' ) && 45.0 === (float) ( $gsnap['lines'][0]['amount'] ?? 0 ) );
+t( 'grooming snapshot: service and price at booking time', 'Biscuit: Basic Bath' === ( $gsnap['lines'][0]['label'] ?? '' ) && 45.0 === (float) ( $gsnap['lines'][0]['amount'] ?? 0 ) );
 $GLOBALS['paw_options'][ \Pawfectly\Settings::OPTION ] = array( 'services' => array( 'basic_bath' => array( 'small' => '60' ) ) );
 t( 'a later price change does not touch the stored booking', 45.0 === (float) ( json_decode( $wpdb->rows[1]['details'], true )['pricing']['lines'][0]['amount'] ?? 0 ) );
 unset( $GLOBALS['paw_options'][ \Pawfectly\Settings::OPTION ] );
@@ -104,7 +101,7 @@ reset_state();
 $res = Rest::submit( request( $good, array( 'owner_email' => 'nope', 'signature' => '' ), array() ) );
 $fields = is_wp_error( $res ) ? $res->get_error_data()['fields'] : array();
 t( 'invalid → 400 paw_invalid', is_wp_error( $res ) && 'paw_invalid' === $res->get_error_code() && 400 === $res->get_error_data()['status'] );
-t( 'field, file and signature errors merged', isset( $fields['owner_email'], $fields['vaccination_files'], $fields['signature'] ) );
+t( 'field, file and signature errors merged', isset( $fields['owner_email'], $fields['vaccination_files_0'], $fields['signature'] ) );
 t( 'invalid inserts nothing', 0 === inserts() );
 
 // Review Focus 1: the same submission sent twice makes one reservation.
@@ -181,6 +178,28 @@ wp_set_current_user( 0 );
 reset_state();
 Rest::submit( request( $good, array( 'owner_email' => 'guest@example.com', 'account_password' => 'correct horse' ) ) );
 t( 'unticked box: no account even if a password was typed', ! email_exists( 'guest@example.com' ) && null === $wpdb->rows[1]['user_id'] );
+
+// Two pets, files for each.
+reset_state();
+$two = $good;
+$two['pets'][1] = array_merge( $good['pets'][0], array( 'pet_name' => 'Luna', 'pet_type' => 'cat', 'dog_size' => '' ) );
+$both_files = array(
+	'vaccination_files_0' => fixture_files_field( array( 'Rex.pdf' => fixture_file( 'r.pdf', fixture_pdf_bytes() ) ) ),
+	'vaccination_files_1' => fixture_files_field( array( 'Luna.pdf' => fixture_file( 'l.pdf', fixture_pdf_bytes() ) ) ),
+);
+$res = Rest::submit( request( $two, array(), $both_files ) );
+$row = $wpdb->rows[1] ?? array();
+$stored = json_decode( $row['files'] ?? '[]', true );
+t( 'two pets: one booking, counted', $res instanceof WP_REST_Response && '2' === ( $row['pet_count'] ?? '' ) && 'Biscuit + Luna' === ( $row['pet_name'] ?? '' ) );
+t( 'two pets: each file tagged with its pet', array( 0, 1 ) === array_column( $stored, 'pet' ) && array( 'Rex.pdf', 'Luna.pdf' ) === array_column( $stored, 'name' ) );
+t( 'two pets: snapshot labelled per pet', str_starts_with( json_decode( $row['details'], true )['pricing']['lines'][1]['label'] ?? '', 'Luna: Boarding' ) );
+reset_state();
+$res = Rest::submit( request( $two, array(), array( 'vaccination_files_0' => $both_files['vaccination_files_0'] ) ) );
+t( "the second pet's missing files are reported on its own field", is_wp_error( $res ) && isset( $res->get_error_data()['fields']['vaccination_files_1'] ) && ! isset( $res->get_error_data()['fields']['vaccination_files_0'] ) && 0 === inserts() );
+reset_state();
+$six = $good;
+$six['pets'] = array_fill( 0, 6, $good['pets'][0] );
+t( 'six pets → 400', 400 === Rest::submit( request( $six ) )->get_error_data()['status'] && 0 === inserts() );
 
 t( 'nonce endpoint', 'good-nonce' === Rest::nonce()->get_data()['nonce'] );
 

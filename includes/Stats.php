@@ -28,11 +28,12 @@ final class Stats {
 		foreach ( $rows as $r ) {
 			$staying = in_array( $r['status'], self::STAYING, true );
 			$type    = $r['booking_type'] ?? 'boarding';
+			$groomed = max( 1, count( array_filter( explode( ',', (string) ( $r['service'] ?? '' ) ) ) ) );
 			if ( 'pending' === $r['status'] ) {
 				++$out['pending'];
 			}
 			if ( 'boarding' !== $type && ( $r['appointment_date'] ?? '' ) === $today && ( $staying || 'pending' === $r['status'] ) ) {
-				++$out['grooming'];
+				$out['grooming'] += $groomed;
 			}
 			if ( 'grooming' === $type ) {
 				continue; // A grooming visit is not a stay.
@@ -51,7 +52,7 @@ final class Stats {
 			$count = 0;
 			foreach ( $rows as $r ) {
 				if ( 'grooming' !== ( $r['booking_type'] ?? 'boarding' ) && in_array( $r['status'], self::STAYING, true ) && $r['check_in'] <= $date && $date < $r['check_out'] ) {
-					++$count;
+					$count += max( 1, (int) ( $r['pet_count'] ?? 1 ) );
 				}
 			}
 			$out['nights'][] = array( 'date' => $date, 'count' => $count );

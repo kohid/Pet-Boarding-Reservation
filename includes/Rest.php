@@ -73,12 +73,22 @@ final class Rest {
 		}
 
 		$clean     = Validator::validate( $params, new \DateTimeImmutable( 'today', wp_timezone() ) );
-		$checked   = Uploads::check( (array) ( $files['vaccination_files'] ?? array() ) );
 		$signature = Signature::decode( is_string( $params['signature'] ?? null ) ? $params['signature'] : '' );
 		$errors    = array();
-		foreach ( array( $clean, $checked, $signature ) as $result ) {
+		foreach ( array( $clean, $signature ) as $result ) {
 			if ( is_wp_error( $result ) ) {
 				$errors += $result->get_error_data()['fields'];
+			}
+		}
+		// Each pet brings its own vaccination files: vaccination_files_N.
+		$pet_count = is_array( $params['pets'] ?? null ) ? min( count( $params['pets'] ), Fields::MAX_PETS ) : 0;
+		$checked   = array();
+		for ( $n = 0; $n < $pet_count; $n++ ) {
+			$result = Uploads::check( (array) ( $files[ 'vaccination_files_' . $n ] ?? array() ) );
+			if ( is_wp_error( $result ) ) {
+				$errors[ 'vaccination_files_' . $n ] = $result->get_error_data()['fields']['vaccination_files'];
+			} else {
+				$checked[ $n ] = $result;
 			}
 		}
 		$account = self::account_request( $params, is_array( $clean ) ? $clean['columns']['owner_email'] : '' );
@@ -92,9 +102,14 @@ final class Rest {
 			$reference = Reference::generate();
 		}
 
-		$stored = Uploads::store( $reference, $checked );
-		if ( is_wp_error( $stored ) ) {
-			return $stored;
+		$stored = array();
+		foreach ( $checked as $n => $pet_files ) {
+			$result = Uploads::store( $reference, $pet_files, $n );
+			if ( is_wp_error( $result ) ) {
+				Uploads::delete( $stored );
+				return $result;
+			}
+			$stored = array_merge( $stored, $result );
 		}
 		$signature_path = Signature::store( $reference, $signature );
 		if ( is_wp_error( $signature_path ) ) {

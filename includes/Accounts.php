@@ -243,17 +243,26 @@ final class Accounts {
 			);
 		}
 
-		$values = Reservations::values( $last );
-		$keep   = array();
+		// Booking-level answers from the owner and emergency steps; each pet's details and care.
+		$values  = Reservations::values( $last );
+		$per_pet = Fields::pet_fields();
+		$keep    = array();
+		$pet_ids = array();
 		foreach ( Fields::steps() as $step ) {
 			if ( ! in_array( $step['id'], self::PREFILL_STEPS, true ) ) {
 				continue;
 			}
 			foreach ( $step['fields'] as $field ) {
-				if ( isset( $values[ $field['id'] ] ) && '' !== (string) $values[ $field['id'] ] ) {
+				if ( isset( $per_pet[ $field['id'] ] ) ) {
+					$pet_ids[] = $field['id'];
+				} elseif ( isset( $values[ $field['id'] ] ) && '' !== (string) $values[ $field['id'] ] ) {
 					$keep[ $field['id'] ] = (string) $values[ $field['id'] ];
 				}
 			}
+		}
+		$keep['pets'] = array();
+		foreach ( Reservations::pets( $last ) as $pet ) {
+			$keep['pets'][] = array_filter( array_map( 'strval', array_intersect_key( $pet, array_flip( $pet_ids ) ) ), 'strlen' );
 		}
 		$keep['owner_email'] = (string) $user->user_email;
 		return $keep;

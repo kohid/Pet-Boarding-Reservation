@@ -79,4 +79,12 @@ t( 'unknown status ignored', ! str_contains( implode( '', ( function () use ( $w
 t( 'query returns rows and total', 1 === $res['total'] && is_array( $res['rows'] ) );
 
 fixture_rmrf_simple( $GLOBALS['paw_upload_base'] ?? '' );
+// Pets: older rows read as one pet; newer rows keep each pet's own files.
+$old = array( 'pet_name' => 'Biscuit', 'pet_type' => 'dog', 'details' => array( 'pet_breed' => 'Beagle', 'vet_name' => 'Dr. Who' ), 'files' => array( array( 'name' => 'a.pdf', 'path' => 'x/a.pdf', 'mime' => 'application/pdf', 'size' => 1 ) ) );
+$op  = Reservations::pets( $old );
+t( 'older row: one pet with its answers and files', 1 === count( $op ) && 'Biscuit' === $op[0]['pet_name'] && 'Beagle' === $op[0]['pet_breed'] && ! isset( $op[0]['vet_name'] ) && 'a.pdf' === $op[0]['files'][0]['name'] );
+$new = array( 'pet_name' => 'Rex + Tom', 'details' => array( 'pets' => array( array( 'pet_name' => 'Rex' ), array( 'pet_name' => 'Tom' ) ) ), 'files' => array( array( 'name' => 'r.pdf', 'pet' => 0 ), array( 'name' => 't.pdf', 'pet' => 1 ), array( 'name' => 't2.pdf', 'pet' => 1 ) ) );
+$np  = Reservations::pets( $new );
+t( 'newer row: each pet gets only its own files', 2 === count( $np ) && array( 'r.pdf' ) === array_column( $np[0]['files'], 'name' ) && array( 't.pdf', 't2.pdf' ) === array_column( $np[1]['files'], 'name' ) );
+
 done();
