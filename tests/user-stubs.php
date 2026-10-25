@@ -102,3 +102,11 @@ function wp_lostpassword_url( $redirect = '' ) { return 'https://example.test/wp
 function wp_logout_url( $redirect = '' ) { return 'https://example.test/wp-login.php?action=logout'; }
 function add_query_arg( $args, $url ) { return $url . ( str_contains( $url, '?' ) ? '&' : '?' ) . http_build_query( $args ); }
 function add_role( $role, $name, $caps ) { $GLOBALS['paw_added_roles'][ $role ] = $caps; return true; }
+$GLOBALS['paw_actions'] = array();
+function do_action( $hook, ...$args ) { $GLOBALS['paw_actions'][] = $hook; }
+/** Core's wp_authenticate runs the `authenticate` filter (lockout and 2FA plugins); the stand-in records the call. */
+function wp_authenticate( $login, $password ) {
+	$GLOBALS['paw_actions'][] = 'wp_authenticate';
+	$u = get_user_by( 'id', username_exists( $login ) ?: 0 );
+	return $u && wp_check_password( $password, $u->user_pass ) ? $u : new WP_Error( 'incorrect_password', 'no' );
+}

@@ -36,6 +36,17 @@ $desk  = Accounts::authenticate( 'desk@example.com', 'desk pass1' );
 t( 'administrators sent to the WordPress login', is_wp_error( $admin ) && 'paw_staff_login' === $admin->get_error_code() && str_contains( $admin->get_error_message(), 'wp-login.php' ) );
 t( 'staff sent to the WordPress login', is_wp_error( $desk ) && 'paw_staff_login' === $desk->get_error_code() );
 t( 'staff refusal is a 403', 403 === $desk->get_error_data()['status'] );
+$admin_wrong = Accounts::authenticate( 'boss@example.com', 'wrong password' );
+t( 'staff refusal does not depend on the password (no password oracle)', is_wp_error( $admin_wrong ) && 'paw_staff_login' === $admin_wrong->get_error_code() );
+$ed = paw_test_user( 'editor@example.com', 'editor pass', array( 'editor' ) );
+$ed->caps = array( 'edit_posts' => true );
+t( 'editors and other privileged roles sent to the WordPress login', 'paw_staff_login' === Accounts::authenticate( 'editor@example.com', 'editor pass' )->get_error_code() );
+$sub = paw_test_user( 'sub@example.com', 'subscriber1', array( 'subscriber' ) );
+t( 'subscribers may use the customer sign-in', Accounts::authenticate( 'sub@example.com', 'subscriber1' ) instanceof WP_User );
+$GLOBALS['paw_actions'] = array();
+Accounts::authenticate( 'zoe+dogs@example.com', 'correct horse' );
+t( "sign-in goes through WordPress's authenticate checks", in_array( 'wp_authenticate', $GLOBALS['paw_actions'], true ) );
+t( 'customer-login rule', Accounts::may_use_customer_login( get_user_by( 'id', $id ) ) && ! Accounts::may_use_customer_login( $ed ) );
 
 Accounts::start_session( $id );
 t( 'session started', $id === get_current_user_id() && $id === $GLOBALS['paw_auth_cookie'] );

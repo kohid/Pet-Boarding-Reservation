@@ -45,6 +45,7 @@ t( 'honeypot refused, no account', is_wp_error( $bot ) && ! email_exists( 'bot@e
 wp_set_current_user( 0 );
 $ok = AccountRest::login( req( array( 'email' => 'zoe@example.com', 'password' => 'correct horse' ) ) );
 t( 'sign-in succeeds and asks for a reload', 'ok' === code( $ok ) && true === $ok->get_data()['reload'] && $zoe->ID === get_current_user_id() );
+t( 'sign-in fires wp_login for security plugins', in_array( 'wp_login', $GLOBALS['paw_actions'], true ) );
 wp_set_current_user( 0 );
 t( 'wrong password → 400 paw_login', 'paw_login' === code( AccountRest::login( req( array( 'email' => 'zoe@example.com', 'password' => 'nope nope' ) ) ) ) );
 paw_test_user( 'desk@example.com', 'desk pass1', array( Accounts::STAFF_ROLE ), array( Activator::CAPABILITY => true ) );

@@ -50,6 +50,7 @@ final class AccountRest {
 			return $user;
 		}
 		Accounts::start_session( (int) $user->ID );
+		do_action( 'wp_login', $user->user_login, $user ); // Core's own sign-in fires this; security plugins listen.
 		return new \WP_REST_Response( array( 'ok' => true, 'reload' => true ) );
 	}
 

@@ -66,13 +66,18 @@ final class Accounts {
 		return (int) $id;
 	}
 
-	/** @return \WP_User|\WP_Error */
+	/** Roles that may use the owner sign-in. Everyone else signs in on wp-login.php. */
+	private const CUSTOMER_ROLES = array( self::ROLE, 'subscriber', 'customer' );
+
+	/**
+	 * Owner sign-in. Privileged accounts are refused before the password is looked at, so this
+	 * endpoint cannot be used to test staff passwords outside wp-login's protections.
+	 *
+	 * @return \WP_User|\WP_Error
+	 */
 	public static function authenticate( string $email, string $password ) {
 		$user = get_user_by( 'email', $email );
-		if ( ! $user || ! wp_check_password( $password, $user->user_pass, $user->ID ) ) {
-			return new \WP_Error( 'paw_login', __( 'The email or password is not right.', 'pawfectly-reservations' ), array( 'status' => 400 ) );
-		}
-		if ( self::is_staff( $user ) ) {
+		if ( $user && ! self::may_use_customer_login( $user ) ) {
 			return new \WP_Error(
 				'paw_staff_login',
 				/* translators: %s: WordPress login page address */
@@ -80,11 +85,21 @@ final class Accounts {
 				array( 'status' => 403, 'login_url' => wp_login_url() )
 			);
 		}
-		return $user;
+		// wp_authenticate runs the `authenticate` filter, so lockout and 2FA plugins still apply.
+		$checked = $user ? wp_authenticate( $user->user_login, $password ) : null;
+		if ( ! $checked instanceof \WP_User ) {
+			return new \WP_Error( 'paw_login', __( 'The email or password is not right.', 'pawfectly-reservations' ), array( 'status' => 400 ) );
+		}
+		return $checked;
+	}
+
+	/** Only plain customer accounts: no staff capability, nothing beyond reading. */
+	public static function may_use_customer_login( \WP_User $user ): bool {
+		return ! array_diff( (array) $user->roles, self::CUSTOMER_ROLES ) && ! $user->has_cap( Activator::CAPABILITY ) && ! $user->has_cap( 'edit_posts' );
 	}
 
 	public static function is_staff( \WP_User $user ): bool {
-		return (bool) array_intersect( array( 'administrator', self::STAFF_ROLE ), (array) $user->roles ) || $user->has_cap( Activator::CAPABILITY );
+		return ! self::may_use_customer_login( $user );
 	}
 
 	public static function start_session( int $user_id ): void {
