@@ -4,7 +4,21 @@ Guidance for Claude Code sessions working in this repository.
 
 ## Project
 
-**Pet Boarding Reservation**: an app for booking pet boarding stays. Scope, users, and tech stack are still being decided during brainstorming. Record decisions here (or in `docs/superpowers/specs/`) once they're agreed.
+**Pawfectly Pet Boarding Reservation**: a WordPress plugin (PHP 8.0+, WordPress 6.0+, vanilla JS) modeled on kohid/Sprint-Booking, with a Metronic 8-style look in Pawfectly's brand colors.
+- Spec: `docs/superpowers/specs/2026-10-25-pet-boarding-reservation-design.md`
+- Plan: `docs/superpowers/plans/2026-10-25-pet-boarding-reservation.md`
+
+Conventions:
+- Namespace `Pawfectly\`, with `includes/Foo.php` loaded automatically.
+- Prefixes: `paw_` for options, transients, the table, and nonces; `paw-` for CSS and handles. Text domain `pawfectly-reservations`.
+- Front-end CSS is scoped under `.paw-app`, admin CSS under `.paw-admin`. Resets use `:where()`.
+- Every field is defined once, in `includes/Fields.php`.
+
+## Commands
+
+- Unit tests: `bash bin/test.sh`
+- Browser test: `php tests/e2e/build.php && node tests/e2e/form-e2e.js` (set `PAW_SHOTS=dir` to save screenshots)
+- Release zip: `bin/build-release.sh`
 
 ## Required skills: use them in every session
 

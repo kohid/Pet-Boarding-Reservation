@@ -1,0 +1,8 @@
+# Kept out of release zips (git archive): development files only.
+/tests export-ignore
+/docs export-ignore
+/bin export-ignore
+/.github export-ignore
+/CLAUDE.md export-ignore
+/.gitignore export-ignore
+/.gitattributes export-ignore
