@@ -26,6 +26,7 @@ $paw_tiles = array(
 	'check_ins'  => __( 'Check-ins today', 'pawfectly-reservations' ),
 	'check_outs' => __( 'Check-outs today', 'pawfectly-reservations' ),
 	'boarding'   => __( 'Pets boarding tonight', 'pawfectly-reservations' ),
+	'grooming'   => __( 'Grooming today', 'pawfectly-reservations' ),
 	'pending'    => __( 'Requests to review', 'pawfectly-reservations' ),
 );
 ?>

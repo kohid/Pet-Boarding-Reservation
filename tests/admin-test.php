@@ -63,11 +63,24 @@ t( 'country exported by name', 'United States' === $row[ $col['address_country']
 t( 'hidden conditional is empty', '' === $row[ $col['allergies_details'] ] );
 t( 'shown conditional exported', '5mg daily' === $row[ $col['medications_details'] ] );
 t( 'files counted', '1' === $row[ $col['files_count'] ] );
+t( 'estimated total is the last column', 'Estimated total' === end( $header ) );
+$rp = $r;
+$rp['details']['pricing'] = array( 'lines' => array( array( 'label' => 'Boarding: 2 nights', 'amount' => 80.0, 'monthly' => false ), array( 'label' => 'Basic Bath', 'amount' => null, 'monthly' => false ) ), 'total' => 80.0, 'on_request' => true, 'currency' => '€' );
+$prow = Admin::csv_row( $rp );
+t( 'estimated total in the snapshot currency, flagged when part is on request', '€80 + price on request' === end( $prow ) );
+t( 'no snapshot (older bookings): empty', '' === end( $row ) );
+t( 'service answer shows the service name', 'Premium Haircuts' === Admin::answer_text( Fields::all()['service'], 'premium_haircut' ) );
+ob_start();
+Admin::render_detail( array_merge( $rp, array( 'booking_type' => 'both', 'service' => 'basic_bath', 'appointment_date' => '2026-10-29' ) ) );
+$phtml = ob_get_clean();
+t( 'detail lists the estimate', str_contains( $phtml, 'Boarding: 2 nights' ) && str_contains( $phtml, '€80' ) && str_contains( $phtml, 'Price on request' ) );
 t( 'no file, signature or agree columns', ! isset( $col['vaccination_files'] ) && ! isset( $col['signature'] ) && ! isset( $col['waiver_agree'] ) );
 
 ob_start();
 Admin::render_detail( $r );
 $html = ob_get_clean();
+$html_before = $html;
+t( 'older bookings without a type still show their stay dates', str_contains( $html_before, '10/28/2026' ) );
 foreach ( Fields::steps() as $step ) {
 	t( "detail shows step: {$step['title']}", str_contains( $html, esc_html( $step['title'] ) ) );
 }

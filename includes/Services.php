@@ -183,8 +183,8 @@ final class Services {
 		return '' !== $key ? self::amount( $rates[ $key ] ?? '' ) : null;
 	}
 
-	public static function money( float $amount ): string {
-		$currency = (string) ( Settings::get()['currency'] ?? '$' );
+	public static function money( float $amount, ?string $currency = null ): string {
+		$currency = $currency ?? (string) ( Settings::get()['currency'] ?? '$' );
 		$decimals = abs( $amount - round( $amount ) ) < 0.005 ? 0 : 2;
 		return $currency . number_format( $amount, $decimals );
 	}
@@ -249,6 +249,28 @@ final class Services {
 			'on_request' => $open,
 			'currency'   => (string) ( Settings::get()['currency'] ?? '$' ),
 		);
+	}
+
+	/** One line of a stored estimate as a person reads it. */
+	public static function amount_text( ?float $amount, bool $monthly, string $currency ): string {
+		if ( null === $amount ) {
+			return __( 'Price on request', 'pawfectly-reservations' );
+		}
+		return self::money( $amount, $currency ) . ( $monthly ? ' ' . __( '/ month', 'pawfectly-reservations' ) : '' );
+	}
+
+	/** A stored estimate's total: "$100", "$80 + price on request", "Price on request", or '' without one. */
+	public static function total_text( array $pricing ): string {
+		if ( empty( $pricing['lines'] ) ) {
+			return '';
+		}
+		$currency = (string) ( $pricing['currency'] ?? '$' );
+		$total    = (float) ( $pricing['total'] ?? 0 );
+		$known    = array_filter( (array) $pricing['lines'], static fn( $l ): bool => null !== ( $l['amount'] ?? null ) );
+		if ( ! $known ) {
+			return __( 'Price on request', 'pawfectly-reservations' );
+		}
+		return self::money( $total, $currency ) . ( ! empty( $pricing['on_request'] ) ? ' + ' . __( 'price on request', 'pawfectly-reservations' ) : '' );
 	}
 
 	private static function nights( string $in, string $out ): int {

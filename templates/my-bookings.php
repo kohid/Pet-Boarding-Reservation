@@ -12,7 +12,6 @@
  */
 
 use Pawfectly\Fields;
-use Pawfectly\Mailer;
 use Pawfectly\MyBookings;
 use Pawfectly\Profile;
 use Pawfectly\Reservations;
@@ -46,7 +45,12 @@ $paw_types = Fields::all()['pet_type']['options'];
 						<tr data-paw-row="<?php echo esc_attr( (string) $paw_r['id'] ); ?>">
 							<td><strong><?php echo esc_html( $paw_r['reference'] ); ?></strong></td>
 							<td><?php echo esc_html( $paw_r['pet_name'] ); ?> <span class="paw-acct__muted"><?php echo esc_html( $paw_types[ $paw_r['pet_type'] ] ?? $paw_r['pet_type'] ); ?></span></td>
-							<td><?php echo esc_html( Mailer::date( $paw_r['check_in'] ) . ' → ' . Mailer::date( $paw_r['check_out'] ) ); ?></td>
+							<td>
+								<?php echo esc_html( Reservations::when( $paw_r ) ); ?>
+								<?php if ( '' !== Reservations::service_name( $paw_r ) ) : ?>
+									<br><span class="paw-acct__muted"><?php echo esc_html( Reservations::service_name( $paw_r ) ); ?></span>
+								<?php endif; ?>
+							</td>
 							<td><span class="paw-badge paw-badge--<?php echo esc_attr( $paw_r['status'] ); ?>" data-paw-status><?php echo esc_html( Reservations::label( $paw_r['status'] ) ); ?></span></td>
 							<td>
 								<?php if ( MyBookings::can_cancel( $paw_r, $today ) ) : ?>

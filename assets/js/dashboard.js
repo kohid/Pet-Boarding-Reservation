@@ -98,7 +98,7 @@
 
 	function loadOverview() {
 		api('staff/stats').then(function (s) {
-			['check_ins', 'check_outs', 'boarding', 'pending'].forEach(function (key) {
+			['check_ins', 'check_outs', 'boarding', 'grooming', 'pending'].forEach(function (key) {
 				$('[data-paw-tile="' + key + '"] .paw-dash__tile-num').textContent = String(s[key]);
 			});
 			var chart = $('[data-paw-chart]');
@@ -185,7 +185,7 @@
 			var owner = el('td');
 			owner.append(el('span', '', r.owner), el('small', '', r.email));
 			var stay = el('td');
-			stay.append(el('span', '', r.stay), el('small', '', r.nights + ' ' + (r.nights === 1 ? I18N.night : I18N.nights)));
+			stay.append(el('span', '', r.stay), el('small', '', r.booking_type === 'grooming' ? r.service_name : r.nights + ' ' + (r.nights === 1 ? I18N.night : I18N.nights) + (r.service_name ? ' · ' + r.service_name : '')));
 			var st = el('td');
 			st.appendChild(badge(r.status, r.status_label));
 			tr.append(ref, pet, owner, stay, st);
@@ -352,4 +352,9 @@
 
 	history.replaceState({ pawView: state.view }, '', location.href);
 	show(state.view, false);
+	// Links in staff emails open one reservation: ?paw_view=reservations&open=ID.
+	var opening = parseInt(new URLSearchParams(location.search).get('open') || '', 10);
+	if (opening > 0) {
+		open(opening, null);
+	}
 })();

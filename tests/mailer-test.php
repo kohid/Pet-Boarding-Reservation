@@ -4,11 +4,13 @@
  * Run: php tests/mailer-test.php
  */
 require __DIR__ . '/bootstrap.php';
+require __DIR__ . '/user-stubs.php';
 
 use Pawfectly\Mailer;
 use Pawfectly\Settings;
 
 $GLOBALS['paw_options']['admin_email']      = 'owner@example.com';
+$GLOBALS['paw_transients'][ 'paw_pg_' . md5( 'pawfectly_dashboard' ) ] = 'https://example.test/dashboard/';
 $GLOBALS['paw_options'][ Settings::OPTION ] = array( 'staff_emails' => 'desk@example.com, manager@example.com' );
 
 $reservation = array(
@@ -47,9 +49,28 @@ t( 'branded with the business name', str_contains( $owner['message'], 'Pawfectly
 
 t( 'staff email goes to every staff address', array( 'desk@example.com', 'manager@example.com' ) === $staff['to'] );
 t( 'staff subject', 'New reservation request PAW-7K3QX9: <b>x</b> (10/28/2026 → 10/30/2026)' === $staff['subject'] );
-t( 'staff body links to the reservation in wp-admin', str_contains( $staff['message'], 'https://example.test/wp-admin/admin.php?page=paw-reservations&amp;view=12' ) );
+t( 'staff body links to the reservation', str_contains( $staff['message'], 'https://example.test/dashboard/?paw_view=reservations&amp;open=12' ) );
 t( 'staff body leaves out health details', ! str_contains( $staff['message'], 'SECRET-MEDS' ) );
 t( 'staff replies go to the owner', in_array( 'Reply-To: zoe@example.com', (array) $staff['headers'], true ) );
+
+$GLOBALS['paw_mail'] = array();
+Mailer::reservation_received(
+	array_merge(
+		$reservation,
+		array(
+			'booking_type'     => 'grooming',
+			'appointment_date' => '2026-10-29',
+			'check_in'         => '2026-10-29',
+			'check_out'        => '2026-10-29',
+			'service'          => 'basic_bath',
+			'details'          => array( 'appointment_time' => 'afternoon', 'pricing' => array( 'lines' => array( array( 'label' => 'Basic Bath', 'amount' => 45.0, 'monthly' => false ) ), 'total' => 45.0, 'on_request' => false, 'currency' => '$' ) ),
+		)
+	)
+);
+$g = $GLOBALS['paw_mail'][0]['message'] ?? '';
+t( 'grooming email: appointment instead of check-in/out', str_contains( $g, 'Appointment' ) && str_contains( $g, '10/29/2026 · Afternoon (12–5)' ) && ! str_contains( $g, 'Check-out' ) );
+t( 'grooming email: service and estimate', str_contains( $g, 'Basic Bath' ) && str_contains( $g, '$45' ) && str_contains( $g, 'staff confirm the final price' ) );
+t( 'grooming staff subject names the day', str_contains( $GLOBALS['paw_mail'][1]['subject'] ?? '', '(10/29/2026 · Afternoon (12–5))' ) );
 
 $GLOBALS['paw_mail'] = array();
 Mailer::status_changed( array_merge( $reservation, array( 'status' => 'confirmed' ) ) );

@@ -13,10 +13,11 @@ let passed = 0;
 function ok(name, cond) { assert.ok(cond, name); passed++; console.log('ok   - ' + name); }
 
 const nights = Array.from({ length: 14 }, (_, i) => ({ date: new Date(Date.UTC(2026, 9, 25 + i)).toISOString().slice(0, 10), count: [3, 4, 4, 2, 5, 6, 6, 4, 3, 2, 2, 1, 0, 1][i] }));
-const STATS = { check_ins: 2, check_outs: 1, boarding: 3, pending: 4, nights, today: '2026-10-25' };
+const STATS = { check_ins: 2, check_outs: 1, boarding: 3, grooming: 5, pending: 4, nights, today: '2026-10-25' };
 const ROWS = [
   { id: 7, reference: 'PAW-7K3QX9', pet_name: 'Biscuit', pet_type: 'Dog', owner: "Zoë O'Brien", email: 'zoe@example.com', phone: '555', check_in: '2026-10-28', check_out: '2026-10-30', stay: '10/28/2026 → 10/30/2026', nights: 2, status: 'pending', status_label: 'Pending', created_at: '10/25/2026 9:00 am' },
   { id: 8, reference: 'PAW-ABCDEF', pet_name: '<b>Luna</b>', pet_type: 'Cat', owner: 'Ada Lovelace', email: 'ada@example.com', phone: '555', check_in: '2026-11-02', check_out: '2026-11-05', stay: '11/02/2026 → 11/05/2026', nights: 3, status: 'confirmed', status_label: 'Confirmed', created_at: '10/24/2026 3:12 pm' },
+  { id: 9, reference: 'PAW-GR00M1', pet_name: 'Rex', pet_type: 'Dog', owner: 'Ada Lovelace', email: 'ada@example.com', phone: '555', check_in: '2026-10-27', check_out: '2026-10-27', stay: '10/27/2026 · Morning (8–12)', nights: 0, booking_type: 'grooming', service_name: 'Nail Trimming', status: 'pending', status_label: 'Pending', created_at: '10/25/2026 9:30 am' },
 ];
 const DETAIL = {
   id: 7, reference: 'PAW-7K3QX9', pet_name: 'Biscuit', owner: "Zoë O'Brien", stay: '10/28/2026 → 10/30/2026', nights: 2, status: 'pending', status_label: 'Pending', staff_notes: '',
@@ -47,6 +48,7 @@ async function mock(page, log) {
     await page.goto(URL);
 
     await page.waitForSelector('[data-paw-tile="pending"] .paw-dash__tile-num');
+    ok('overview: grooming today tile', (await page.textContent('[data-paw-tile="grooming"] .paw-dash__tile-num')).trim() === '5');
     ok('overview: four tiles with the numbers', (await page.textContent('[data-paw-tile="check_ins"] .paw-dash__tile-num')).trim() === '2' && (await page.textContent('[data-paw-tile="boarding"] .paw-dash__tile-num')).trim() === '3' && (await page.textContent('[data-paw-tile="pending"] .paw-dash__tile-num')).trim() === '4');
     ok('overview: 14 bars', (await page.locator('.paw-dash__bar').count()) === 14);
     ok('overview: every bar has a readable day label', !(await page.textContent('[data-paw-chart]')).includes('Invalid'));
@@ -57,7 +59,8 @@ async function mock(page, log) {
 
     await page.click('[data-paw-nav="reservations"]');
     await page.waitForSelector('.paw-dash__table tbody tr');
-    ok('reservations: rows listed', (await page.locator('.paw-dash__table tbody tr').count()) === 2);
+    ok('reservations: rows listed', (await page.locator('.paw-dash__table tbody tr').count()) === 3);
+    ok('reservations: a grooming row shows its day and service', (await page.textContent('.paw-dash__table tbody tr[data-id="9"]')).includes('10/27/2026 · Morning (8–12)') && (await page.textContent('.paw-dash__table tbody tr[data-id="9"]')).includes('Nail Trimming'));
     ok('reservations: text is not parsed as HTML', (await page.textContent('.paw-dash__table')).includes('<b>Luna</b>'));
     ok('reservations: address shows the view', page.url().includes('paw_view=reservations'));
     ok('reservations: status tabs with counts', (await page.textContent('[data-paw-status-tab="pending"]')).includes('1'));
@@ -94,6 +97,10 @@ async function mock(page, log) {
     ok('phone: no horizontal scroll', (await page.evaluate(() => document.documentElement.scrollWidth)) <= 375);
     ok('phone: side menu becomes a top bar', await page.evaluate(() => { const s = document.querySelector('.paw-dash__side').getBoundingClientRect(); return s.width >= 370 && s.height < 140; }));
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'dash-phone.png'), fullPage: true });
+
+    await page.goto(URL + '?paw_view=reservations&open=7');
+    await page.waitForSelector('[data-paw-panel]:not([hidden]) [data-paw-answers] .paw-answers');
+    ok('a staff email link opens that reservation', (await page.textContent('[data-paw-panel-title]')).includes('PAW-7K3QX9'));
 
     await page.goto(URL);
     await page.click('[data-paw-nav="settings"]', { noWaitAfter: true, trial: true });

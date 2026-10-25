@@ -168,7 +168,25 @@ final class Reservations {
 		foreach ( Fields::COLUMNS as $col ) {
 			$values[ $col ] = (string) ( $r[ $col ] ?? '' );
 		}
+		if ( '' === $values['booking_type'] ) {
+			$values['booking_type'] = 'boarding'; // Booked before grooming existed.
+		}
 		return $values;
+	}
+
+	/** When it happens, as a person reads it: "10/28/2026 → 10/30/2026", or a grooming day and time. */
+	public static function when( array $r ): string {
+		if ( 'grooming' === ( $r['booking_type'] ?? '' ) ) {
+			$time = (string) ( Fields::all()['appointment_time']['options'][ $r['details']['appointment_time'] ?? '' ] ?? '' );
+			return Mailer::date( (string) $r['appointment_date'] ) . ( '' !== $time ? ' · ' . $time : '' );
+		}
+		return Mailer::date( (string) $r['check_in'] ) . ' → ' . Mailer::date( (string) $r['check_out'] );
+	}
+
+	/** The booked service's name, or '' for boarding only. */
+	public static function service_name( array $r ): string {
+		$id = (string) ( $r['service'] ?? '' );
+		return '' !== $id ? (string) ( Services::catalog()[ $id ]['name'] ?? $id ) : '';
 	}
 
 	/** @return array<string, int> Count per status, every status present. */

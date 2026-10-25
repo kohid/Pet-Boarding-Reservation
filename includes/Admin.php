@@ -114,6 +114,8 @@ final class Admin {
 				return Fields::countries()[ $value ] ?? $value;
 			case 'date':
 				return Mailer::date( $value );
+			case 'service':
+				return (string) ( Services::catalog()[ $value ]['name'] ?? $value );
 		}
 		return $value;
 	}
@@ -126,7 +128,7 @@ final class Admin {
 				$keys[] = $id;
 			}
 		}
-		return array_merge( $keys, array( 'files_count', 'signed_at' ) );
+		return array_merge( $keys, array( 'files_count', 'signed_at', 'estimate' ) );
 	}
 
 	public static function csv_header(): array {
@@ -137,6 +139,7 @@ final class Admin {
 			'created_at'  => __( 'Submitted (UTC)', 'pawfectly-reservations' ),
 			'files_count' => __( 'Vaccination files', 'pawfectly-reservations' ),
 			'signed_at'   => __( 'Signed (UTC)', 'pawfectly-reservations' ),
+			'estimate'    => __( 'Estimated total', 'pawfectly-reservations' ),
 		);
 		return array_map( fn( $key ) => $labels[ $key ] ?? $all[ $key ]['label'], self::csv_keys() );
 	}
@@ -157,6 +160,9 @@ final class Admin {
 					break;
 				case 'files_count':
 					$cell = (string) count( (array) $r['files'] );
+					break;
+				case 'estimate':
+					$cell = Services::total_text( (array) ( $r['details']['pricing'] ?? array() ) );
 					break;
 				default:
 					$field = $all[ $key ];

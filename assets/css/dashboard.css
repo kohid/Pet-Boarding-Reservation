@@ -227,7 +227,7 @@ body.admin-bar .paw-dash--full {
 
 .paw-dash .paw-dash__tiles {
 	display: grid;
-	grid-template-columns: repeat(4, minmax(0, 1fr));
+	grid-template-columns: repeat(5, minmax(0, 1fr));
 	gap: 1.25rem;
 	margin-bottom: 1.5rem;
 }
@@ -247,6 +247,7 @@ body.admin-bar .paw-dash--full {
 .paw-dash .paw-dash__tile--check_outs { --tile: var(--paw-steel); }
 .paw-dash .paw-dash__tile--boarding { --tile: var(--paw-success); }
 .paw-dash .paw-dash__tile--pending { --tile: var(--paw-primary); }
+.paw-dash .paw-dash__tile--grooming { --tile: var(--paw-royal); }
 
 .paw-dash .paw-dash__tile-num {
 	color: var(--paw-ink);

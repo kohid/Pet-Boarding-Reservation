@@ -85,6 +85,17 @@ $fresh = add_reservation( 'PAW-EEEEEE', 'zoe@example.com', $zoe->ID, 'confirmed'
 $html  = MyBookings::render();
 t( 'confirmed future reservation offers cancel', 1 === substr_count( $html, 'data-paw-cancel="' . $fresh . '"' ) );
 t( 'names escaped', str_contains( $html, 'Pet PAW-EEEEEE' ) );
+$groom_row = Reservations::build_row(
+	array(
+		'columns' => array( 'owner_first_name' => 'Zoë', 'owner_last_name' => 'O', 'owner_email' => 'zoe@example.com', 'owner_phone' => '555', 'pet_name' => 'Rex', 'pet_type' => 'dog', 'booking_type' => 'grooming', 'check_in' => '2030-02-03', 'check_out' => '2030-02-03', 'appointment_date' => '2030-02-03', 'service' => 'nail_trim' ),
+		'details' => array( 'appointment_time' => 'morning' ),
+	),
+	'PAW-GGGGGG', array(), '', '203.0.113.9', '2026-10-25 10:00:00'
+);
+$groom_row['user_id'] = $zoe->ID;
+Reservations::insert( $groom_row );
+$html = MyBookings::render();
+t( 'grooming booking shows the service and its day', str_contains( $html, 'Nail Trimming' ) && str_contains( $html, '02/03/2030 · Morning (8–12)' ) );
 wp_set_current_user( $other->ID );
 t( 'an owner with nothing sees an invitation to book', str_contains( MyBookings::render(), 'No reservations yet' ) || str_contains( MyBookings::render(), 'PAW-CCCCCC' ) );
 
@@ -92,7 +103,7 @@ t( 'an owner with nothing sees an invitation to book', str_contains( MyBookings:
 wp_set_current_user( 0 );
 $html = Profile::render();
 t( 'signed out: sign in and create account tabs', str_contains( $html, 'data-paw-tab="signin"' ) && str_contains( $html, 'data-paw-tab="signup"' ) && str_contains( $html, 'autocomplete="new-password"' ) );
-t( 'staff pointed to the WordPress login', str_contains( $html, 'wp-login.php' ) );
+t( 'no separate staff sign-in line', ! str_contains( $html, 'Pawfectly staff' ) );
 $zoe->first_name   = 'Zoë';
 $zoe->last_name    = '<O>';
 $zoe->display_name = 'Zoë <O>';

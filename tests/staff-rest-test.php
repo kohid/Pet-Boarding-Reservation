@@ -46,6 +46,7 @@ t( 'staff allowed', true === StaffRest::can() );
 $list = StaffRest::list( req( array(), array( 'status' => 'pending' ) ) )->get_data();
 t( 'list rows with summary fields', 1 === count( $list['rows'] ) && 'PAW-7K3QX9' === $list['rows'][0]['reference'] && "Zoë O'Brien" === $list['rows'][0]['owner'] && 3 === $list['rows'][0]['nights'] && 'Pending' === $list['rows'][0]['status_label'] );
 t( 'list counts per status', isset( $list['counts']['pending'] ) );
+t( 'list rows carry the booking type and service', 'boarding' === $list['rows'][0]['booking_type'] && '' === $list['rows'][0]['service_name'] );
 t( 'list rows carry no health details', ! isset( $list['rows'][0]['details'] ) );
 
 $detail = StaffRest::detail( req( array(), array( 'id' => (string) $id ) ) );
