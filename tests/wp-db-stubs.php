@@ -94,7 +94,11 @@ class WP_REST_Request {
 	public $params  = array();
 	public $files   = array();
 	public $headers = array();
+	public $json    = array();
+	public $url     = array();
 	public function get_body_params() { return $this->params; }
+	public function get_json_params() { return $this->json; }
+	public function get_param( $key ) { return $this->url[ $key ] ?? $this->json[ $key ] ?? $this->params[ $key ] ?? null; }
 	public function get_file_params() { return $this->files; }
 	public function get_header( $key ) { return $this->headers[ strtolower( str_replace( '-', '_', $key ) ) ] ?? null; }
 }
@@ -108,5 +112,7 @@ class WP_REST_Response {
 	}
 	public function get_data() { return $this->data; }
 	public function get_status() { return $this->status; }
+	public $sent_headers = array();
+	public function header( $key, $value ) { $this->sent_headers[ $key ] = $value; }
 }
 
