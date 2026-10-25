@@ -103,6 +103,10 @@ final class Admin {
 
 	/** An answer as a person reads it: option labels, country names, m/d/Y dates. Not escaped. */
 	public static function answer_text( array $field, string $value ): string {
+		if ( 'agree' === $field['type'] ) {
+			// An unticked box is a real answer: staff need to see "No" (e.g. no consent to texts).
+			return '1' === $value ? __( 'Yes', 'pawfectly-reservations' ) : __( 'No', 'pawfectly-reservations' );
+		}
 		if ( '' === $value ) {
 			return '';
 		}

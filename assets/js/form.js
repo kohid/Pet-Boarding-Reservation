@@ -122,13 +122,19 @@
 		return input ? input.value.trim() : '';
 	}
 
-	/** A pet's conditional question looks at that pet's answers and at the booking's. */
-	function isShown(key) {
+	/**
+	 * A pet's conditional question looks at that pet's answers and at the booking's. A hidden
+	 * answer counts as empty, as on the server, so a service hidden by switching to Boarding
+	 * also hides the groomer and schedule questions that depend on it.
+	 */
+	function isShown(key, depth) {
 		var k = parse(key);
 		var cond = CFG.fields[k.id].showIf;
+		depth = depth || 0;
 		return Object.keys(cond).every(function (target) {
 			var wanted = cond[target];
-			var v = value(k.n === null ? target : petKey(target, k.n));
+			var targetKey = k.n === null ? target : petKey(target, k.n);
+			var v = depth < 5 && !isShown(targetKey, depth + 1) ? '' : value(targetKey);
 			return Array.isArray(wanted) ? wanted.indexOf(v) !== -1 : v === wanted;
 		});
 	}
@@ -287,7 +293,7 @@
 		}
 		if (type === 'both') {
 			for (n = 0; n < pets; n++) {
-				var svc = value('pets.' + n + '.service');
+				var svc = isShown('pets.' + n + '.service') ? value('pets.' + n + '.service') : '';
 				if (svc !== '' && svc !== 'none') {
 					return null;
 				}
@@ -1217,6 +1223,10 @@
 
 	/* ---------- Start ---------- */
 
+	// The v0.3 draft (owner details) is no longer read: don't leave it on shared computers.
+	try {
+		localStorage.removeItem('paw_draft_v1');
+	} catch (err) { /* Ignore. */ }
 	setupDates();
 	restoreDraft();
 	applyPrefill();

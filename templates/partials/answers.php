@@ -11,6 +11,7 @@
  */
 
 use Pawfectly\Admin;
+use Pawfectly\Fields;
 use Pawfectly\Reservations;
 use Pawfectly\Services;
 use Pawfectly\Uploads;
@@ -44,7 +45,7 @@ $paw_row = static function ( array $paw_f, array $values, array $paw_files, stri
 				?>
 			</p>
 		</dd>
-	<?php elseif ( 'agree' === $paw_f['type'] ) : ?>
+	<?php elseif ( 'agree' === $paw_f['type'] && 'waiver_agree' === $paw_id_f ) : ?>
 		<dt><?php echo esc_html( $paw_f['label'] ); ?></dt>
 		<dd>
 			<?php esc_html_e( 'Agreed to the waiver below', 'pawfectly-reservations' ); ?>
@@ -87,6 +88,11 @@ $paw_row = static function ( array $paw_f, array $values, array $paw_files, stri
 		<h2><?php echo esc_html( $paw_step['title'] ); ?></h2>
 		<dl class="paw-answers">
 			<?php
+			if ( 'stay' === $paw_step['id'] ) {
+				foreach ( Fields::welcome() as $paw_f ) { // What was booked, chosen on the welcome screen.
+					$paw_row( $paw_f, $values, array(), 'welcome' );
+				}
+			}
 			foreach ( $paw_booking as $paw_f ) {
 				$paw_row( $paw_f, $values, (array) $r['files'], $paw_step['id'] );
 			}

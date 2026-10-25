@@ -127,4 +127,20 @@ t( 'detail: a section per pet, named', str_contains( $dhtml, 'Pet 1: Rex' ) && s
 t( 'detail: each pet lists its own file', strpos( $dhtml, 'rex.pdf' ) < strpos( $dhtml, 'Pet 2: Tom' ) && strpos( $dhtml, 'tom.pdf' ) > strpos( $dhtml, 'Pet 2: Tom' ) );
 t( 'detail: the groomer is shown', str_contains( $dhtml, 'Ana' ) );
 
+// Contact consent and booking type in the staff view.
+$yes = $two;
+$yes['booking_type'] = 'both';
+$yes['details']['contact_consent'] = '1';
+ob_start();
+Admin::render_detail( $yes );
+$yhtml = ob_get_clean();
+t( 'staff view: booking type shown', str_contains( $yhtml, 'What would you like to book?' ) && str_contains( $yhtml, 'Boarding + grooming' ) );
+t( 'staff view: consent given reads Yes, waiver shown once', str_contains( $yhtml, 'Contact (optional)' ) && 1 === substr_count( $yhtml, 'Agreed to the waiver below' ) );
+$no = $two;
+ob_start();
+Admin::render_detail( $no );
+$nhtml = ob_get_clean();
+t( 'staff view: no consent reads No', (bool) preg_match( '/Contact \(optional\)<\/dt>\s*<dd>\s*No\s*<\/dd>/', $nhtml ) );
+t( 'CSV: consent as Yes / No', 'Yes' === Admin::answer_text( Fields::all()['contact_consent'], '1' ) && 'No' === Admin::answer_text( Fields::all()['contact_consent'], '' ) );
+
 done();

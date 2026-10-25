@@ -47,7 +47,10 @@ final class Mailer {
 		}
 		if ( '' !== Reservations::service_names( $r ) ) {
 			if ( count( $pets ) < 2 ) {
-				$summary[ __( 'Service', 'pawfectly-reservations' ) ] = Reservations::service_names( $r );
+				$groomer = (string) ( $pets[0]['groomer'] ?? '' );
+				$summary[ __( 'Service', 'pawfectly-reservations' ) ] = Reservations::service_names( $r )
+					/* translators: %s: groomer's name */
+					. ( '' !== $groomer && 'any' !== $groomer ? ', ' . sprintf( __( 'groomer %s', 'pawfectly-reservations' ), $groomer ) : '' );
 			}
 			if ( 'both' === $type && ! empty( $r['appointment_date'] ) ) {
 				$summary[ __( 'Grooming day', 'pawfectly-reservations' ) ] = self::date( (string) $r['appointment_date'] );
