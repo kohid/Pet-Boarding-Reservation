@@ -18,6 +18,7 @@ final class Accounts {
 	public const META_VERIFIED = 'paw_email_verified';
 	public const META_HASH     = 'paw_verify_hash';
 	public const META_EXPIRES  = 'paw_verify_expires';
+	public const META_PENDING_EMAIL = 'paw_pending_email';
 
 	private const TOKEN_TTL = 7 * DAY_IN_SECONDS;
 
@@ -66,34 +67,26 @@ final class Accounts {
 		return (int) $id;
 	}
 
-	/** Roles that may use the owner sign-in. Everyone else signs in on wp-login.php. */
+	/** Roles that count as plain customers (their reservations link to their account). */
 	private const CUSTOMER_ROLES = array( self::ROLE, 'subscriber', 'customer' );
 
 	/**
-	 * Owner sign-in. Privileged accounts are refused before the password is looked at, so this
-	 * endpoint cannot be used to test staff passwords outside wp-login's protections.
+	 * Sign-in for everyone, by email or username. wp_signon runs the `authenticate` filter, so
+	 * lockout and security plugins still apply, sets the cookie and fires `wp_login`.
 	 *
 	 * @return \WP_User|\WP_Error
 	 */
-	public static function authenticate( string $email, string $password ) {
-		$user = get_user_by( 'email', $email );
-		if ( $user && ! self::may_use_customer_login( $user ) ) {
-			return new \WP_Error(
-				'paw_staff_login',
-				/* translators: %s: WordPress login page address */
-				sprintf( __( 'Staff sign in on the WordPress login page: %s', 'pawfectly-reservations' ), wp_login_url() ),
-				array( 'status' => 403, 'login_url' => wp_login_url() )
-			);
-		}
-		// wp_authenticate runs the `authenticate` filter, so lockout and 2FA plugins still apply.
-		$checked = $user ? wp_authenticate( $user->user_login, $password ) : null;
-		if ( ! $checked instanceof \WP_User ) {
+	public static function authenticate( string $login, string $password, bool $remember = false ) {
+		$user = is_email( $login ) ? get_user_by( 'email', $login ) : get_user_by( 'login', $login );
+		$done = $user ? wp_signon( array( 'user_login' => $user->user_login, 'user_password' => $password, 'remember' => $remember ), is_ssl() ) : null;
+		if ( ! $done instanceof \WP_User ) {
 			return new \WP_Error( 'paw_login', __( 'The email or password is not right.', 'pawfectly-reservations' ), array( 'status' => 400 ) );
 		}
-		return $checked;
+		wp_set_current_user( (int) $done->ID );
+		return $done;
 	}
 
-	/** Only plain customer accounts: no staff capability, nothing beyond reading. */
+	/** Plain customer accounts: no staff capability, nothing beyond reading. */
 	public static function may_use_customer_login( \WP_User $user ): bool {
 		return ! array_diff( (array) $user->roles, self::CUSTOMER_ROLES ) && ! $user->has_cap( Activator::CAPABILITY ) && ! $user->has_cap( 'edit_posts' );
 	}
@@ -115,11 +108,27 @@ final class Accounts {
 		return $token;
 	}
 
+	/** The site's Administration Email Address (any letter case). It belongs to the site owner. */
+	public static function is_admin_email( string $email ): bool {
+		$admin = strtolower( trim( (string) get_option( 'admin_email' ) ) );
+		return '' !== $admin && strtolower( trim( $email ) ) === $admin;
+	}
+
 	public static function verify( int $user_id, string $token ): bool {
 		$hash    = (string) get_user_meta( $user_id, self::META_HASH, true );
 		$expires = (int) get_user_meta( $user_id, self::META_EXPIRES, true );
 		if ( '' === $hash || $expires < time() || ! hash_equals( $hash, hash( 'sha256', $token ) ) ) {
 			return false;
+		}
+		// A staff email change waits for this click on the new address.
+		$pending = (string) get_user_meta( $user_id, self::META_PENDING_EMAIL, true );
+		if ( '' !== $pending ) {
+			delete_user_meta( $user_id, self::META_PENDING_EMAIL );
+			$other = email_exists( $pending );
+			if ( ( $other && (int) $other !== $user_id ) || self::is_admin_email( $pending ) ) {
+				return false;
+			}
+			wp_update_user( array( 'ID' => $user_id, 'user_email' => $pending ) );
 		}
 		update_user_meta( $user_id, self::META_VERIFIED, '1' );
 		delete_user_meta( $user_id, self::META_HASH );
@@ -198,11 +207,15 @@ final class Accounts {
 		exit;
 	}
 
-	/** Starts verification: new token, emailed link. */
-	public static function send_verification( int $user_id ): void {
+	/** Starts verification: new token, emailed link (to $to when given, e.g. a pending new address). */
+	public static function send_verification( int $user_id, string $to = '' ): void {
 		$user = get_user_by( 'id', $user_id );
 		if ( $user ) {
-			Mailer::verify_email( $user, self::verify_url( $user_id, self::new_token( $user_id ) ) );
+			$recipient = clone $user;
+			if ( '' !== $to ) {
+				$recipient->user_email = $to;
+			}
+			Mailer::verify_email( $recipient, self::verify_url( $user_id, self::new_token( $user_id ) ) );
 		}
 	}
 

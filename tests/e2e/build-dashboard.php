@@ -14,6 +14,9 @@ function shortcode_atts( $pairs, $atts, $tag = '' ) { return array_merge( $pairs
 function wp_enqueue_style() {}
 function wp_enqueue_script() {}
 function wp_add_inline_script() {}
+function wp_enqueue_media() {}
+function translate_user_role( $r ) { return $r; }
+function get_users( $args = array() ) { return array(); }
 
 use Pawfectly\Accounts;
 use Pawfectly\Activator;

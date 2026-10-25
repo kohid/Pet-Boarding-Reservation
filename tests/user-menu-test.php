@@ -16,6 +16,10 @@ t( 'staff: dashboard first', array( 'dashboard', 'bookings', 'profile', '—', '
 t( 'admin: settings too', array( 'dashboard', 'bookings', 'profile', 'settings', '—', 'logout' ) === $keys( UserMenu::items( array( 'logged_in' => true, 'staff' => true, 'admin' => true, 'urls' => $urls ) ) ) );
 t( 'items without a page are left out', array( 'profile', '—', 'logout' ) === $keys( UserMenu::items( array( 'logged_in' => true, 'staff' => false, 'admin' => false, 'urls' => array_merge( $urls, array( 'bookings' => '' ) ) ) ) ) );
 t( 'guest without sign-up page', array( 'login' ) === $keys( UserMenu::items( array( 'logged_in' => false, 'staff' => false, 'admin' => false, 'urls' => array_merge( $urls, array( 'signup' => '' ) ) ) ) ) );
+$wp = array( 'logged_in' => true, 'staff' => true, 'admin' => true, 'wp_admin' => true, 'urls' => array_merge( $urls, array( 'wp_admin' => '/wp-admin/' ) ) );
+t( 'admin-email account / developer: Admin Panel after Settings, before Log Out', array( 'dashboard', 'bookings', 'profile', 'settings', 'wp_admin', '—', 'logout' ) === $keys( UserMenu::items( $wp ) ) );
+t( 'Admin Panel label and link', (bool) array_filter( UserMenu::items( $wp ), fn( $i ) => ( $i['key'] ?? '' ) === 'wp_admin' && 'Admin Panel' === $i['label'] && '/wp-admin/' === $i['url'] ) );
+t( 'other administrators: no Admin Panel', ! in_array( 'wp_admin', $keys( UserMenu::items( array_merge( $wp, array( 'wp_admin' => false ) ) ) ), true ) );
 t( 'labels', 'My Bookings' === UserMenu::items( array( 'logged_in' => true, 'staff' => false, 'admin' => false, 'urls' => $urls ) )[0]['label'] );
 t( 'initials: two names', 'JM' === UserMenu::initials( 'Jay Miralles' ) );
 t( 'initials: one name, accents', 'Z' === UserMenu::initials( 'zoë' ) );

@@ -1,7 +1,7 @@
 <?php
 /**
- * [pawfectly_my_profile]: signed out, Sign in / Create account tabs for owners (staff are pointed
- * to the WordPress login); signed in, details and password forms for everyone.
+ * [pawfectly_my_profile]: signed in, details and password forms for everyone; signed out, the
+ * login panel in place (the same one [pawfectly_login] shows).
  *
  * @package Pawfectly
  */
@@ -23,6 +23,7 @@ final class Profile {
 		wp_enqueue_style( 'paw-account', PAW_URL . 'assets/css/account.css', array(), PAW_VERSION );
 		wp_enqueue_script( 'paw-account', PAW_URL . 'assets/js/account.js', array(), PAW_VERSION, true );
 		wp_add_inline_script( 'paw-account', 'window.PAW_ACCOUNT = ' . wp_json_encode( self::config() ) . ';', 'before' );
+		Login::password_toggle();
 	}
 
 	public static function config(): array {
@@ -33,6 +34,7 @@ final class Profile {
 				'failed'        => __( 'Something went wrong. Please try again.', 'pawfectly-reservations' ),
 				'network'       => __( "We couldn't reach the server. Please try again.", 'pawfectly-reservations' ),
 				'saving'        => __( 'Saving…', 'pawfectly-reservations' ),
+				'mismatch'      => __( "The two passwords don't match.", 'pawfectly-reservations' ),
 				'confirmCancel' => __( 'Cancel this reservation? This cannot be undone online.', 'pawfectly-reservations' ),
 			),
 		);
@@ -59,14 +61,12 @@ final class Profile {
 	}
 
 	public static function render(): string {
+		$user = wp_get_current_user();
+		if ( ! $user->exists() ) {
+			return Login::panel( (string) ( get_permalink() ?: home_url( '/' ) ) );
+		}
 		self::enqueue();
-		$user  = wp_get_current_user();
-		$here  = (string) ( get_permalink() ?: home_url( '/' ) );
-		$links = array(
-			'lost'     => wp_lostpassword_url( $here ),
-			'staff'    => wp_login_url( $here ),
-			'bookings' => Pages::url( MyBookings::TAG ),
-		);
+		$links = array( 'bookings' => Pages::url( MyBookings::TAG ) );
 		$phone = $user->exists() ? (string) get_user_meta( (int) $user->ID, Accounts::META_PHONE, true ) : '';
 
 		ob_start();

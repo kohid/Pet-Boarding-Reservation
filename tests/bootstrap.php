@@ -94,9 +94,10 @@ $GLOBALS['paw_roles'] = array();
 class Fake_Role {
 	public $name;
 	public $caps = array();
+	public $capabilities = array(); // WP_Role's real property name.
 	public function __construct( $name ) { $this->name = $name; }
-	public function add_cap( $cap ) { $this->caps[ $cap ] = true; }
-	public function remove_cap( $cap ) { unset( $this->caps[ $cap ] ); }
+	public function add_cap( $cap ) { $this->caps[ $cap ] = true; $this->capabilities[ $cap ] = true; }
+	public function remove_cap( $cap ) { unset( $this->caps[ $cap ], $this->capabilities[ $cap ] ); }
 	public function has_cap( $cap ) { return ! empty( $this->caps[ $cap ] ); }
 }
 foreach ( array( 'administrator' => 'Administrator', 'editor' => 'Editor', 'shop_manager' => 'Shop manager', 'subscriber' => 'Subscriber' ) as $slug => $label ) {

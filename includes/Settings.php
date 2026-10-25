@@ -38,6 +38,9 @@ final class Settings {
 			'waiver'          => '<p>' . __( 'I understand that boarding my pet involves inherent risks. I certify that my pet is in good health and has not been exposed to any contagious diseases within the last 30 days. I agree to hold harmless the boarding facility, its owners, employees, and agents from any and all liability for injury, illness, or death of my pet, or for damage to personal property, except in cases of proven negligence or intentional misconduct. I authorize the facility to seek emergency veterinary care if needed and agree to be responsible for all associated costs. I understand that every effort will be made to contact me before treatment, but in an emergency, care will be provided immediately. I certify that all information provided in this form is accurate and complete.', 'pawfectly-reservations' ) . '</p>',
 			'default_country' => 'US',
 			'roles'           => array(),
+			'currency'        => '$',
+			'boarding_rates'  => array( 'small' => '', 'large' => '', 'other' => '' ),
+			'services'        => Services::defaults(),
 		);
 	}
 
@@ -73,17 +76,60 @@ final class Settings {
 			'waiver'          => '' !== $waiver ? $waiver : $defaults['waiver'],
 			'default_country' => isset( Fields::countries()[ $code ] ) ? $code : 'US',
 			'roles'           => $roles,
+		) + self::sanitize_pricing( $input, self::get() );
+	}
+
+	/**
+	 * Currency, boarding rates and services. Anything not sent keeps its saved value, so the
+	 * wp-admin form (which has no pricing fields) never wipes prices; an invalid price keeps the
+	 * saved one too.
+	 */
+	private static function sanitize_pricing( array $input, array $current ): array {
+		$currency = mb_substr( sanitize_text_field( (string) ( $input['currency'] ?? $current['currency'] ) ), 0, 3 );
+
+		$rates = array();
+		foreach ( array( 'small', 'large', 'other' ) as $key ) {
+			$was           = (string) ( $current['boarding_rates'][ $key ] ?? '' );
+			$sent          = $input['boarding_rates'][ $key ] ?? $was;
+			$rates[ $key ] = Services::clean_price( $sent ) ?? $was;
+		}
+
+		$services = array();
+		$sent_all = is_array( $input['services'] ?? null ) ? $input['services'] : array();
+		foreach ( Services::defaults() as $id => $default ) {
+			$was  = array_merge( $default, is_array( $current['services'][ $id ] ?? null ) ? $current['services'][ $id ] : array() );
+			$sent = is_array( $sent_all[ $id ] ?? null ) ? $sent_all[ $id ] : array();
+			$name = mb_substr( sanitize_text_field( (string) ( $sent['name'] ?? $was['name'] ) ), 0, 60 );
+
+			$services[ $id ] = array(
+				'enabled'  => array_key_exists( 'enabled', $sent ) ? ! empty( $sent['enabled'] ) : (bool) $was['enabled'],
+				'name'     => '' !== $name ? $name : $default['name'],
+				'time'     => mb_substr( sanitize_text_field( (string) ( $sent['time'] ?? $was['time'] ) ), 0, 60 ),
+				'small'    => Services::clean_price( $sent['small'] ?? $was['small'] ) ?? (string) $was['small'],
+				'large'    => Services::clean_price( $sent['large'] ?? $was['large'] ) ?? (string) $was['large'],
+				'included' => sanitize_textarea_field( (string) ( $sent['included'] ?? $was['included'] ) ),
+			);
+		}
+
+		return array(
+			'currency'       => '' !== $currency ? $currency : '$',
+			'boarding_rates' => $rates,
+			'services'       => $services,
 		);
 	}
 
-	/** Ticked roles get the staff capability, every other role loses it; administrators always keep it. */
+	/** Ticked roles get the staff capability, every other role loses it; administrators and Developers always keep it. */
 	private static function apply_roles( array $roles ): void {
+		$developer = get_role( Access::DEVELOPER );
+		if ( $developer ) {
+			$developer->add_cap( Activator::CAPABILITY );
+		}
 		foreach ( array_keys( wp_roles()->role_names ) as $slug ) {
 			$role = get_role( $slug );
 			if ( ! $role ) {
 				continue;
 			}
-			if ( 'administrator' === $slug || in_array( $slug, $roles, true ) ) {
+			if ( in_array( $slug, array( 'administrator', Access::DEVELOPER ), true ) || in_array( $slug, $roles, true ) ) {
 				$role->add_cap( Activator::CAPABILITY );
 			} else {
 				$role->remove_cap( Activator::CAPABILITY );

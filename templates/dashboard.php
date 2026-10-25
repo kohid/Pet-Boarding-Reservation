@@ -26,6 +26,7 @@ $paw_tiles = array(
 	'check_ins'  => __( 'Check-ins today', 'pawfectly-reservations' ),
 	'check_outs' => __( 'Check-outs today', 'pawfectly-reservations' ),
 	'boarding'   => __( 'Pets boarding tonight', 'pawfectly-reservations' ),
+	'grooming'   => __( 'Grooming today', 'pawfectly-reservations' ),
 	'pending'    => __( 'Requests to review', 'pawfectly-reservations' ),
 );
 ?>
@@ -43,7 +44,7 @@ $paw_tiles = array(
 				</a>
 			<?php endforeach; ?>
 			<?php if ( '' !== $config['urls']['settings'] ) : ?>
-				<a href="<?php echo esc_url( $config['urls']['settings'] ); ?>" class="paw-dash__nav-item" data-paw-nav="settings">
+				<a href="<?php echo esc_url( $config['urls']['settings'] ); ?>" class="paw-dash__nav-item" data-paw-nav="settings"<?php echo 'settings' === $view ? ' aria-current="page"' : ''; ?>>
 					<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><?php echo $paw_icon['settings']; // phpcs:ignore WordPress.Security.EscapeOutput ?></svg>
 					<span><?php esc_html_e( 'Settings', 'pawfectly-reservations' ); ?></span>
 				</a>
@@ -93,6 +94,7 @@ $paw_tiles = array(
 					</div>
 				</div>
 				<div class="paw-dash__tabs" role="tablist" data-paw-status-tabs></div>
+				<p class="paw-dash__export"><a class="paw-dash__btn paw-dash__btn--light" data-paw-export href="<?php echo esc_url( $config['urls']['export'] ); ?>"><?php esc_html_e( 'Export CSV', 'pawfectly-reservations' ); ?></a></p>
 				<div class="paw-dash__tablewrap">
 					<table class="paw-dash__table">
 						<thead>
@@ -115,6 +117,13 @@ $paw_tiles = array(
 				</div>
 			</div>
 		</section>
+
+		<?php if ( '' !== $config['urls']['settings'] ) : ?>
+			<section data-paw-view="settings" aria-labelledby="paw-dash-settings"<?php echo 'settings' === $view ? '' : ' hidden'; ?>>
+				<h2 class="screen-reader-text" id="paw-dash-settings"><?php esc_html_e( 'Settings', 'pawfectly-reservations' ); ?></h2>
+				<?php include PAW_DIR . 'templates/partials/dashboard-settings.php'; ?>
+			</section>
+		<?php endif; ?>
 	</main>
 
 	<div class="paw-dash__overlay" data-paw-overlay hidden></div>

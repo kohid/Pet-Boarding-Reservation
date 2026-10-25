@@ -1,8 +1,8 @@
 # Pawfectly Pet Boarding Reservation
 
-A WordPress plugin for Pawfectly's boarding reservations. Owners fill in a 7-step form: owner details, pet, stay dates, health and vaccination records, care instructions, emergency contacts and vet, and a signed liability waiver. Staff review, confirm and export reservations in wp-admin.
+A WordPress plugin for Pawfectly's boarding and grooming reservations. Owners fill in a 7-step form: owner details, pet, what they're booking (boarding, grooming, or both) with an estimated price, health and vaccination records, care instructions, emergency contacts and vet, and a signed liability waiver. Staff review, confirm and export reservations in the front-end dashboard.
 
-Requires WordPress 6.0+ and PHP 8.0+. This is v0.2. See `docs/superpowers/specs/` for what is and is not built.
+Requires WordPress 6.0+ and PHP 8.0+. This is v0.3. See `docs/superpowers/specs/` for what is and is not built.
 
 ## Install
 
@@ -15,8 +15,9 @@ Requires WordPress 6.0+ and PHP 8.0+. This is v0.2. See `docs/superpowers/specs/
 | Shortcode | For | Shows |
 |---|---|---|
 | `[pawfectly_reservation_form]` | everyone | The reservation form. Signed-out visitors can sign in or create an account on the owner step; signed-in owners get their details filled in. |
-| `[pawfectly_user_menu]` | everyone | The avatar and dropdown for your site header (an Elementor Shortcode widget in the header template). Guests: Sign In / Sign Up. Signed in: Dashboard (staff), My Bookings, My Profile, Settings (admins), Log Out. `align="left"` opens it to the right. |
-| `[pawfectly_my_profile]` | owners | Sign in / Create account (link to `…#signup` to open the second tab), then name, email, phone and password. |
+| `[pawfectly_login]` | everyone | The one sign-in and create-account page for owners, staff and admins. `?tab=signup` opens Create account. WordPress's own login page sends people here (see below). |
+| `[pawfectly_user_menu]` | everyone | The avatar and dropdown for your site header (an Elementor Shortcode widget in the header template). Guests: Sign In / Sign Up. Signed in: Dashboard (staff), My Bookings, My Profile, Settings (admins), Admin Panel (see below), Log Out. `align="left"` opens it to the right. |
+| `[pawfectly_my_profile]` | everyone signed in | Name, email, phone and password. Signed out, it shows the login panel in place. |
 | `[pawfectly_my_bookings]` | owners | Their reservations, with Cancel while a stay is Pending or Confirmed and check-in is still ahead. |
 | `[pawfectly_dashboard]` | staff | The staff dashboard: Overview and Reservations. It fills the browser; `fullscreen="no"` keeps it in the page column, and `view="reservations"` opens that view first. |
 
@@ -26,18 +27,54 @@ Requires WordPress 6.0+ and PHP 8.0+. This is v0.2. See `docs/superpowers/specs/
 
 - **Accounts are optional.** On the owner step, visitors can tick "Create an account with these details" and choose a password. The account is made once the reservation is saved, and they're signed in. Visitors who already have an account can click "Sign in" right there; the page reloads with their details filled in from their last reservation, never the dates, health answers, files or signature.
 - **New accounts confirm their email with a link,** valid for 7 days. Until they do, My Bookings shows only reservations made while signed in. After confirming, it also shows earlier reservations made with that email.
-- **Staff and administrators** can't sign in on the owner pages. They use the normal WordPress login, so any login protection you have still applies.
+- **Everyone signs in on the login page,** owners, staff and admins alike, with their email or username. It goes through WordPress's own sign-in, so login-limit and security plugins still apply. After signing in, staff land on the Dashboard and owners on My Bookings (or wherever they were headed).
+- **Create account** asks for the password twice, and every password box has a Show/Hide button, on the booking form too.
+- **Changing email in My Profile:** owners switch at once and confirm the new address. Staff keep their current address until they click the link sent to the new one. The admin-email account changes its email in wp-admin.
 - **Forgotten passwords** use WordPress's own reset page.
+
+## Who can open the WordPress dashboard (wp-admin)
+
+Only two kinds of account can open wp-admin, and only they see **Admin Panel** in the account menu:
+- the account whose email is the site's **Administration Email Address** (Settings → General)
+- users with the **Developer** role (created by the plugin with full administrator rights)
+
+Everyone else, other administrators and staff included, is sent to the front-end Dashboard or My Bookings, and doesn't see the WordPress toolbar. File downloads, the logo picker and background requests keep working.
+
+`/wp-login.php` sends people to the login page. Log out, lost password and reset password still work on wp-login.php. If a two-factor plugin needs wp-login.php, add `add_filter( 'paw_redirect_wp_login', '__return_false' );`.
+
+The Administration Email Address is reserved: nobody can sign up with it or switch their account to it through Pawfectly's pages.
+
+If no account uses the Administration Email Address and there is no Developer, administrators keep wp-admin access so the site is never locked, and the dashboard's Settings view shows a warning. To turn the restriction and the login redirect off completely, put `define( 'PAW_WP_ADMIN_OPEN', true );` in `wp-config.php`.
 
 ## Staff dashboard
 
 Put `[pawfectly_dashboard]` on a page, for example `/dashboard/`.
-- **Overview:** today's check-ins and check-outs, pets boarding tonight, requests to review, and a 14-night chart of pets per night.
+- **Overview:** today's check-ins and check-outs, pets boarding tonight, grooming appointments today, requests to review, and a 14-night chart of pets per night.
 - **Reservations:** search, status tabs, a check-in date range, and a side panel with every answer, the vaccination files, the signature, status change (optionally emailing the owner), staff notes, history and delete.
 
-The **Pawfectly staff** role can use the dashboard without any other wp-admin access. Give it to front-desk people under **Users**. You can also tick other roles in **Settings → Who can manage reservations**.
+- **Export CSV** on the Reservations view downloads the current filter.
+- **Settings** (administrators, Developers and the admin-email account): everything below, including prices.
 
-## Settings (Pawfectly → Settings)
+The **Pawfectly staff** role can use the dashboard. Give it to front-desk people under **Users**. You can also tick other roles in **Settings → Who can manage reservations**.
+
+## Grooming services and prices
+
+The booking form asks what the owner wants to book: **Boarding**, **Grooming**, or **Boarding + grooming**. Grooming is for dogs, and asks the dog's size (under 25 lbs, or 25 lbs & up), a grooming day, and for grooming only, a morning or afternoon drop-off. One service per booking:
+
+| Service | Starts at |
+|---|---|
+| Nail Trimming | $15 small / $20 large |
+| Nail Membership | $15 / $20 a month |
+| Bath Membership | $59 a month |
+| Basic Bath, Deluxe Bath, Basic Haircuts, Premium Haircuts | Price on request until you set a price |
+
+In **Dashboard → Settings → Pricing** you can turn each service on or off and edit its name, time, small and large dog prices, and "What's included" list. You can also set nightly boarding rates (small dog, large dog, cat or other) and the currency symbol. A blank price shows "Price on request".
+
+The form shows an estimated total, labelled as an estimate: payment is taken at Pawfectly and staff confirm the final price. Each booking keeps the prices it was made with, so later price changes don't alter it.
+
+## Settings (Dashboard → Settings)
+
+The general settings (not the prices) are also on **Pawfectly → Settings** in wp-admin, for the accounts that can open it, along with the Shortcodes list and the private-files check.
 
 - **Business name** and **logo.** The logo shows in a circle on the welcome screen and in emails. Until you choose one, a paw placeholder is shown.
 - **Send new reservations to.** One or more staff email addresses.
@@ -57,11 +94,11 @@ Statuses: Pending (new), Confirmed, Declined, Checked in, Completed, Cancelled.
 
 ## Emails
 
-- **Owner:** "We've received your reservation request — PAW-XXXXXX", with dates and pet name.
-- **Staff:** "New reservation request PAW-XXXXXX: Pet (dates)", with a link to the reservation.
+- **Owner:** "We've received your reservation request — PAW-XXXXXX", with dates (or the grooming day and time), pet name, service and estimated total.
+- **Staff:** "New reservation request PAW-XXXXXX: Pet (dates)", with a link that opens the reservation in the dashboard.
 - **Status change** (optional): "Your reservation PAW-XXXXXX is now Confirmed".
 
-Health details and files are never emailed; staff read them in wp-admin. Sending uses `wp_mail`, so use an SMTP plugin if your host's mail is unreliable.
+Health details and files are never emailed; staff read them in the dashboard. Sending uses `wp_mail`, so use an SMTP plugin if your host's mail is unreliable.
 
 ## Private files
 
@@ -98,15 +135,15 @@ On Nginx, also set `client_max_body_size 32m;`. On Apache, check that `LimitRequ
 
 The plugin updates itself from this repository's GitHub releases, on the normal Plugins screen. This works while the repository is public; a private repository would need a token for downloads.
 
-To publish a release: set the same version in the plugin header and `PAW_VERSION`, commit, then push a tag like `v0.1.0`. You can also run **Actions → Release** with the tag. The workflow checks the version, runs the tests, and attaches `pawfectly-reservations.zip`.
+To publish a release: set the same version in the plugin header and `PAW_VERSION`, commit, then push a tag like `v0.3.0`. You can also run **Actions → Release** with the tag. The workflow checks the version, runs the tests, and attaches `pawfectly-reservations.zip`.
 
 ## Development
 
 ```bash
 bash bin/test.sh                                          # PHP unit tests (no WordPress needed)
 php tests/e2e/build.php && php tests/e2e/build.php signed-in && node tests/e2e/form-e2e.js   # the form
-php tests/e2e/build-account.php && node tests/e2e/account-e2e.js                          # menu, profile, bookings
-php tests/e2e/build-dashboard.php && node tests/e2e/dashboard-e2e.js                      # staff dashboard
+php tests/e2e/build-account.php && node tests/e2e/account-e2e.js                          # menu, login, profile, bookings
+php tests/e2e/build-dashboard.php && node tests/e2e/dashboard-e2e.js                      # staff dashboard and settings
 bin/build-release.sh                                      # dist/pawfectly-reservations.zip
 ```
 

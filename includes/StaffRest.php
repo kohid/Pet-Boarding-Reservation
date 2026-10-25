@@ -20,7 +20,21 @@ final class StaffRest {
 		return current_user_can( Activator::CAPABILITY );
 	}
 
+	public static function can_settings(): bool {
+		return Access::can_manage_settings( wp_get_current_user() );
+	}
+
 	public static function routes(): void {
+		register_rest_route(
+			Rest::NS,
+			'/staff/settings',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( self::class, 'save_settings' ),
+				'permission_callback' => array( self::class, 'can_settings' ),
+			)
+		);
+
 		$id     = '/staff/reservations/(?P<id>\d+)';
 		$routes = array(
 			array( '/staff/stats', 'GET', 'stats' ),
@@ -41,6 +55,41 @@ final class StaffRest {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Saves the dashboard's Settings view. Keys not sent keep their saved values; a price that is
+	 * not a number is reported on its field and nothing is saved.
+	 *
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public static function save_settings( \WP_REST_Request $req ) {
+		$in     = (array) $req->get_json_params();
+		$errors = array();
+		$bad    = __( 'Enter an amount like 45 or 45.50, or leave it blank for "Price on request".', 'pawfectly-reservations' );
+		foreach ( (array) ( $in['boarding_rates'] ?? array() ) as $key => $price ) {
+			if ( null === Services::clean_price( $price ) ) {
+				$errors[ 'boarding_rates.' . sanitize_key( (string) $key ) ] = $bad;
+			}
+		}
+		foreach ( (array) ( $in['services'] ?? array() ) as $id => $svc ) {
+			foreach ( array( 'small', 'large' ) as $size ) {
+				if ( is_array( $svc ) && array_key_exists( $size, $svc ) && null === Services::clean_price( $svc[ $size ] ) ) {
+					$errors[ 'services.' . sanitize_key( (string) $id ) . '.' . $size ] = $bad;
+				}
+			}
+		}
+		if ( $errors ) {
+			return new \WP_Error( 'paw_invalid', __( 'Please check the highlighted fields.', 'pawfectly-reservations' ), array( 'status' => 400, 'fields' => $errors ) );
+		}
+		$clean = Settings::sanitize( array_merge( Settings::get(), $in ) );
+		update_option( Settings::OPTION, $clean );
+		return new \WP_REST_Response( array( 'ok' => true, 'settings' => $clean ) );
+	}
+
+	/** True when nobody could open wp-admin (administrators then keep it, see Access::gate_target). */
+	public static function lockout_risk(): bool {
+		return Access::nobody_can_enter();
 	}
 
 	public static function stats( \WP_REST_Request $req ): \WP_REST_Response {
@@ -71,7 +120,9 @@ final class StaffRest {
 						'phone'        => $r['owner_phone'],
 						'check_in'     => $r['check_in'],
 						'check_out'    => $r['check_out'],
-						'stay'         => Mailer::date( $r['check_in'] ) . ' → ' . Mailer::date( $r['check_out'] ),
+						'stay'         => Reservations::when( $r ),
+						'booking_type' => '' !== (string) ( $r['booking_type'] ?? '' ) ? (string) $r['booking_type'] : 'boarding',
+						'service_name' => Reservations::service_name( $r ),
 						'nights'       => self::nights( $r ),
 						'status'       => $r['status'],
 						'status_label' => Reservations::label( $r['status'] ),
@@ -104,7 +155,7 @@ final class StaffRest {
 				'reference'     => $r['reference'],
 				'pet_name'      => $r['pet_name'],
 				'owner'         => trim( $r['owner_first_name'] . ' ' . $r['owner_last_name'] ),
-				'stay'          => Mailer::date( $r['check_in'] ) . ' → ' . Mailer::date( $r['check_out'] ),
+				'stay'          => Reservations::when( $r ),
 				'nights'        => self::nights( $r ),
 				'status'        => $r['status'],
 				'status_label'  => Reservations::label( $r['status'] ),
@@ -117,7 +168,7 @@ final class StaffRest {
 				),
 				'signature_url' => Uploads::url( (int) $r['id'], 'sig' ),
 				'history'       => self::history( $r ),
-				'admin_url'     => Admin::detail_url( (int) $r['id'] ),
+				'admin_url'     => Access::is_admin_user( wp_get_current_user() ) ? Admin::detail_url( (int) $r['id'] ) : '',
 			)
 		);
 	}

@@ -25,6 +25,7 @@ final class Shortcode {
 		wp_enqueue_script( 'paw-signature-pad', PAW_URL . 'assets/js/signature-pad.js', array(), $v, true );
 		wp_enqueue_script( 'paw-form', PAW_URL . 'assets/js/form.js', array( 'paw-flatpickr', 'paw-signature-pad' ), $v, true );
 		wp_add_inline_script( 'paw-form', 'window.PAW_FORM = ' . wp_json_encode( self::config() ) . ';', 'before' );
+		Login::password_toggle();
 
 		return self::markup( Settings::get() );
 	}
@@ -74,7 +75,21 @@ final class Shortcode {
 			);
 		}
 
+		$services = array();
+		foreach ( Services::enabled() as $id => $svc ) {
+			$services[ $id ] = array( 'small' => $svc['small'], 'large' => $svc['large'], 'monthly' => $svc['monthly'] );
+		}
+		$settings = Settings::get();
+		$rates    = array();
+		foreach ( array( 'small', 'large', 'other' ) as $key ) {
+			$clean         = Services::clean_price( $settings['boarding_rates'][ $key ] ?? '' );
+			$rates[ $key ] = null === $clean || '' === $clean ? null : (float) $clean;
+		}
+
 		return array(
+			'services' => $services,
+			'rates'    => $rates,
+			'currency' => (string) $settings['currency'],
 			'restUrl'  => rest_url( Rest::NS . '/reservations' ),
 			'nonceUrl' => rest_url( Rest::NS . '/nonce' ),
 			'nonce'    => wp_create_nonce( 'wp_rest' ),
@@ -105,6 +120,18 @@ final class Shortcode {
 				'tooLarge'     => Uploads::total_message(),
 				'fileType'     => __( 'Only PDF, JPG or PNG files are accepted.', 'pawfectly-reservations' ),
 				'signature'    => __( 'Please sign in the box above.', 'pawfectly-reservations' ),
+				'onRequest'     => __( 'Price on request', 'pawfectly-reservations' ),
+				'perMonth'      => __( '/ month', 'pawfectly-reservations' ),
+				'estimate'      => __( 'Estimate. Payment is taken at Pawfectly; staff confirm the final price.', 'pawfectly-reservations' ),
+				/* translators: %d: number of nights */
+				'boardingOne'   => __( 'Boarding: %d night', 'pawfectly-reservations' ),
+				/* translators: %d: number of nights */
+				'boardingMany'  => __( 'Boarding: %d nights', 'pawfectly-reservations' ),
+				'total'         => __( 'Estimated total', 'pawfectly-reservations' ),
+				'plusOnRequest' => __( 'plus items priced on request', 'pawfectly-reservations' ),
+				'pastGrooming'  => __( "The grooming day can't be in the past.", 'pawfectly-reservations' ),
+				'groomingStay'  => __( 'The grooming day must fall within the stay.', 'pawfectly-reservations' ),
+				'mismatch'      => __( "The two passwords don't match.", 'pawfectly-reservations' ),
 				'passwordShort' => sprintf( /* translators: %d: minimum number of characters */ __( 'Use at least %d characters.', 'pawfectly-reservations' ), AccountRules::MIN_PASSWORD ),
 				'signinFailed'  => __( 'The email or password is not right.', 'pawfectly-reservations' ),
 				'signingIn'     => __( 'Signing in…', 'pawfectly-reservations' ),

@@ -24,6 +24,7 @@ final class Activator {
 		dbDelta( self::schema_sql( self::table(), $wpdb->get_charset_collate() ) );
 
 		Accounts::add_roles();
+		Access::add_developer_role();
 		$admin = get_role( 'administrator' );
 		if ( $admin ) {
 			$admin->add_cap( self::CAPABILITY );
@@ -55,6 +56,9 @@ pet_name VARCHAR(60) NOT NULL,
 pet_type VARCHAR(10) NOT NULL,
 check_in DATE NOT NULL,
 check_out DATE NOT NULL,
+booking_type VARCHAR(12) NOT NULL DEFAULT 'boarding',
+appointment_date DATE NULL,
+service VARCHAR(40) NOT NULL DEFAULT '',
 details LONGTEXT NOT NULL,
 files LONGTEXT NOT NULL,
 signature_path VARCHAR(190) NOT NULL,

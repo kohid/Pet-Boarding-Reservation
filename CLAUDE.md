@@ -5,14 +5,16 @@ Guidance for Claude Code sessions working in this repository.
 ## Project
 
 **Pawfectly Pet Boarding Reservation**: a WordPress plugin (PHP 8.0+, WordPress 6.0+, vanilla JS) modeled on kohid/Sprint-Booking, with a Metronic 8-style look in Pawfectly's brand colors.
-- Specs: `docs/superpowers/specs/2026-10-25-pet-boarding-reservation-design.md` (v0.1), `docs/superpowers/specs/2026-10-25-accounts-dashboard-design.md` (v0.2)
-- Plans: `docs/superpowers/plans/2026-10-25-pet-boarding-reservation.md`, `docs/superpowers/plans/2026-10-25-accounts-dashboard-plan.md`
+- Specs: `docs/superpowers/specs/2026-10-25-pet-boarding-reservation-design.md` (v0.1), `docs/superpowers/specs/2026-10-25-accounts-dashboard-design.md` (v0.2), `docs/superpowers/specs/2026-10-25-login-services-design.md` (v0.3)
+- Plans: `docs/superpowers/plans/2026-10-25-pet-boarding-reservation.md`, `docs/superpowers/plans/2026-10-25-accounts-dashboard-plan.md`, `docs/superpowers/plans/2026-10-25-login-services-plan.md`
 
 Conventions:
 - Namespace `Pawfectly\`, with `includes/Foo.php` loaded automatically.
 - Prefixes: `paw_` for options, transients, the table, and nonces; `paw-` for CSS and handles. Text domain `pawfectly-reservations`.
 - Front-end CSS is scoped under `.paw-app` (form), `.paw-um` / `.paw-acct` (account pages), `.paw-dash` (dashboard); admin CSS under `.paw-admin`. Resets use `:where()`; component selectors carry the root prefix so theme rules can't override them.
 - Staff data only over capability-checked REST routes (`StaffRest`); owner routes in `AccountRest`.
+- Login and access: `[pawfectly_login]` (`Login`) is the sign-in page for everyone; `Access` limits wp-admin to the admin-email account and the `developer` role (escape: `PAW_WP_ADMIN_OPEN`).
+- Prices live only in Settings and are read only through `Services` (catalog, prices by dog size, estimate).
 - Every field is defined once, in `includes/Fields.php`.
 
 ## Commands

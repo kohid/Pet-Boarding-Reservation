@@ -16,9 +16,10 @@ final class Pages {
 	public const TAGS = array(
 		'pawfectly_reservation_form' => array( 'Pet Boarding Reservation', 'The reservation form, for everyone.' ),
 		'pawfectly_user_menu'        => array( 'Account menu', 'The avatar and dropdown for your site header (an Elementor Shortcode widget in the header template).' ),
-		'pawfectly_my_profile'       => array( 'My Profile', 'Sign in and create account for owners; name, email, phone and password once signed in.' ),
+		'pawfectly_login'            => array( 'Login', 'Sign in and create account for everyone: owners, staff and admins. WordPress logins go here.' ),
+		'pawfectly_my_profile'       => array( 'My Profile', 'Name, email, phone and password once signed in.' ),
 		'pawfectly_my_bookings'      => array( 'My Bookings', "An owner's own reservations, with Cancel while allowed." ),
-		'pawfectly_dashboard'        => array( 'Dashboard', 'The staff dashboard: Overview and Reservations. Fills the browser; add fullscreen="no" to keep it in the page column.' ),
+		'pawfectly_dashboard'        => array( 'Dashboard', 'The staff dashboard: Overview, Reservations, and Settings for admins. Fills the browser; add fullscreen="no" to keep it in the page column.' ),
 	);
 
 	private const TRANSIENT = 'paw_pg_';

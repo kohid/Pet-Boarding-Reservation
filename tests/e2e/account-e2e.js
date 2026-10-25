@@ -72,16 +72,39 @@ function ok(name, cond) { assert.ok(cond, name); passed++; console.log('ok   - '
     await page.fill(`${out} #paw-acct-up-last_name`, "O'Brien");
     await page.fill(`${out} #paw-acct-up-email`, 'jay@example.com');
     await page.fill(`${out} #paw-acct-up-password`, 'correct horse');
+    await page.fill(`${out} #paw-acct-up-confirm`, 'correct horsf');
+    await page.click(`${out} #paw-panel-signup button[type=submit]`);
+    ok('sign-up: mismatched confirm caught before sending', signupCalls === 0 && (await page.textContent(`${out} #paw-panel-signup [data-paw-field=confirm] .paw-acct__error`)).includes("don't match"));
+    await page.click(`${out} #paw-panel-signup [data-paw-field=password] .paw-pw__toggle`);
+    ok('sign-up: show password works on the account page', (await page.getAttribute(`${out} #paw-acct-up-password`, 'type')) === 'text');
+    await page.fill(`${out} #paw-acct-up-confirm`, 'correct horse');
     await page.click(`${out} #paw-panel-signup button[type=submit]`);
     await page.waitForSelector(`${out} #paw-panel-signup [data-paw-field=email] .paw-acct__error:not([hidden])`);
     ok('server field error shown under the field', (await page.textContent(`${out} #paw-panel-signup [data-paw-field=email] .paw-acct__error`)).includes('already uses'));
     ok('sign-up sends no page nonce (cached pages must still work)', signupHeaders && !('x-wp-nonce' in signupHeaders));
-    ok('sign-up sends the typed details as JSON', signupBody && signupBody.first_name === 'Zoë' && signupBody.password === 'correct horse' && signupBody.website === '');
+    ok('sign-up sends the typed details as JSON', signupBody && signupBody.first_name === 'Zoë' && signupBody.password === 'correct horse' && signupBody.confirm === 'correct horse' && signupBody.website === '');
     await page.fill(`${out} #paw-acct-up-email`, 'zoe@example.com');
     await Promise.all([page.waitForEvent('load'), page.click(`${out} #paw-panel-signup button[type=submit]`)]);
     ok('successful sign-up reloads the page', signupCalls === 2);
     await page.goto(URL + '#signup');
     ok('#signup opens the create-account tab', await page.isVisible(`${out} #paw-panel-signup`));
+
+    // Sign in: everyone uses this panel (no separate staff line), remember me is sent, and the
+    // browser goes where the server says.
+    ok('no separate staff sign-in line', !(await page.textContent(out)).includes('Pawfectly staff'));
+    let loginBody = null;
+    await page.route('**/mock/account/login', route => {
+      loginBody = route.request().postDataJSON();
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, reload: true, redirect: URL + '?went=dashboard' }) });
+    });
+    await page.click(`${out} [data-paw-tab=signin]`);
+    await page.fill(`${out} #paw-acct-in-email`, 'desk');
+    await page.fill(`${out} #paw-acct-in-password`, 'desk pass1');
+    await page.check(`${out} input[name=remember]`);
+    await Promise.all([page.waitForURL(/went=dashboard/), page.click(`${out} #paw-panel-signin button[type=submit]`)]);
+    ok('sign-in goes to the address the server picked', page.url().includes('went=dashboard'));
+    ok('sign-in sends username, remember me and redirect_to', loginBody && loginBody.email === 'desk' && loginBody.remember === '1' && 'redirect_to' in loginBody);
+    await page.goto(URL);
 
     // My Profile, signed in: save shows the message; nonce sent.
     let profileHeaders = null;

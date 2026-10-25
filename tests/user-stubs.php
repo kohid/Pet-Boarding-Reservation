@@ -83,7 +83,7 @@ function get_user_by( $field, $value ) {
 	if ( 'id' === $field ) {
 		return $GLOBALS['paw_users'][ (int) $value ] ?? false;
 	}
-	$id = 'email' === $field ? email_exists( $value ) : false;
+	$id = 'email' === $field ? email_exists( $value ) : ( 'login' === $field ? username_exists( $value ) : false );
 	return $id ? $GLOBALS['paw_users'][ $id ] : false;
 }
 function get_userdata( $id ) { return get_user_by( 'id', $id ); }
@@ -100,8 +100,17 @@ function current_user_can( $cap ) { $u = wp_get_current_user(); return $u->exist
 function wp_login_url( $redirect = '' ) { return 'https://example.test/wp-login.php' . ( $redirect ? '?redirect_to=' . rawurlencode( $redirect ) : '' ); }
 function wp_lostpassword_url( $redirect = '' ) { return 'https://example.test/wp-login.php?action=lostpassword'; }
 function wp_logout_url( $redirect = '' ) { return 'https://example.test/wp-login.php?action=logout'; }
-function add_query_arg( $args, $url ) { return $url . ( str_contains( $url, '?' ) ? '&' : '?' ) . http_build_query( $args ); }
-function add_role( $role, $name, $caps ) { $GLOBALS['paw_added_roles'][ $role ] = $caps; return true; }
+/** Like core: values are NOT url-encoded. */
+function add_query_arg( $args, $url ) { return $url . ( str_contains( $url, '?' ) ? '&' : '?' ) . implode( '&', array_map( fn( $k, $v ) => $k . '=' . $v, array_keys( $args ), $args ) ); }
+function add_role( $role, $name, $caps ) {
+	$GLOBALS['paw_added_roles'][ $role ] = $caps;
+	$GLOBALS['paw_roles'][ $role ]       = new Fake_Role( $role );
+	foreach ( array_keys( array_filter( $caps ) ) as $cap ) {
+		$GLOBALS['paw_roles'][ $role ]->add_cap( $cap );
+	}
+	return $GLOBALS['paw_roles'][ $role ];
+}
+function user_can( $user, $cap ) { return $user instanceof WP_User && $user->exists() && $user->has_cap( $cap ); }
 $GLOBALS['paw_actions'] = array();
 function do_action( $hook, ...$args ) { $GLOBALS['paw_actions'][] = $hook; }
 /** Core's wp_authenticate runs the `authenticate` filter (lockout and 2FA plugins); the stand-in records the call. */
@@ -111,3 +120,19 @@ function wp_authenticate( $login, $password ) {
 	return $u && wp_check_password( $password, $u->user_pass ) ? $u : new WP_Error( 'incorrect_password', 'no' );
 }
 function get_edit_profile_url( $id = 0 ) { return 'https://example.test/wp-admin/profile.php'; }
+/** Core's wp_signon: authenticates (running the `authenticate` filter), sets the cookie, fires wp_login. */
+function wp_signon( $creds = array(), $secure = '' ) {
+	$u = wp_authenticate( $creds['user_login'] ?? '', $creds['user_password'] ?? '' );
+	if ( $u instanceof WP_User ) {
+		$GLOBALS['paw_auth_cookie']   = $u->ID;
+		$GLOBALS['paw_remember']      = ! empty( $creds['remember'] );
+		do_action( 'wp_login', $u->user_login, $u );
+	}
+	return $u;
+}
+function is_ssl() { return true; }
+function wp_validate_redirect( $location, $fallback = '' ) {
+	$host = parse_url( (string) $location, PHP_URL_HOST );
+	return ( '' !== (string) $location && ( null === $host || 'example.test' === $host ) ) ? $location : $fallback;
+}
+function apply_filters( $hook, $value, ...$args ) { return isset( $GLOBALS['paw_filters'][ $hook ] ) ? $GLOBALS['paw_filters'][ $hook ]( $value, ...$args ) : $value; }

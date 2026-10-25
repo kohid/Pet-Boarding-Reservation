@@ -104,6 +104,8 @@ final class Rest {
 
 		// Keep the exact waiver wording that was signed: Settings can change later.
 		$clean['details']['waiver_text'] = Settings::get()['waiver'];
+		// And the prices the owner saw: Settings can change later too.
+		$clean['details']['pricing'] = Services::estimate( $clean['columns'] + $clean['details'] );
 
 		$ip  = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 		$row = Reservations::build_row( $clean, $reference, $stored, $signature_path, $ip, current_time( 'mysql', true ) );
@@ -139,11 +141,16 @@ final class Rest {
 		}
 		$password = is_string( $params['account_password'] ?? null ) ? $params['account_password'] : '';
 		$errors   = array();
+		$confirm  = is_string( $params['account_password_confirm'] ?? null ) ? $params['account_password_confirm'] : '';
 		$problem  = AccountRules::password( $password, null );
 		if ( null !== $problem ) {
 			$errors['account_password'] = $problem;
+		} elseif ( null !== AccountRules::password( $password, $confirm ) ) {
+			$errors['account_password_confirm'] = __( "The two passwords don't match.", 'pawfectly-reservations' );
 		}
-		if ( '' !== $email && email_exists( $email ) ) {
+		if ( '' !== $email && Accounts::is_admin_email( $email ) ) {
+			$errors['owner_email'] = __( "This email address belongs to the site's administrator. Book without an account, or use another email.", 'pawfectly-reservations' );
+		} elseif ( '' !== $email && email_exists( $email ) ) {
 			$errors['owner_email'] = __( "An account already uses this email. Sign in above, or untick 'Create an account'.", 'pawfectly-reservations' );
 		}
 		return array( 'create' => true, 'password' => $password, 'errors' => $errors );

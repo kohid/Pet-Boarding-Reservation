@@ -2,7 +2,7 @@
 /**
  * [pawfectly_user_menu]: the avatar and dropdown for a site header. Visitors see Sign In and
  * Sign Up; signed-in users see their name and email with Dashboard (staff), My Bookings,
- * My Profile, Settings (admins) and Log Out. Place it in an Elementor header with a Shortcode widget.
+ * My Profile, Settings (admins), Admin Panel (the admin-email account and Developers) and Log Out. Place it in an Elementor header with a Shortcode widget.
  *
  * @package Pawfectly
  */
@@ -24,7 +24,7 @@ final class UserMenu {
 	/**
 	 * Menu entries for one visitor. Entries whose page does not exist are left out.
 	 *
-	 * @param array{logged_in: bool, staff: bool, admin: bool, urls: array<string,string>} $ctx
+	 * @param array{logged_in: bool, staff: bool, admin: bool, wp_admin?: bool, urls: array<string,string>} $ctx
 	 * @return array<int, array{key: string, label: string, url: string}|array{sep: true}>
 	 */
 	public static function items( array $ctx ): array {
@@ -47,6 +47,9 @@ final class UserMenu {
 		$add( 'profile', __( 'My Profile', 'pawfectly-reservations' ) );
 		if ( $ctx['admin'] ) {
 			$add( 'settings', __( 'Settings', 'pawfectly-reservations' ) );
+		}
+		if ( ! empty( $ctx['wp_admin'] ) ) {
+			$add( 'wp_admin', __( 'Admin Panel', 'pawfectly-reservations' ) );
 		}
 		$out[] = array( 'sep' => true );
 		$add( 'logout', __( 'Log Out', 'pawfectly-reservations' ) );
@@ -72,22 +75,25 @@ final class UserMenu {
 		$user    = wp_get_current_user();
 		$in      = $user->exists();
 		$here    = (string) ( get_permalink() ?: home_url( '/' ) );
-		$profile = Pages::url( 'pawfectly_my_profile' );
-		$staff   = $in && current_user_can( Activator::CAPABILITY );
-		$dash    = Pages::url( 'pawfectly_dashboard' );
+		$profile  = Pages::url( Profile::TAG );
+		$dash     = Pages::url( Dashboard::TAG );
+		$wp_admin = Access::is_admin_user( $user );
+		$login    = Login::url_for( $here );
 
 		$items = self::items(
 			array(
 				'logged_in' => $in,
-				'staff'     => $staff,
-				'admin'     => $in && current_user_can( 'manage_options' ),
+				'staff'     => $in && current_user_can( Activator::CAPABILITY ),
+				'admin'     => Access::can_manage_settings( $user ),
+				'wp_admin'  => $wp_admin,
 				'urls'      => array(
-					'login'     => '' !== $profile ? $profile : wp_login_url( $here ),
-					'signup'    => '' !== $profile ? $profile . '#signup' : '',
-					'profile'   => '' !== $profile ? $profile : get_edit_profile_url(),
-					'bookings'  => Pages::url( 'pawfectly_my_bookings' ),
-					'dashboard' => '' !== $dash ? $dash : admin_url( 'admin.php?page=' . Admin::MENU ),
-					'settings'  => admin_url( 'admin.php?page=' . Settings::PAGE ),
+					'login'     => $login,
+					'signup'    => '' !== Login::url() ? add_query_arg( array( 'tab' => 'signup' ), $login ) : '',
+					'profile'   => '' !== $profile ? $profile : ( $wp_admin ? get_edit_profile_url() : '' ),
+					'bookings'  => Pages::url( MyBookings::TAG ),
+					'dashboard' => $dash,
+					'settings'  => '' !== $dash ? add_query_arg( array( 'paw_view' => 'settings' ), $dash ) : ( $wp_admin ? admin_url( 'admin.php?page=' . Settings::PAGE ) : '' ),
+					'wp_admin'  => admin_url(),
 					'logout'    => wp_logout_url( $here ),
 				),
 			)

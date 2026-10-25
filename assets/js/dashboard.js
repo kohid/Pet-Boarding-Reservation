@@ -13,7 +13,10 @@
 	var I18N = CFG.i18n;
 	var $ = function (sel) { return root.querySelector(sel); };
 
-	var state = { view: CFG.view, status: '', search: '', from: '', to: '', page: 1, pages: 1 };
+	// The address wins (as on the server), when that view is on the page.
+	var askedView = new URLSearchParams(location.search).get('paw_view');
+	var startView = askedView && root.querySelector('[data-paw-view="' + askedView + '"]') ? askedView : CFG.view;
+	var state = { view: startView, status: '', search: '', from: '', to: '', page: 1, pages: 1 };
 	var current = null; // The reservation open in the side panel.
 	var lastRow = null;
 
@@ -76,7 +79,7 @@
 		}
 		if (view === 'overview') {
 			loadOverview();
-		} else {
+		} else if (view === 'reservations') {
 			loadList();
 		}
 	}
@@ -98,7 +101,7 @@
 
 	function loadOverview() {
 		api('staff/stats').then(function (s) {
-			['check_ins', 'check_outs', 'boarding', 'pending'].forEach(function (key) {
+			['check_ins', 'check_outs', 'boarding', 'grooming', 'pending'].forEach(function (key) {
 				$('[data-paw-tile="' + key + '"] .paw-dash__tile-num').textContent = String(s[key]);
 			});
 			var chart = $('[data-paw-chart]');
@@ -130,6 +133,20 @@
 				q.set(k, state[k]);
 			}
 		});
+		// Export CSV follows the same filters (the wp-admin export reads s, not search).
+		var exportLink = $('[data-paw-export]');
+		if (exportLink) {
+			var e = new URLSearchParams();
+			['status', 'from', 'to'].forEach(function (k) {
+				if (state[k]) {
+					e.set(k, state[k]);
+				}
+			});
+			if (state.search) {
+				e.set('s', state.search);
+			}
+			exportLink.href = CFG.urls.export + (e.toString() ? '&' + e.toString() : '');
+		}
 		api('staff/reservations?' + q.toString()).then(function (data) {
 			if (token !== listToken) {
 				return; // A newer search already answered.
@@ -185,7 +202,7 @@
 			var owner = el('td');
 			owner.append(el('span', '', r.owner), el('small', '', r.email));
 			var stay = el('td');
-			stay.append(el('span', '', r.stay), el('small', '', r.nights + ' ' + (r.nights === 1 ? I18N.night : I18N.nights)));
+			stay.append(el('span', '', r.stay), el('small', '', r.booking_type === 'grooming' ? r.service_name : r.nights + ' ' + (r.nights === 1 ? I18N.night : I18N.nights) + (r.service_name ? ' · ' + r.service_name : '')));
 			var st = el('td');
 			st.appendChild(badge(r.status, r.status_label));
 			tr.append(ref, pet, owner, stay, st);
@@ -275,7 +292,8 @@
 			$('[data-paw-signature]').src = d.signature_url;
 			$('[data-paw-answers]').innerHTML = d.answers_html; // Rendered and escaped by the server.
 			$('[data-paw-notes]').value = d.staff_notes;
-			$('[data-paw-admin-link]').href = d.admin_url;
+			$('[data-paw-admin-link]').href = d.admin_url || '#';
+			$('[data-paw-admin-link]').hidden = !d.admin_url; // Only for accounts that may open wp-admin.
 			renderHistory(d.history);
 			$('[data-paw-close]').focus();
 		}).catch(function (err) {
@@ -348,8 +366,119 @@
 		});
 	});
 
+	/* ---------- Settings ---------- */
+
+	var settingsForm = $('[data-paw-settings]');
+
+	/** Form fields as the nested object Settings expects: services[basic_bath][small] → services.basic_bath.small. */
+	function settingsValues(form) {
+		var out = {};
+		Array.prototype.forEach.call(form.elements, function (input) {
+			if (!input.name || input.disabled) {
+				return;
+			}
+			var list = /\[\]$/.test(input.name);
+			var path = input.name.replace(/\[\]$/, '').replace(/\]/g, '').split('[');
+			var last = path.pop();
+			var node = path.reduce(function (o, key) { return (o[key] = o[key] || {}); }, out);
+			if (list) {
+				node[last] = node[last] || [];
+				if (input.checked) {
+					node[last].push(input.value);
+				}
+			} else {
+				node[last] = input.type === 'checkbox' ? input.checked : input.value;
+			}
+		});
+		return out;
+	}
+
+	function settingsErrors(form, fields) {
+		form.querySelectorAll('.paw-dash__field.is-invalid').forEach(function (f) {
+			f.classList.remove('is-invalid');
+			var p = f.querySelector('.paw-dash__error');
+			if (p) {
+				p.remove();
+			}
+		});
+		var first = null;
+		Object.keys(fields || {}).forEach(function (key) {
+			var f = form.querySelector('[data-paw-setting="' + key + '"]');
+			if (!f) {
+				return;
+			}
+			f.classList.add('is-invalid');
+			f.appendChild(el('small', 'paw-dash__error', fields[key]));
+			first = first || f.querySelector('input, textarea, select');
+		});
+		return first;
+	}
+
+	if (settingsForm) {
+		var settingsMsg = $('[data-paw-settings-msg]');
+		settingsForm.addEventListener('submit', function (e) {
+			e.preventDefault();
+			var btn = settingsForm.querySelector('button[type=submit]');
+			btn.disabled = true;
+			settingsMsg.hidden = true;
+			settingsErrors(settingsForm, {});
+			fetch(CFG.rest + 'staff/settings', {
+				method: 'POST',
+				credentials: 'same-origin',
+				headers: { 'X-WP-Nonce': CFG.nonce, 'Content-Type': 'application/json' },
+				body: JSON.stringify(settingsValues(settingsForm))
+			}).then(function (res) {
+				return res.json().catch(function () { return {}; }).then(function (body) {
+					if (res.ok) {
+						settingsMsg.textContent = I18N.settingsSaved;
+						settingsMsg.className = 'paw-dash__savemsg is-ok';
+					} else {
+						var first = settingsErrors(settingsForm, body.data && body.data.fields);
+						settingsMsg.textContent = body.message || I18N.failed;
+						settingsMsg.className = 'paw-dash__savemsg is-error';
+						if (first) {
+							first.focus();
+						}
+					}
+					settingsMsg.hidden = false;
+				});
+			}).catch(function () {
+				settingsMsg.textContent = I18N.failed;
+				settingsMsg.className = 'paw-dash__savemsg is-error';
+				settingsMsg.hidden = false;
+			}).then(function () {
+				btn.disabled = false;
+			});
+		});
+
+		var logoId = settingsForm.querySelector('[name=logo_id]');
+		var logoImg = settingsForm.querySelector('[data-paw-logo-preview]');
+		var frame = null;
+		settingsForm.querySelector('[data-paw-logo-choose]').addEventListener('click', function () {
+			if (!window.wp || !window.wp.media) {
+				return;
+			}
+			frame = frame || window.wp.media({ title: I18N.chooseLogo, library: { type: 'image' }, multiple: false });
+			frame.off('select').on('select', function () {
+				var file = frame.state().get('selection').first().toJSON();
+				logoId.value = String(file.id);
+				logoImg.src = (file.sizes && file.sizes.thumbnail ? file.sizes.thumbnail.url : file.url);
+			});
+			frame.open();
+		});
+		settingsForm.querySelector('[data-paw-logo-remove]').addEventListener('click', function () {
+			logoId.value = '0';
+			logoImg.src = logoImg.getAttribute('data-placeholder');
+		});
+	}
+
 	/* ---------- Start ---------- */
 
 	history.replaceState({ pawView: state.view }, '', location.href);
 	show(state.view, false);
+	// Links in staff emails open one reservation: ?paw_view=reservations&open=ID.
+	var opening = parseInt(new URLSearchParams(location.search).get('open') || '', 10);
+	if (opening > 0) {
+		open(opening, null);
+	}
 })();

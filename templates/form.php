@@ -11,6 +11,8 @@
  * @var array  $account   Shortcode::account().
  */
 
+use Pawfectly\Services;
+
 defined( 'ABSPATH' ) || exit;
 
 $paw_label = static function ( array $field ): string {
@@ -97,7 +99,7 @@ $paw_count = count( $steps );
 						$paw_class = 'paw-field paw-field--' . $paw_f['type'] . ( $paw_f['half'] ? ' paw-field--half' : '' );
 						$paw_desc  = $paw_dom . '-error' . ( $paw_f['help'] ? ' ' . $paw_dom . '-help' : '' );
 						$paw_aria  = ' aria-describedby="' . esc_attr( $paw_desc ) . '"' . ( $paw_f['required'] ? ' aria-required="true"' : '' );
-						$paw_group = in_array( $paw_f['type'], array( 'choice', 'yesno', 'agree' ), true );
+						$paw_group = in_array( $paw_f['type'], array( 'choice', 'yesno', 'agree', 'service' ), true );
 						?>
 						<?php if ( ! empty( $paw_f['group'] ) ) : ?>
 							<p class="paw-group-title"><?php echo esc_html( $paw_f['group'] ); ?><span class="paw-req" aria-hidden="true">*</span></p>
@@ -154,11 +156,47 @@ $paw_count = count( $steps );
 <?php case 'choice': case 'agree': ?>
 								<div class="paw-options">
 									<?php foreach ( $paw_f['options'] as $paw_value => $paw_text ) : ?>
-										<label class="paw-option">
-											<input type="<?php echo 'agree' === $paw_f['type'] ? 'checkbox' : 'radio'; ?>" name="<?php echo esc_attr( $paw_id ); ?>" value="<?php echo esc_attr( (string) $paw_value ); ?>"<?php echo $paw_aria; // phpcs:ignore WordPress.Security.EscapeOutput ?>>
+										<label class="paw-option"<?php echo in_array( (string) $paw_value, $paw_f['dog_only'], true ) ? ' data-paw-dog-only' : ''; ?>>
+											<input type="<?php echo 'agree' === $paw_f['type'] ? 'checkbox' : 'radio'; ?>" name="<?php echo esc_attr( $paw_id ); ?>" value="<?php echo esc_attr( (string) $paw_value ); ?>"<?php echo '' !== $paw_f['default'] && (string) $paw_value === $paw_f['default'] ? ' checked' : ''; ?><?php echo $paw_aria; // phpcs:ignore WordPress.Security.EscapeOutput ?>>
 											<span class="paw-option__text"><?php echo esc_html( $paw_text ); ?></span>
 											<span class="paw-option__mark" aria-hidden="true"></span>
 										</label>
+									<?php endforeach; ?>
+								</div>
+								<?php break; ?>
+<?php case 'service': ?>
+								<div class="paw-svc-list">
+									<?php foreach ( Services::enabled() as $paw_svc ) : ?>
+										<?php
+										$paw_prices = array_filter( array( $paw_svc['small'], $paw_svc['large'] ), 'is_float' );
+										$paw_range  = $paw_prices ? implode( '–', array_unique( array_map( array( Services::class, 'money' ), $paw_prices ) ) ) : __( 'Price on request', 'pawfectly-reservations' );
+										?>
+										<div class="paw-svc" data-paw-svc="<?php echo esc_attr( $paw_svc['id'] ); ?>">
+											<label class="paw-svc__pick">
+												<input type="radio" name="service" value="<?php echo esc_attr( $paw_svc['id'] ); ?>"<?php echo $paw_aria; // phpcs:ignore WordPress.Security.EscapeOutput ?>>
+												<span class="paw-option__mark" aria-hidden="true"></span>
+												<span class="paw-svc__main">
+													<span class="paw-svc__name"><?php echo esc_html( $paw_svc['name'] ); ?></span>
+													<?php if ( $paw_svc['monthly'] ) : ?>
+														<span class="paw-svc__tag"><?php esc_html_e( 'Monthly', 'pawfectly-reservations' ); ?></span>
+													<?php endif; ?>
+													<?php if ( '' !== $paw_svc['time'] ) : ?>
+														<span class="paw-svc__time"><?php echo esc_html( $paw_svc['time'] ); ?></span>
+													<?php endif; ?>
+												</span>
+												<span class="paw-svc__price<?php echo $paw_prices ? '' : ' is-request'; ?>" data-paw-price="<?php echo esc_attr( $paw_svc['id'] ); ?>"><?php echo esc_html( $paw_range ); ?><?php echo $paw_svc['monthly'] && $paw_prices ? '<small>' . esc_html__( '/ month', 'pawfectly-reservations' ) . '</small>' : ''; ?></span>
+											</label>
+											<?php if ( $paw_svc['included'] ) : ?>
+												<details class="paw-svc__more">
+													<summary><?php esc_html_e( "What's included", 'pawfectly-reservations' ); ?></summary>
+													<ul>
+														<?php foreach ( $paw_svc['included'] as $paw_item ) : ?>
+															<li><?php echo esc_html( $paw_item ); ?></li>
+														<?php endforeach; ?>
+													</ul>
+												</details>
+											<?php endif; ?>
+										</div>
 									<?php endforeach; ?>
 								</div>
 								<?php break; ?>
@@ -196,6 +234,15 @@ $paw_count = count( $steps );
 						<?php echo $paw_group ? '</fieldset>' : '</div>'; ?>
 					<?php endforeach; ?>
 
+					<?php if ( 'stay' === $paw_step['id'] ) : ?>
+						<div class="paw-estimate" data-paw-estimate aria-live="polite" hidden>
+							<p class="paw-estimate__title"><?php esc_html_e( 'Estimated total', 'pawfectly-reservations' ); ?></p>
+							<ul class="paw-estimate__lines" data-paw-estimate-lines></ul>
+							<p class="paw-estimate__total"><span><?php esc_html_e( 'Total', 'pawfectly-reservations' ); ?></span> <strong data-paw-estimate-total></strong></p>
+							<p class="paw-estimate__note"><?php esc_html_e( 'Estimate. Payment is taken at Pawfectly; staff confirm the final price.', 'pawfectly-reservations' ); ?></p>
+						</div>
+					<?php endif; ?>
+
 					<?php if ( 'owner' === $paw_step['id'] && ! $account['signedIn'] ) : ?>
 						<fieldset class="paw-field paw-field--agree" data-field="create_account">
 							<legend class="paw-label"><?php esc_html_e( 'Account (optional)', 'pawfectly-reservations' ); ?></legend>
@@ -213,6 +260,11 @@ $paw_count = count( $steps );
 							<p class="paw-help" id="paw-account_password-help"><?php esc_html_e( 'At least 8 characters.', 'pawfectly-reservations' ); ?></p>
 							<input class="paw-input" type="password" id="paw-account_password" name="account_password" autocomplete="new-password" aria-describedby="paw-account_password-error paw-account_password-help">
 							<p class="paw-error" id="paw-account_password-error" role="alert" hidden></p>
+						</div>
+						<div class="paw-field paw-field--password" data-field="account_password_confirm" hidden>
+							<label class="paw-label" for="paw-account_password_confirm"><?php esc_html_e( 'Confirm password', 'pawfectly-reservations' ); ?><span class="paw-req" aria-hidden="true">*</span></label>
+							<input class="paw-input" type="password" id="paw-account_password_confirm" name="account_password_confirm" autocomplete="new-password" aria-describedby="paw-account_password_confirm-error">
+							<p class="paw-error" id="paw-account_password_confirm-error" role="alert" hidden></p>
 						</div>
 					<?php endif; ?>
 				</div>
@@ -234,6 +286,7 @@ $paw_count = count( $steps );
 				<strong class="paw-done__ref" data-paw-reference></strong>.
 				<?php esc_html_e( "We'll email you once it's confirmed.", 'pawfectly-reservations' ); ?>
 			</p>
+			<div class="paw-done__estimate" data-paw-estimate-done hidden></div>
 		</section>
 
 		<nav class="paw-nav" aria-label="<?php esc_attr_e( 'Form steps', 'pawfectly-reservations' ); ?>" data-paw-nav>

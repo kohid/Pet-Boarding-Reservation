@@ -11,6 +11,7 @@
  */
 
 use Pawfectly\Admin;
+use Pawfectly\Services;
 use Pawfectly\Uploads;
 use Pawfectly\Validator;
 
@@ -79,6 +80,16 @@ $paw_id = (int) $r['id'];
 					</dd>
 				<?php endif; ?>
 			<?php endforeach; ?>
+			<?php if ( 'stay' === $paw_step['id'] && ! empty( $r['details']['pricing']['lines'] ) ) : ?>
+				<?php $paw_pricing = $r['details']['pricing']; ?>
+				<dt><?php esc_html_e( 'Estimate at booking', 'pawfectly-reservations' ); ?></dt>
+				<dd>
+					<?php foreach ( $paw_pricing['lines'] as $paw_line ) : ?>
+						<?php echo esc_html( $paw_line['label'] . ': ' . Services::amount_text( isset( $paw_line['amount'] ) ? (float) $paw_line['amount'] : null, ! empty( $paw_line['monthly'] ), (string) $paw_pricing['currency'] ) ); ?><br>
+					<?php endforeach; ?>
+					<strong><?php echo esc_html( __( 'Total', 'pawfectly-reservations' ) . ': ' . Services::total_text( $paw_pricing ) ); ?></strong>
+				</dd>
+			<?php endif; ?>
 		</dl>
 	</section>
 <?php endforeach; ?>

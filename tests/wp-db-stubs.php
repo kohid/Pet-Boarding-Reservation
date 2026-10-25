@@ -36,7 +36,8 @@ class Fake_WPDB {
 			return false;
 		}
 		$this->insert_id                = count( $this->rows ) + 1;
-		$this->rows[ $this->insert_id ] = array( 'id' => (string) $this->insert_id ) + array_map( 'strval', $data );
+		// Like MySQL: values come back as strings, NULL stays NULL.
+		$this->rows[ $this->insert_id ] = array( 'id' => (string) $this->insert_id ) + array_map( fn( $v ) => null === $v ? null : (string) $v, $data );
 		return 1;
 	}
 

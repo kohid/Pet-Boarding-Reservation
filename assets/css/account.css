@@ -472,3 +472,69 @@
 	clip: rect(0 0 0 0);
 	white-space: nowrap;
 }
+
+.paw-acct .paw-acct__check {
+	display: inline-flex;
+	gap: 0.5rem;
+	align-items: center;
+	margin-top: 1rem;
+	color: var(--paw-text);
+	font-size: 0.9375rem;
+	cursor: pointer;
+}
+
+.paw-acct .paw-acct__check input {
+	width: 1rem;
+	height: 1rem;
+	margin: 0;
+	accent-color: var(--paw-primary);
+}
+
+/* Show/hide password (password.js wraps each password box). */
+.paw-acct .paw-pw {
+	position: relative;
+	display: block;
+}
+
+.paw-acct .paw-pw input:not(#paw-0) {
+	padding-right: 3rem;
+}
+
+.paw-acct .paw-pw .paw-pw__toggle {
+	position: absolute;
+	top: 50%;
+	right: 0.375rem;
+	display: grid;
+	place-items: center;
+	width: 2.25rem;
+	height: 2.25rem;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0.375rem;
+	background: transparent;
+	box-shadow: none;
+	color: var(--paw-soft);
+	cursor: pointer;
+	transform: translateY(-50%);
+}
+
+.paw-acct .paw-pw .paw-pw__toggle:hover {
+	background: transparent;
+	color: var(--paw-primary-dark);
+}
+
+.paw-acct .paw-pw .paw-pw__toggle:focus-visible {
+	outline: none;
+	box-shadow: var(--paw-ring);
+}
+
+.paw-acct .paw-pw .paw-pw__toggle[aria-pressed="true"] {
+	color: var(--paw-primary-dark);
+}
+
+.paw-acct .paw-pw .paw-pw__toggle svg {
+	width: 1.25rem;
+	height: 1.25rem;
+	fill: currentColor;
+}

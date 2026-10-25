@@ -16,19 +16,35 @@ final class Mailer {
 		$settings = Settings::get();
 		$staff    = Settings::staff_emails( $settings );
 		$pet      = (string) $r['pet_name'];
-		$stay     = self::date( $r['check_in'] ) . ' → ' . self::date( $r['check_out'] );
+		$stay     = Reservations::when( $r );
+		$type     = (string) ( $r['booking_type'] ?? 'boarding' );
 		$summary  = array(
 			__( 'Reference', 'pawfectly-reservations' ) => $r['reference'],
 			__( 'Pet', 'pawfectly-reservations' )       => $pet,
-			__( 'Check-in', 'pawfectly-reservations' )  => self::date( $r['check_in'] ),
-			__( 'Check-out', 'pawfectly-reservations' ) => self::date( $r['check_out'] ),
 		);
+		if ( 'grooming' === $type ) {
+			$summary[ __( 'Appointment', 'pawfectly-reservations' ) ] = $stay;
+		} else {
+			$summary[ __( 'Check-in', 'pawfectly-reservations' ) ]  = self::date( $r['check_in'] );
+			$summary[ __( 'Check-out', 'pawfectly-reservations' ) ] = self::date( $r['check_out'] );
+		}
+		if ( '' !== Reservations::service_name( $r ) ) {
+			$summary[ __( 'Service', 'pawfectly-reservations' ) ] = Reservations::service_name( $r );
+			if ( 'both' === $type && ! empty( $r['appointment_date'] ) ) {
+				$summary[ __( 'Grooming day', 'pawfectly-reservations' ) ] = self::date( (string) $r['appointment_date'] );
+			}
+		}
+		$estimate = Services::total_text( (array) ( $r['details']['pricing'] ?? array() ) );
+		if ( '' !== $estimate ) {
+			$summary[ __( 'Estimated total', 'pawfectly-reservations' ) ] = $estimate;
+		}
 
 		/* translators: %s: owner's first name */
 		$owner_body = '<p>' . esc_html( sprintf( __( 'Hi %s,', 'pawfectly-reservations' ), $r['owner_first_name'] ) ) . '</p>'
 			/* translators: %s: pet's name */
 			. '<p>' . esc_html( sprintf( __( "Thank you for choosing us for %s's stay. Your request is pending: we'll email you again once it's confirmed.", 'pawfectly-reservations' ), $pet ) ) . '</p>'
 			. EmailTemplate::rows( $summary )
+			. ( '' !== $estimate ? '<p>' . esc_html__( 'Estimate. Payment is taken at Pawfectly; staff confirm the final price.', 'pawfectly-reservations' ) . '</p>' : '' )
 			. '<p>' . esc_html__( 'If anything changes, just reply to this email.', 'pawfectly-reservations' ) . '</p>';
 		self::send(
 			(string) $r['owner_email'],
@@ -41,14 +57,17 @@ final class Mailer {
 		if ( ! $staff ) {
 			return;
 		}
-		$link       = admin_url( 'admin.php?page=paw-reservations&view=' . (int) $r['id'] );
+		$dashboard  = Pages::url( Dashboard::TAG );
+		$link       = '' !== $dashboard
+			? add_query_arg( array( 'paw_view' => 'reservations', 'open' => (int) $r['id'] ), $dashboard )
+			: admin_url( 'admin.php?page=paw-reservations&view=' . (int) $r['id'] );
 		$staff_body = EmailTemplate::rows(
 			$summary + array(
 				__( 'Owner', 'pawfectly-reservations' ) => trim( $r['owner_first_name'] . ' ' . $r['owner_last_name'] ),
 				__( 'Email', 'pawfectly-reservations' ) => $r['owner_email'],
 				__( 'Phone', 'pawfectly-reservations' ) => $r['owner_phone'],
 			)
-		) . '<p><a href="' . esc_url( $link ) . '" style="display:inline-block;padding:10px 20px;border-radius:24px;background:#ff7f50;color:#ffffff;text-decoration:none;font-weight:600;">' . esc_html__( 'View in wp-admin', 'pawfectly-reservations' ) . '</a></p>';
+		) . '<p><a href="' . esc_url( $link ) . '" style="display:inline-block;padding:10px 20px;border-radius:24px;background:#ff7f50;color:#ffffff;text-decoration:none;font-weight:600;">' . esc_html__( 'View reservation', 'pawfectly-reservations' ) . '</a></p>';
 		self::send(
 			$staff,
 			/* translators: 1: reference, 2: pet name, 3: stay dates */
@@ -115,7 +134,7 @@ final class Mailer {
 				__( 'Check-in', 'pawfectly-reservations' )  => self::date( $r['check_in'] ),
 				__( 'Check-out', 'pawfectly-reservations' ) => self::date( $r['check_out'] ),
 			)
-		) . '<p><a href="' . esc_url( admin_url( 'admin.php?page=paw-reservations&view=' . (int) $r['id'] ) ) . '">' . esc_html__( 'View in wp-admin', 'pawfectly-reservations' ) . '</a></p>';
+		) . '<p><a href="' . esc_url( admin_url( 'admin.php?page=paw-reservations&view=' . (int) $r['id'] ) ) . '">' . esc_html__( 'View reservation', 'pawfectly-reservations' ) . '</a></p>';
 		self::send(
 			$staff,
 			/* translators: 1: reference, 2: pet name */
