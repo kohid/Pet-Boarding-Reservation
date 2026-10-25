@@ -135,6 +135,11 @@ $ada = paw_test_user( 'ada@example.com', 'some pass1', array( 'paw_customer' ) )
 wp_set_current_user( $ada->ID );
 Rest::submit( request( $good ) );
 t( 'signed-in owner: reservation linked to the account', (string) $ada->ID === ( $wpdb->rows[1]['user_id'] ?? '' ) );
+reset_state();
+$staffer = paw_test_user( 'front@example.com', 'some pass1', array( 'administrator' ) );
+wp_set_current_user( $staffer->ID );
+Rest::submit( request( $good ) );
+t( 'staff booking for a customer: not linked to the staff account', '' === ( $wpdb->rows[1]['user_id'] ?? 'x' ) );
 wp_set_current_user( 0 );
 
 reset_state();

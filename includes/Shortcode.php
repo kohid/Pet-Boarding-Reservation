@@ -44,13 +44,16 @@ final class Shortcode {
 
 	/** Who is filling in the form, and the links the owner step offers. */
 	public static function account(): array {
-		$user = wp_get_current_user();
-		$in   = $user->exists();
-		$here = (string) ( get_permalink() ?: home_url( '/' ) );
+		$user     = wp_get_current_user();
+		$in       = $user->exists();
+		$customer = $in && Accounts::may_use_customer_login( $user );
+		$here     = (string) ( get_permalink() ?: home_url( '/' ) );
 		return array(
 			'signedIn'  => $in,
+			// Staff using the form are booking for a customer: nothing of theirs is filled in or linked.
+			'staff'     => $in && ! $customer,
 			'name'      => $in ? (string) $user->display_name : '',
-			'prefill'   => $in ? Accounts::prefill( (int) $user->ID ) : array(),
+			'prefill'   => $customer ? Accounts::prefill( (int) $user->ID ) : array(),
 			'loginRest' => rest_url( Rest::NS . '/account/login' ),
 			'lostUrl'   => wp_lostpassword_url( $here ),
 			'logoutUrl' => wp_logout_url( $here ),

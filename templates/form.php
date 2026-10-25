@@ -49,7 +49,12 @@ $paw_count = count( $steps );
 				<?php endif; ?>
 
 				<?php if ( 'owner' === $paw_step['id'] ) : ?>
-					<?php if ( $account['signedIn'] ) : ?>
+					<?php if ( $account['staff'] ) : ?>
+						<p class="paw-account paw-account--in" data-paw-account>
+							<?php esc_html_e( 'Signed in as', 'pawfectly-reservations' ); ?> <strong><?php echo esc_html( $account['name'] ); ?></strong> (<?php esc_html_e( 'staff', 'pawfectly-reservations' ); ?>).
+							<?php esc_html_e( "You're booking for a customer: enter their details. Nothing is saved to your account.", 'pawfectly-reservations' ); ?>
+						</p>
+					<?php elseif ( $account['signedIn'] ) : ?>
 						<p class="paw-account paw-account--in" data-paw-account>
 							<?php esc_html_e( 'Signed in as', 'pawfectly-reservations' ); ?> <strong><?php echo esc_html( $account['name'] ); ?></strong>.
 							<a href="<?php echo esc_url( $account['logoutUrl'] ); ?>"><?php esc_html_e( 'Not you? Log out', 'pawfectly-reservations' ); ?></a>
