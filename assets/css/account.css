@@ -1,0 +1,474 @@
+/*
+ * Pawfectly — account menu, My Profile and My Bookings.
+ * Metronic-style cards and menu in the Pawfectly palette. Transparent backgrounds, so the page
+ * builder sets the page. Selectors are prefixed and specific so theme button and link styles stay out.
+ */
+
+.paw-um,
+.paw-acct {
+	--paw-primary: #ff7f50;
+	--paw-primary-dark: #e8663a;
+	--paw-tint: #fff1eb;
+	--paw-ink: #2c3947;
+	--paw-text: #3f4254;
+	--paw-soft: #8a90a2;
+	--paw-line: #eef0f4;
+	--paw-hover: #fff7f3;
+	--paw-danger: #bc0202;
+	--paw-success: #06d6a0;
+	--paw-ring: 0 0 0 3px rgba(255, 127, 80, 0.3);
+}
+
+/* ---------- Account menu ---------- */
+
+.paw-um {
+	position: relative;
+	display: inline-block;
+	font-family: inherit;
+	line-height: 1.4;
+	text-align: left;
+}
+
+.paw-um *,
+.paw-um *::before,
+.paw-um *::after {
+	box-sizing: border-box;
+}
+
+.paw-um .paw-um__btn {
+	display: grid;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	box-shadow: none;
+	cursor: pointer;
+	line-height: 1;
+}
+
+.paw-um .paw-um__btn:hover,
+.paw-um .paw-um__btn:focus,
+.paw-um .paw-um__btn[aria-expanded="true"] {
+	background: transparent;
+	box-shadow: none;
+}
+
+.paw-um .paw-um__btn:focus-visible {
+	outline: none;
+	box-shadow: var(--paw-ring);
+}
+
+.paw-um .paw-um__btn:hover .paw-um__avatar,
+.paw-um .paw-um__btn[aria-expanded="true"] .paw-um__avatar {
+	filter: brightness(0.96);
+}
+
+.paw-um .paw-um__avatar {
+	display: grid;
+	flex: none;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	overflow: hidden;
+	border-radius: 50%;
+	background: var(--paw-tint);
+	color: var(--paw-primary-dark);
+	font-size: 0.95rem;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+}
+
+.paw-um .paw-um__avatar.is-guest {
+	background: #e9ecf1;
+	color: #b5b9c7;
+}
+
+.paw-um .paw-um__avatar svg {
+	width: 72%;
+	height: 72%;
+	fill: currentColor;
+}
+
+.paw-um .paw-um__avatar--lg {
+	width: 3.2rem;
+	height: 3.2rem;
+	font-size: 1.15rem;
+}
+
+.paw-um .paw-um__panel {
+	position: absolute;
+	z-index: 99999;
+	top: calc(100% + 0.6rem);
+	width: 17rem;
+	max-width: calc(100vw - 24px);
+	overflow: hidden;
+	border-radius: 0.625rem;
+	background: #fff;
+	box-shadow: 0 0 50px rgba(44, 57, 71, 0.16);
+	animation: paw-um-in 0.14s ease-out;
+}
+
+.paw-um .paw-um__panel[hidden] {
+	display: none;
+}
+
+.paw-um--right .paw-um__panel {
+	right: 0;
+}
+
+.paw-um--left .paw-um__panel {
+	left: 0;
+}
+
+@keyframes paw-um-in {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+}
+
+.paw-um .paw-um__head {
+	display: flex;
+	gap: 0.9rem;
+	align-items: center;
+	padding: 1rem 1.25rem;
+	border-bottom: 1px solid var(--paw-line);
+}
+
+.paw-um .paw-um__who {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.paw-um .paw-um__who strong {
+	overflow: hidden;
+	color: var(--paw-ink);
+	font-size: 0.98rem;
+	font-weight: 600;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.paw-um .paw-um__who span {
+	overflow: hidden;
+	color: var(--paw-soft);
+	font-size: 0.8rem;
+	font-weight: 500;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.paw-um .paw-um__list {
+	padding: 0.5rem 0;
+}
+
+.paw-um .paw-um__panel a.paw-um__item {
+	display: block;
+	padding: 0.6rem 1.25rem;
+	border: 0;
+	background: transparent;
+	color: var(--paw-text);
+	font-size: 0.95rem;
+	font-weight: 400;
+	text-decoration: none;
+}
+
+.paw-um .paw-um__panel a.paw-um__item:hover,
+.paw-um .paw-um__panel a.paw-um__item:focus {
+	background: var(--paw-hover);
+	color: var(--paw-primary-dark);
+	text-decoration: none;
+}
+
+.paw-um .paw-um__panel a.paw-um__item:focus-visible {
+	outline: none;
+	box-shadow: inset 3px 0 0 var(--paw-primary);
+}
+
+.paw-um .paw-um__sep {
+	height: 0;
+	margin: 0.4rem 0;
+	border: 0;
+	border-top: 1px solid var(--paw-line);
+}
+
+/* ---------- Profile and My Bookings ---------- */
+
+.paw-acct {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 760px;
+	margin: 0 auto;
+	color: var(--paw-ink);
+	font-family: Nunito, ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, -apple-system, sans-serif;
+	line-height: 1.5;
+}
+
+.paw-acct *,
+.paw-acct *::before,
+.paw-acct *::after {
+	box-sizing: inherit;
+}
+
+.paw-acct [hidden] {
+	display: none !important;
+}
+
+.paw-acct .paw-acct__card {
+	margin-bottom: 1.25rem;
+	padding: 1.5rem;
+	border-radius: 0.475rem;
+	background: #fff;
+	box-shadow: 0 0.1rem 1rem 0.25rem rgba(44, 57, 71, 0.05);
+}
+
+.paw-acct .paw-acct__card h2,
+.paw-acct .paw-acct__card h3 {
+	margin: 0 0 1rem;
+	color: var(--paw-ink);
+	font-size: 1.125rem;
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+.paw-acct .paw-acct__notice {
+	margin: 0 0 1rem;
+	padding: 0.75rem 1rem;
+	border-left: 3px solid var(--paw-success);
+	border-radius: 0.375rem;
+	background: #e9fbf5;
+	color: #03684e;
+}
+
+.paw-acct .paw-acct__notice--error {
+	border-left-color: var(--paw-danger);
+	background: #fdeaea;
+	color: var(--paw-danger);
+}
+
+.paw-acct .paw-acct__tabs {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.25rem;
+	margin-bottom: 1.25rem;
+	padding: 0.25rem;
+	border-radius: 0.5rem;
+	background: #f5f6f8;
+}
+
+.paw-acct .paw-acct__tab {
+	padding: 0.625rem;
+	border: 0;
+	border-radius: 0.375rem;
+	background: transparent;
+	color: var(--paw-soft);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.paw-acct .paw-acct__tab[aria-selected="true"] {
+	background: #fff;
+	box-shadow: 0 1px 3px rgba(44, 57, 71, 0.12);
+	color: var(--paw-primary-dark);
+}
+
+.paw-acct .paw-acct__tab:focus-visible {
+	outline: none;
+	box-shadow: var(--paw-ring);
+}
+
+.paw-acct .paw-acct__grid {
+	display: grid;
+	gap: 1rem;
+}
+
+@media (min-width: 640px) {
+	.paw-acct .paw-acct__grid--2 {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
+.paw-acct .paw-acct__field label {
+	display: block;
+	margin-bottom: 0.25rem;
+	color: var(--paw-ink);
+	font-size: 0.9375rem;
+	font-weight: 600;
+}
+
+.paw-acct .paw-acct__field input:not(#paw-0) {
+	display: block;
+	width: 100%;
+	min-height: 2.75rem;
+	margin: 0;
+	padding: 0.5rem 0.875rem;
+	border: 1px solid #e1e4ea;
+	border-radius: 0.475rem;
+	background: #f9fafb;
+	box-shadow: none;
+	color: var(--paw-ink);
+	font: inherit;
+}
+
+.paw-acct .paw-acct__field input:not(#paw-0):focus {
+	border-color: var(--paw-primary);
+	background: #fff;
+	box-shadow: var(--paw-ring);
+	outline: none;
+}
+
+.paw-acct .paw-acct__field.is-invalid input:not(#paw-0) {
+	border-color: var(--paw-danger);
+}
+
+.paw-acct .paw-acct__error {
+	margin: 0.375rem 0 0;
+	color: var(--paw-danger);
+	font-size: 0.8125rem;
+}
+
+.paw-acct .paw-acct__msg {
+	margin: 1rem 0 0;
+	font-weight: 600;
+}
+
+.paw-acct .paw-acct__msg.is-error {
+	color: var(--paw-danger);
+}
+
+.paw-acct .paw-acct__msg.is-ok {
+	color: #03684e;
+}
+
+.paw-acct .paw-acct__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	align-items: center;
+	margin-top: 1.25rem;
+}
+
+.paw-acct .paw-acct__btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 2.75rem;
+	padding: 0.5rem 1.5rem;
+	border: 1.5px solid var(--paw-primary);
+	border-radius: 2rem;
+	background: var(--paw-primary);
+	color: #fff;
+	font: inherit;
+	font-weight: 600;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.paw-acct .paw-acct__btn:hover {
+	border-color: var(--paw-primary-dark);
+	background: var(--paw-primary-dark);
+	color: #fff;
+}
+
+.paw-acct .paw-acct__btn:focus-visible {
+	outline: none;
+	box-shadow: var(--paw-ring);
+}
+
+.paw-acct .paw-acct__btn--ghost {
+	background: transparent;
+	color: var(--paw-primary-dark);
+}
+
+.paw-acct .paw-acct__btn[disabled] {
+	opacity: 0.6;
+	cursor: progress;
+}
+
+.paw-acct .paw-acct__link {
+	color: var(--paw-primary-dark);
+	font-size: 0.9375rem;
+}
+
+.paw-acct .paw-acct__muted {
+	color: var(--paw-soft);
+	font-size: 0.875rem;
+}
+
+.paw-acct .paw-acct__table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.paw-acct .paw-acct__table th {
+	padding: 0.625rem 0.75rem;
+	border-bottom: 1px solid var(--paw-line);
+	color: var(--paw-soft);
+	font-size: 0.75rem;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-align: left;
+	text-transform: uppercase;
+}
+
+.paw-acct .paw-acct__table td {
+	padding: 0.875rem 0.75rem;
+	border-bottom: 1px solid var(--paw-line);
+	vertical-align: middle;
+}
+
+@media (max-width: 639px) {
+	.paw-acct .paw-acct__table thead {
+		display: none;
+	}
+
+	.paw-acct .paw-acct__table tr {
+		display: grid;
+		gap: 0.25rem;
+		padding: 0.875rem 0;
+		border-bottom: 1px solid var(--paw-line);
+	}
+
+	.paw-acct .paw-acct__table td {
+		padding: 0;
+		border: 0;
+	}
+}
+
+.paw-acct .paw-badge {
+	display: inline-block;
+	padding: 2px 10px;
+	border-radius: 2rem;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.7;
+	white-space: nowrap;
+}
+
+.paw-acct .paw-badge--pending { background: #e6f5ff; color: #0b6fae; }
+.paw-acct .paw-badge--confirmed { background: #e3faf3; color: #037a5c; }
+.paw-acct .paw-badge--declined { background: #fbe6e6; color: #bc0202; }
+.paw-acct .paw-badge--checked_in { background: #e7ecfa; color: #0f42c0; }
+.paw-acct .paw-badge--completed { background: #e8f0f5; color: #3b7597; }
+.paw-acct .paw-badge--cancelled { background: #f1f1f4; color: #6b7280; }
+
+@media (prefers-reduced-motion: reduce) {
+	.paw-um .paw-um__panel {
+		animation: none;
+	}
+}
+
+.paw-acct .screen-reader-text {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}

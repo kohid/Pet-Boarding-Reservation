@@ -21,6 +21,9 @@
 	var draftNote = root.querySelector('[data-paw-draft]');
 	var fileList = root.querySelector('[data-paw-file-list]');
 	var fileInput = root.querySelector('input[type=file]');
+	var createBox = form.querySelector('input[name=create_account]');
+	var accountField = root.querySelector('[data-field=account_password]');
+	var ACCOUNT = CFG.account || { signedIn: false, prefill: {} };
 	var N = CFG.steps;
 	var I18N = CFG.i18n;
 	var DRAFT_KEY = 'paw_draft_v1';
@@ -167,6 +170,18 @@
 		return Object.keys(CFG.fields).filter(function (id) { return CFG.fields[id].step === step; });
 	}
 
+	function creatingAccount() {
+		return !!(createBox && createBox.checked);
+	}
+
+	/** The step a server error belongs to (account_password is not a reservation field). */
+	function stepOf(id) {
+		if (CFG.fields[id]) {
+			return CFG.fields[id].step;
+		}
+		return id === 'account_password' ? 1 : null;
+	}
+
 	/** Checks one step, shows its messages, and returns the first problem field id (or null). */
 	function checkStep(step) {
 		var first = null;
@@ -177,6 +192,14 @@
 				first = id;
 			}
 		});
+		if (step === 1 && accountField) {
+			var pw = form.querySelector('[name=account_password]').value;
+			var bad = creatingAccount() && Array.from(pw).length < 8 ? I18N.passwordShort : null;
+			showError('account_password', bad);
+			if (bad && !first) {
+				first = 'account_password';
+			}
+		}
 		return first;
 	}
 
@@ -193,6 +216,10 @@
 		el.scrollIntoView({ block: 'center', behavior: 'auto' });
 		if (target && target.focus) {
 			target.focus({ preventScroll: true });
+		}
+		// Point at the date field without opening its calendar over the buttons below it.
+		if (pickers[id]) {
+			pickers[id].close();
 		}
 	}
 
@@ -214,6 +241,9 @@
 		root.querySelectorAll('[data-show-if]').forEach(function (el) {
 			el.hidden = !isShown(el.getAttribute('data-field'));
 		});
+		if (accountField) {
+			accountField.hidden = !creatingAccount();
+		}
 		nextBtn.disabled = warned();
 	}
 
@@ -236,7 +266,7 @@
 		reached = Math.max(reached, n);
 		root.setAttribute('data-current', String(n));
 
-		prevBtn.disabled = n === 0;
+		prevBtn.hidden = n === 0;
 		nextBtn.hidden = n === N;
 		progress.style.setProperty('--paw-progress', (n / N * 100) + '%');
 		progress.setAttribute('aria-valuenow', String(n));
@@ -290,7 +320,12 @@
 
 	function saveDraft() {
 		clearTimeout(saveTimer);
-		saveTimer = setTimeout(function () {
+		saveTimer = setTimeout(writeDraft, 500);
+	}
+
+	function writeDraft() {
+		clearTimeout(saveTimer);
+		(function () {
 			var values = {};
 			Object.keys(CFG.fields).forEach(function (id) {
 				var t = CFG.fields[id].type;
@@ -301,7 +336,7 @@
 			try {
 				localStorage.setItem(DRAFT_KEY, JSON.stringify({ t: Date.now(), v: values }));
 			} catch (err) { /* Private mode or storage full: drafts are a convenience only. */ }
-		}, 500);
+		})();
 	}
 
 	function clearDraft() {
@@ -525,6 +560,10 @@
 		files.forEach(function (file) { data.append('vaccination_files[]', file, file.name); });
 		data.set('signature', pad && !pad.isEmpty() ? pad.toDataURL() : '');
 		data.set('submission_id', submissionId);
+		if (!creatingAccount()) {
+			data.delete('create_account');
+			data.delete('account_password');
+		}
 		return data;
 	}
 
@@ -536,7 +575,9 @@
 			body: payload()
 		}).then(function (res) {
 			return res.json().catch(function () { return {}; }).then(function (body) {
-				if (res.status === 403 && body.code === 'paw_nonce' && !retried) {
+				// WordPress itself answers rest_cookie_invalid_nonce for an expired nonce on a cached page.
+				var staleNonce = body.code === 'paw_nonce' || body.code === 'rest_cookie_invalid_nonce';
+				if (res.status === 403 && staleNonce && !retried) {
 					return fetch(CFG.nonceUrl, { credentials: 'same-origin' })
 						.then(function (r) { return r.json(); })
 						.then(function (fresh) {
@@ -549,9 +590,15 @@
 		});
 	}
 
-	function finish(reference) {
+	function finish(reference, accountMade) {
 		clearDraft();
 		root.querySelector('[data-paw-reference]').textContent = reference;
+		if (accountMade) {
+			var note = document.createElement('p');
+			note.className = 'paw-done__text';
+			note.textContent = I18N.accountReady;
+			stepEl('done').appendChild(note);
+		}
 		root.classList.add('is-done');
 		stepEl(current).hidden = true;
 		var done = stepEl('done');
@@ -586,15 +633,15 @@
 
 		send(false).then(function (r) {
 			if (r.status === 201 && r.body.reference) {
-				finish(r.body.reference);
+				finish(r.body.reference, r.body.account === true);
 				return;
 			}
 			var fields = r.body && r.body.data && r.body.data.fields;
 			if (r.status === 400 && fields) {
-				var ids = Object.keys(fields).filter(function (id) { return CFG.fields[id]; });
-				ids.sort(function (a, b) { return CFG.fields[a].step - CFG.fields[b].step; });
+				var ids = Object.keys(fields).filter(function (id) { return stepOf(id); });
+				ids.sort(function (a, b) { return stepOf(a) - stepOf(b); });
 				if (ids.length) {
-					go(CFG.fields[ids[0]].step, true);
+					go(stepOf(ids[0]), true);
 					ids.forEach(function (id) { showError(id, fields[id]); });
 					focusField(ids[0]);
 					return;
@@ -615,10 +662,91 @@
 		});
 	});
 
+	/* ---------- Account: sign in on the owner step ---------- */
+
+	var signinToggle = root.querySelector('[data-paw-signin-toggle]');
+	if (signinToggle) {
+		var signinBox = root.querySelector('#paw-signin');
+		var signinBtn = root.querySelector('[data-paw-signin]');
+		var signinError = root.querySelector('[data-paw-signin-error]');
+		signinToggle.addEventListener('click', function () {
+			signinBox.hidden = !signinBox.hidden;
+			signinToggle.setAttribute('aria-expanded', String(!signinBox.hidden));
+			if (!signinBox.hidden) {
+				root.querySelector('#paw-login-email').focus();
+			}
+		});
+		var signIn = function () {
+			var label = signinBtn.textContent;
+			signinError.hidden = true;
+			signinBtn.disabled = true;
+			signinBtn.textContent = I18N.signingIn;
+			fetch(ACCOUNT.loginRest, {
+				method: 'POST',
+				credentials: 'same-origin',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					email: root.querySelector('#paw-login-email').value.trim(),
+					password: root.querySelector('#paw-login-password').value
+				})
+			}).then(function (res) {
+				return res.json().catch(function () { return {}; }).then(function (body) {
+					if (res.ok && body.reload) {
+						// The page's REST nonce belongs to the visitor; reload for the owner's.
+						writeDraft();
+						try {
+							sessionStorage.setItem('paw_resume', '1');
+						} catch (err) { /* Ignore. */ }
+						location.reload();
+						return;
+					}
+					signinError.textContent = body.message || I18N.signinFailed;
+					signinError.hidden = false;
+				});
+			}).catch(function () {
+				signinError.textContent = I18N.network;
+				signinError.hidden = false;
+			}).then(function () {
+				signinBtn.disabled = false;
+				signinBtn.textContent = label;
+			});
+		};
+		signinBtn.addEventListener('click', signIn);
+		root.querySelector('#paw-login-password').addEventListener('keydown', function (e) {
+			if (e.key === 'Enter') {
+				e.preventDefault();
+				signIn();
+			}
+		});
+	}
+
+	// On a shared computer the next person must not find this owner's details waiting for them.
+	var logout = root.querySelector('[data-paw-logout]');
+	if (logout) {
+		logout.addEventListener('click', clearDraft);
+	}
+
+	/** Fills only what is still empty, so anything typed (or restored from the draft) wins. */
+	function applyPrefill() {
+		var prefill = ACCOUNT.prefill || {};
+		Object.keys(prefill).forEach(function (id) {
+			if (CFG.fields[id] && value(id) === '') {
+				setValue(id, String(prefill[id]));
+			}
+		});
+	}
+
 	/* ---------- Start ---------- */
 
 	setupDates();
 	restoreDraft();
+	applyPrefill();
+	refresh();
 	history.replaceState({ pawStep: 0 }, '', location.pathname + location.search);
-	go(0, false);
+	var resume = false;
+	try {
+		resume = sessionStorage.getItem('paw_resume') === '1';
+		sessionStorage.removeItem('paw_resume');
+	} catch (err) { /* Ignore. */ }
+	go(resume ? 1 : 0, false);
 })();

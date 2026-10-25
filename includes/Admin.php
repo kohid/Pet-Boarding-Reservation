@@ -97,13 +97,8 @@ final class Admin {
 		include PAW_DIR . 'templates/admin-detail.php';
 	}
 
-	/** Every stored answer keyed by field id: table columns plus details. */
 	public static function values( array $r ): array {
-		$values = (array) $r['details'];
-		foreach ( Fields::COLUMNS as $col ) {
-			$values[ $col ] = (string) ( $r[ $col ] ?? '' );
-		}
-		return $values;
+		return Reservations::values( $r );
 	}
 
 	/** An answer as a person reads it: option labels, country names, m/d/Y dates. Not escaped. */

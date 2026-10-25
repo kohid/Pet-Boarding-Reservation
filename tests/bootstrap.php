@@ -125,3 +125,4 @@ function wp_mail( $to, $subject, $message, $headers = '', $attachments = array()
 }
 function size_format( $b ) { return round( $b / 1024 ) . ' KB'; }
 function wp_max_upload_size() { return $GLOBALS['paw_max_upload'] ?? 64 * 1024 * 1024; }
+function wp_date( $f, $t = null ) { return gmdate( $f, $t ?? time() ); }

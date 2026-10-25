@@ -31,10 +31,9 @@
 
 	box-sizing: border-box;
 	width: 100%;
-	min-height: 70vh;
 	margin: 0;
-	padding: 2rem 1rem 7.5rem;
-	background: var(--paw-cream);
+	padding: 1.5rem 0;
+	background: transparent; /* Designed in the page builder, not here. */
 	color: var(--paw-ink);
 	font-family: Nunito, ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, -apple-system, sans-serif;
 	font-size: 1rem;
@@ -67,19 +66,19 @@
 	text-transform: none;
 }
 
-.paw-form {
+.paw-app .paw-form {
 	max-width: 760px;
 	margin: 0 auto;
 }
 
 /* ---------- Welcome ---------- */
 
-.paw-welcome {
+.paw-app .paw-welcome {
 	padding: 2rem 0 1rem;
 	text-align: center;
 }
 
-.paw-welcome__logo {
+.paw-app .paw-welcome__logo {
 	display: grid;
 	place-items: center;
 	width: 12.5rem;
@@ -90,27 +89,27 @@
 	background: #f6e7d4;
 }
 
-.paw-welcome__logo img {
+.paw-app .paw-welcome__logo img {
 	width: 78%;
 	height: 78%;
 	object-fit: contain;
 }
 
-.paw-welcome__title {
+.paw-app .paw-welcome__title {
 	font-size: clamp(1.75rem, 4vw, 2.125rem);
 	font-weight: 700;
 	line-height: 1.2;
 	color: var(--paw-ink);
 }
 
-.paw-welcome__intro {
+.paw-app .paw-welcome__intro {
 	max-width: 42rem;
 	margin: 0.75rem auto 0;
 	color: var(--paw-ink);
 	opacity: 0.85;
 }
 
-.paw-draft {
+.paw-app .paw-draft {
 	display: inline-flex;
 	gap: 0.5rem;
 	align-items: center;
@@ -124,31 +123,31 @@
 
 /* ---------- Steps and cards ---------- */
 
-.paw-step__title {
+.paw-app .paw-step__title {
 	margin-bottom: 0.875rem;
 	font-size: 1.5rem;
 	font-weight: 600;
 	line-height: 1.3;
 }
 
-.paw-step__title:focus {
+.paw-app .paw-step__title:focus {
 	outline: none;
 }
 
-.paw-step__intro {
+.paw-app .paw-step__intro {
 	margin-bottom: 1rem;
 }
 
-.paw-waiver {
+.paw-app .paw-waiver {
 	margin-bottom: 1.75rem;
 	color: var(--paw-ink);
 }
 
-.paw-waiver p + p {
+.paw-app .paw-waiver p + p {
 	margin-top: 0.75rem;
 }
 
-.paw-card {
+.paw-app .paw-card {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr);
 	border-radius: var(--paw-radius);
@@ -156,49 +155,49 @@
 	box-shadow: var(--paw-shadow);
 }
 
-.paw-field {
+.paw-app .paw-field {
 	min-width: 0;
 	padding: 1.25rem 1.25rem 1.5rem;
 	border-bottom: 1px solid var(--paw-hairline);
 }
 
-.paw-field:last-child {
+.paw-app .paw-field:last-child {
 	border-bottom: 0;
 }
 
-.paw-group-title {
+.paw-app .paw-group-title {
 	padding: 1.25rem 1.25rem 0;
 	color: var(--paw-ink);
 }
 
-.paw-group-title ~ .paw-field--half {
+.paw-app .paw-group-title ~ .paw-field--half {
 	padding-top: 0.75rem;
 	border-bottom: 0;
 }
 
 @media (min-width: 640px) {
-	.paw-card {
+	.paw-app .paw-card {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
-	.paw-card > * {
+	.paw-app .paw-card > * {
 		grid-column: 1 / -1;
 	}
 
-	.paw-card > .paw-field--half {
+	.paw-app .paw-card > .paw-field--half {
 		grid-column: auto;
 	}
 
-	.paw-field {
+	.paw-app .paw-field {
 		padding: 1.5rem 1.5rem 1.75rem;
 	}
 
-	.paw-group-title {
+	.paw-app .paw-group-title {
 		padding: 1.5rem 1.5rem 0;
 	}
 }
 
-.paw-label {
+.paw-app .paw-label {
 	display: block;
 	margin-bottom: 0.25rem;
 	font-size: 1rem;
@@ -207,33 +206,35 @@
 }
 
 /* A floated legend sits inside the fieldset's padding like any other label. */
-legend.paw-label {
+.paw-app legend.paw-label {
 	float: left;
 	width: 100%;
 }
 
-legend.paw-label + * {
+.paw-app legend.paw-label + * {
 	clear: both;
 }
 
-.paw-field--half .paw-label {
+.paw-app .paw-field--half .paw-label {
 	font-size: 0.875rem;
 }
 
-.paw-req {
+.paw-app .paw-req {
 	margin-left: 1px;
 }
 
-.paw-help {
+.paw-app .paw-help {
 	margin-bottom: 0.5rem;
 	font-size: 0.8125rem;
 	color: var(--paw-muted);
 }
 
-/* ---------- Text controls: underlined, as in the mock-ups ---------- */
+/* ---------- Text controls: underlined, as in the mock-ups ----------
+ * :not(#paw-0) lifts these above any class-only theme or page-builder rule (e.g. Elementor's
+ * Site Settings form-field styles, specificity 0,3,1) without !important. */
 
-.paw-input,
-.paw-select {
+.paw-app .paw-input:not(#paw-0),
+.paw-app .paw-select:not(#paw-0) {
 	display: block;
 	width: 100%;
 	min-height: 2.5rem;
@@ -247,7 +248,7 @@ legend.paw-label + * {
 	transition: border-color 0.15s ease;
 }
 
-.paw-select {
+.paw-app .paw-select:not(#paw-0) {
 	appearance: none;
 	padding-right: 1.5rem;
 	color: var(--paw-primary);
@@ -258,7 +259,7 @@ legend.paw-label + * {
 	cursor: pointer;
 }
 
-.paw-textarea {
+.paw-app .paw-textarea:not(#paw-0) {
 	display: block;
 	width: 100%;
 	min-height: 6rem;
@@ -271,52 +272,52 @@ legend.paw-label + * {
 	transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
-.paw-input::placeholder,
-.paw-textarea::placeholder {
+.paw-app .paw-input:not(#paw-0)::placeholder,
+.paw-app .paw-textarea:not(#paw-0)::placeholder {
 	color: #9a9fa8;
 	opacity: 1;
 }
 
-.paw-input:focus,
-.paw-select:focus {
+.paw-app .paw-input:not(#paw-0):focus,
+.paw-app .paw-select:not(#paw-0):focus {
 	border-bottom: 2px solid var(--paw-primary);
 	padding-bottom: calc(0.375rem - 1px);
 }
 
-.paw-textarea:focus {
+.paw-app .paw-textarea:not(#paw-0):focus {
 	border-color: var(--paw-primary);
 	background: var(--paw-card);
 }
 
-.paw-field.is-invalid .paw-input,
-.paw-field.is-invalid .paw-select {
+.paw-app .paw-field.is-invalid .paw-input:not(#paw-0),
+.paw-app .paw-field.is-invalid .paw-select:not(#paw-0) {
 	border-bottom-color: var(--paw-danger);
 }
 
-.paw-field.is-invalid .paw-textarea {
+.paw-app .paw-field.is-invalid .paw-textarea:not(#paw-0) {
 	border-color: var(--paw-danger);
 }
 
 /* ---------- Dates ---------- */
 
-.paw-date {
+.paw-app .paw-date {
 	display: flex;
 	gap: 0.75rem;
 	align-items: center;
 	max-width: 16rem;
 }
 
-.paw-date .paw-input {
+.paw-app .paw-date .paw-input:not(#paw-0) {
 	flex: 1;
 	cursor: pointer;
 }
 
-.paw-date input[readonly] {
+.paw-app .paw-date input[readonly] {
 	color: var(--paw-primary);
 	cursor: default;
 }
 
-.paw-date__icon {
+.paw-app .paw-date__icon {
 	flex: none;
 	width: 1.125rem;
 	height: 1.125rem;
@@ -325,13 +326,13 @@ legend.paw-label + * {
 
 /* ---------- Option cards (radio / checkbox rows) ---------- */
 
-.paw-options {
+.paw-app .paw-options {
 	display: grid;
 	gap: 0.625rem;
 	margin-top: 0.5rem;
 }
 
-.paw-option {
+.paw-app .paw-option {
 	position: relative;
 	display: flex;
 	gap: 1rem;
@@ -347,14 +348,14 @@ legend.paw-label + * {
 	transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
-.paw-option input,
-.paw-yesno__opt input {
+.paw-app .paw-option input,
+.paw-app .paw-yesno__opt input {
 	position: absolute;
 	opacity: 0;
 	pointer-events: none;
 }
 
-.paw-option__mark {
+.paw-app .paw-option__mark {
 	flex: none;
 	width: 0.875rem;
 	height: 0.875rem;
@@ -363,39 +364,39 @@ legend.paw-label + * {
 	transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.paw-field--agree .paw-option__mark {
+.paw-app .paw-field--agree .paw-option__mark {
 	border-radius: 0.2rem;
 }
 
-.paw-option:hover {
+.paw-app .paw-option:hover {
 	border-color: var(--paw-line);
 }
 
-.paw-option:has(input:checked) {
+.paw-app .paw-option:has(input:checked) {
 	border-color: var(--paw-primary);
 	background: var(--paw-primary-tint);
 }
 
-.paw-option input:checked ~ .paw-option__mark {
+.paw-app .paw-option input:checked ~ .paw-option__mark {
 	border-color: var(--paw-primary);
 	background: var(--paw-primary);
 	box-shadow: inset 0 0 0 2px var(--paw-primary-tint);
 }
 
-.paw-option:has(input:focus-visible) {
+.paw-app .paw-option:has(input:focus-visible) {
 	box-shadow: var(--paw-ring);
 }
 
 /* ---------- Yes / No ---------- */
 
-.paw-yesno {
+.paw-app .paw-yesno {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: 0.25rem;
 	margin-top: 0.5rem;
 }
 
-.paw-yesno__opt {
+.paw-app .paw-yesno__opt {
 	position: relative;
 	display: grid;
 	place-items: center;
@@ -411,20 +412,20 @@ legend.paw-label + * {
 	transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.paw-yesno__opt:hover {
+.paw-app .paw-yesno__opt:hover {
 	background: #efeff2;
 }
 
-.paw-yesno__opt:has(input:checked) {
+.paw-app .paw-yesno__opt:has(input:checked) {
 	background: var(--paw-primary);
 	color: #fff;
 }
 
-.paw-yesno__opt:has(input:focus-visible) {
+.paw-app .paw-yesno__opt:has(input:focus-visible) {
 	box-shadow: var(--paw-ring);
 }
 
-.paw-alert {
+.paw-app .paw-alert {
 	margin-top: 0.75rem;
 	padding: 0.75rem 1rem;
 	border-left: 3px solid var(--paw-danger);
@@ -436,7 +437,7 @@ legend.paw-label + * {
 
 /* ---------- File upload ---------- */
 
-.paw-file__input {
+.paw-app .paw-file__input {
 	position: absolute;
 	width: 1px;
 	height: 1px;
@@ -445,7 +446,7 @@ legend.paw-label + * {
 	white-space: nowrap;
 }
 
-.paw-file__button {
+.paw-app .paw-file__button {
 	display: inline-flex;
 	align-items: center;
 	min-height: 2.5rem;
@@ -459,22 +460,22 @@ legend.paw-label + * {
 	transition: box-shadow 0.15s ease;
 }
 
-.paw-file__button:hover {
+.paw-app .paw-file__button:hover {
 	box-shadow: 0 3px 10px rgba(44, 57, 71, 0.22);
 }
 
-.paw-file__input:focus-visible + .paw-file__button {
+.paw-app .paw-file__input:focus-visible + .paw-file__button {
 	box-shadow: var(--paw-ring);
 }
 
-.paw-file__list {
+.paw-app .paw-file__list {
 	display: grid;
 	gap: 0.375rem;
 	margin-top: 0.75rem;
 	list-style: none;
 }
 
-.paw-file__item {
+.paw-app .paw-file__item {
 	display: flex;
 	gap: 0.75rem;
 	align-items: center;
@@ -485,13 +486,13 @@ legend.paw-label + * {
 	font-size: 0.875rem;
 }
 
-.paw-file__name {
+.paw-app .paw-file__name {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
-.paw-file__size {
+.paw-app .paw-file__size {
 	flex: none;
 	margin-left: auto;
 	color: var(--paw-muted);
@@ -499,12 +500,12 @@ legend.paw-label + * {
 
 /* ---------- Signature ---------- */
 
-.paw-sig {
+.paw-app .paw-sig {
 	position: relative;
 	margin-top: 0.5rem;
 }
 
-.paw-sig__canvas {
+.paw-app .paw-sig__canvas {
 	display: block;
 	width: 100%;
 	height: 11.5rem;
@@ -514,7 +515,7 @@ legend.paw-label + * {
 	cursor: crosshair;
 }
 
-.paw-sig__hint {
+.paw-app .paw-sig__hint {
 	position: absolute;
 	top: 5.75rem;
 	left: 50%;
@@ -527,17 +528,64 @@ legend.paw-label + * {
 	pointer-events: none;
 }
 
-.paw-sig.is-signed .paw-sig__hint {
+.paw-app .paw-sig.is-signed .paw-sig__hint {
 	display: none;
 }
 
-.paw-sig__clear {
+.paw-app .paw-sig__clear {
 	margin-top: 0.5rem;
+}
+
+/* ---------- Account (owner step) ---------- */
+
+.paw-app .paw-account {
+	margin-bottom: 1rem;
+	padding: 0.875rem 1.25rem;
+	border-left: 3px solid var(--paw-primary);
+	border-radius: var(--paw-radius);
+	background: var(--paw-card);
+	box-shadow: var(--paw-shadow);
+	font-size: 0.9375rem;
+}
+
+.paw-app .paw-account .paw-link,
+.paw-app .paw-account a {
+	color: var(--paw-primary-dark);
+	font-size: inherit;
+}
+
+.paw-app .paw-signin {
+	display: grid;
+	gap: 0.75rem;
+	margin-top: 0.875rem;
+}
+
+@media (min-width: 640px) {
+	.paw-app .paw-signin {
+		grid-template-columns: 1fr 1fr;
+		column-gap: 1.5rem;
+	}
+
+	.paw-app .paw-signin > .paw-error,
+	.paw-app .paw-signin__actions {
+		grid-column: 1 / -1;
+	}
+}
+
+.paw-app .paw-signin__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	align-items: center;
+}
+
+.paw-app .paw-signin__actions .paw-nav__btn {
+	min-width: 0;
 }
 
 /* ---------- Links, errors, submit ---------- */
 
-.paw-link {
+.paw-app .paw-link {
 	padding: 0;
 	border: 0;
 	background: none;
@@ -548,18 +596,18 @@ legend.paw-label + * {
 	cursor: pointer;
 }
 
-.paw-link:focus-visible {
+.paw-app .paw-link:focus-visible {
 	outline: 2px solid var(--paw-primary);
 	outline-offset: 2px;
 }
 
-.paw-error {
+.paw-app .paw-error {
 	margin-top: 0.5rem;
 	color: var(--paw-danger);
 	font-size: 0.8125rem;
 }
 
-.paw-form-error {
+.paw-app .paw-form-error {
 	margin-top: 1rem;
 	padding: 0.75rem 1rem;
 	border-radius: var(--paw-radius);
@@ -567,7 +615,7 @@ legend.paw-label + * {
 	color: var(--paw-danger);
 }
 
-.paw-submit {
+.paw-app .paw-submit {
 	display: block;
 	width: 100%;
 	min-height: 3rem;
@@ -582,28 +630,28 @@ legend.paw-label + * {
 	transition: background-color 0.15s ease;
 }
 
-.paw-submit:hover {
+.paw-app .paw-submit:hover {
 	background: var(--paw-primary-dark);
 }
 
-.paw-submit:focus-visible {
+.paw-app .paw-submit:focus-visible {
 	box-shadow: var(--paw-ring);
 	outline: none;
 }
 
-.paw-submit[disabled] {
+.paw-app .paw-submit[disabled] {
 	opacity: 0.7;
 	cursor: progress;
 }
 
 /* ---------- Thank you ---------- */
 
-.paw-done {
+.paw-app .paw-done {
 	padding: 3rem 0 1rem;
 	text-align: center;
 }
 
-.paw-done__mark {
+.paw-app .paw-done__mark {
 	display: grid;
 	place-items: center;
 	width: 4.5rem;
@@ -613,127 +661,139 @@ legend.paw-label + * {
 	background: var(--paw-success);
 }
 
-.paw-done__mark svg {
+.paw-app .paw-done__mark svg {
 	width: 2.25rem;
 	height: 2.25rem;
 	fill: #fff;
 }
 
-.paw-done__title {
+.paw-app .paw-done__title {
 	font-size: 1.875rem;
 	font-weight: 700;
 }
 
-.paw-done__title:focus {
+.paw-app .paw-done__title:focus {
 	outline: none;
 }
 
-.paw-done__text {
+.paw-app .paw-done__text {
 	max-width: 32rem;
 	margin: 0.75rem auto 0;
 }
 
-.paw-done__ref {
+.paw-app .paw-done__ref {
 	color: var(--paw-primary-dark);
 	white-space: nowrap;
 }
 
-/* ---------- Bottom nav: ← progress → ---------- */
+/* ---------- Progress (top) ---------- */
 
-.paw-nav {
-	position: fixed;
-	bottom: 1rem;
-	left: 50%;
-	z-index: 50;
-	display: flex;
-	align-items: stretch;
-	width: min(20.5rem, calc(100% - 2rem));
-	height: 2.5rem;
-	overflow: hidden;
+.paw-app .paw-progress {
+	position: relative;
+	max-width: 760px;
+	height: 0.5rem;
+	margin: 0 auto 2rem;
 	border-radius: var(--paw-pill);
-	background: #eee;
-	box-shadow: 0 4px 14px rgba(44, 57, 71, 0.22);
-	transform: translateX(-50%);
+	background: rgba(44, 57, 71, 0.1);
 }
 
-.paw-nav__btn {
-	position: relative;
-	z-index: 2;
-	display: grid;
-	flex: none;
-	place-items: center;
-	width: 4rem;
-	padding: 0;
-	border: 0;
-	background: var(--paw-primary);
-	color: #fff;
-	cursor: pointer;
-	transition: background-color 0.15s ease, opacity 0.15s ease;
-}
-
-.paw-nav__btn svg {
-	width: 1.25rem;
-	height: 1.25rem;
-	fill: currentColor;
-}
-
-.paw-nav__btn:hover {
-	background: var(--paw-primary-dark);
-}
-
-.paw-nav__btn:focus-visible {
-	outline: 3px solid var(--paw-ink);
-	outline-offset: -3px;
-}
-
-.paw-nav__btn[disabled] {
-	opacity: 0.55;
-	cursor: not-allowed;
-}
-
-.paw-nav__btn[disabled]:hover {
-	background: var(--paw-primary);
-}
-
-.paw-progress {
-	position: relative;
-	flex: 1;
-}
-
-.paw-progress__fill {
+.paw-app .paw-progress__fill {
 	position: absolute;
 	inset: 0 auto 0 0;
 	width: var(--paw-progress, 0%);
+	border-radius: inherit;
 	background: var(--paw-primary);
-	box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.35);
 	transition: width 0.35s ease;
 }
 
-/* The paw walks along with the fill: the one playful moment on the page. */
-.paw-progress__paw {
+/* The paw walks along the fill: the one playful moment on the page. */
+.paw-app .paw-progress__paw {
 	position: absolute;
 	top: 50%;
-	left: clamp(0.25rem, calc(var(--paw-progress, 0%) - 1.25rem), calc(100% - 1.25rem));
-	width: 1rem;
-	height: 1rem;
+	left: clamp(0.125rem, calc(var(--paw-progress, 0%) - 0.75rem), calc(100% - 1.75rem));
+	width: 1.5rem;
+	height: 1.5rem;
+	padding: 0.2rem;
+	border-radius: 50%;
+	background: var(--paw-primary);
+	box-shadow: 0 2px 6px rgba(255, 127, 80, 0.45);
 	fill: #fff;
-	opacity: 0;
 	transform: translateY(-50%) rotate(12deg);
-	transition: left 0.35s ease, opacity 0.2s ease;
+	transition: left 0.35s ease;
 }
 
-.paw-progress.is-moving .paw-progress__paw,
-.paw-app[data-current]:not([data-current="0"]) .paw-progress__paw {
-	opacity: 0.9;
-}
-
+.paw-app.is-done .paw-progress,
 .paw-app.is-done .paw-nav {
 	display: none;
 }
 
+/* ---------- Back / Next (inline, under the step) ---------- */
+
+.paw-app .paw-nav {
+	display: flex;
+	gap: 0.75rem;
+	align-items: center;
+	justify-content: space-between;
+	margin-top: 1.5rem;
+}
+
+.paw-app .paw-nav__btn {
+	display: inline-flex;
+	gap: 0.5rem;
+	align-items: center;
+	justify-content: center;
+	min-width: 7.5rem;
+	min-height: 2.75rem;
+	padding: 0.5rem 1.375rem;
+	border: 1.5px solid var(--paw-primary);
+	border-radius: var(--paw-pill);
+	background: var(--paw-primary);
+	color: #fff;
+	font-weight: 600;
+	line-height: 1;
+	cursor: pointer;
+	transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.paw-app .paw-nav__btn svg {
+	width: 1.125rem;
+	height: 1.125rem;
+	fill: currentColor;
+}
+
+.paw-app .paw-nav__btn--next {
+	margin-left: auto;
+}
+
+.paw-app .paw-nav__btn--back {
+	background: transparent;
+	color: var(--paw-primary-dark);
+}
+
+.paw-app .paw-nav__btn:hover {
+	border-color: var(--paw-primary-dark);
+	background: var(--paw-primary-dark);
+	color: #fff;
+}
+
+.paw-app .paw-nav__btn:focus-visible {
+	box-shadow: var(--paw-ring);
+	outline: none;
+}
+
+.paw-app .paw-nav__btn[disabled] {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.paw-app .paw-nav__btn[disabled]:hover {
+	border-color: var(--paw-primary);
+	background: var(--paw-primary);
+}
+
 /* ---------- Step change ---------- */
 
-.paw-step.is-entering {
+.paw-app .paw-step.is-entering {
 	animation: paw-enter 0.25s ease both;
 }
 
@@ -746,7 +806,7 @@ legend.paw-label + * {
 
 /* ---------- Bits ---------- */
 
-.paw-hp {
+.paw-app .paw-hp {
 	position: absolute !important;
 	left: -9999px !important;
 	width: 1px;
@@ -754,7 +814,7 @@ legend.paw-label + * {
 	overflow: hidden;
 }
 
-.paw-noscript {
+.paw-app .paw-noscript {
 	max-width: 760px;
 	margin: 1rem auto;
 	padding: 1rem;

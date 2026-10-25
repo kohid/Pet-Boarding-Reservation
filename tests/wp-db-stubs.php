@@ -15,6 +15,8 @@ class Fake_WPDB {
 	public $fail_insert = false;
 	/** @var array<int, mixed> Values handed back by get_var(), in order; then null. */
 	public $var_queue   = array();
+	/** @var array<int, array|null> Rows handed back by get_row() before any id lookup. */
+	public $row_queue   = array();
 
 	public function get_charset_collate() { return 'DEFAULT CHARSET=utf8mb4'; }
 	public function esc_like( $s ) { return addcslashes( $s, '_%\\' ); }
@@ -57,6 +59,16 @@ class Fake_WPDB {
 		return 1;
 	}
 
+	public $posts = 'wp_posts';
+	public $postmeta = 'wp_postmeta';
+	/** @var array<int, array> Columns handed back by get_col(), in order. */
+	public $col_queue = array();
+
+	public function get_col( $sql ) {
+		$this->queries[] = $sql;
+		return array_shift( $this->col_queue ) ?? array();
+	}
+
 	public function get_var( $sql ) {
 		$this->queries[] = $sql;
 		return array_shift( $this->var_queue );
@@ -64,11 +76,31 @@ class Fake_WPDB {
 
 	public function get_row( $sql, $output = null ) {
 		$this->queries[] = $sql;
+		if ( $this->row_queue ) {
+			return array_shift( $this->row_queue );
+		}
 		return preg_match( '/WHERE id = (\d+)/', $sql, $m ) ? ( $this->rows[ (int) $m[1] ] ?? null ) : null;
 	}
 
 	public function get_results( $sql, $output = null ) {
 		$this->queries[] = $sql;
+		if ( str_contains( $sql, 'GROUP BY status' ) ) {
+			$n = array();
+			foreach ( $this->rows as $r ) {
+				$n[ $r['status'] ] = ( $n[ $r['status'] ] ?? 0 ) + 1;
+			}
+			return array_map( fn( $k, $v ) => array( 'status' => $k, 'n' => (string) $v ), array_keys( $n ), $n );
+		}
+		// Owner queries: keep only rows matching "user_id = N" (or, when present, the email).
+		if ( preg_match( '/user_id = (\d+)/', $sql, $u ) ) {
+			$email = preg_match( "/owner_email = '([^']*)'/", $sql, $e ) ? stripslashes( $e[1] ) : null;
+			return array_values(
+				array_filter(
+					$this->rows,
+					fn( $r ) => ( $r['user_id'] ?? '' ) === $u[1] || ( null !== $email && ( $r['owner_email'] ?? '' ) === $email )
+				)
+			);
+		}
 		return array_values( $this->rows );
 	}
 }
@@ -79,7 +111,11 @@ class WP_REST_Request {
 	public $params  = array();
 	public $files   = array();
 	public $headers = array();
+	public $json    = array();
+	public $url     = array();
 	public function get_body_params() { return $this->params; }
+	public function get_json_params() { return $this->json; }
+	public function get_param( $key ) { return $this->url[ $key ] ?? $this->json[ $key ] ?? $this->params[ $key ] ?? null; }
 	public function get_file_params() { return $this->files; }
 	public function get_header( $key ) { return $this->headers[ strtolower( str_replace( '-', '_', $key ) ) ] ?? null; }
 }
@@ -93,5 +129,7 @@ class WP_REST_Response {
 	}
 	public function get_data() { return $this->data; }
 	public function get_status() { return $this->status; }
+	public $sent_headers = array();
+	public function header( $key, $value ) { $this->sent_headers[ $key ] = $value; }
 }
 

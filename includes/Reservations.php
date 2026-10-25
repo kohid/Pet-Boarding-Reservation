@@ -123,6 +123,50 @@ final class Reservations {
 		);
 	}
 
+	/**
+	 * Reservations an owner may see: their own, plus (once their email is verified) those made
+	 * with the same email. Without verification anyone could sign up as someone else.
+	 */
+	public static function for_owner( int $user_id, string $email, bool $verified, int $limit = 50 ): array {
+		global $wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . Activator::table() . ' WHERE ' . self::owner_where( $verified ) . ' ORDER BY check_in DESC, id DESC LIMIT %d', ...self::owner_args( $user_id, $email, $verified, $limit ) ), ARRAY_A );
+		return array_map( array( self::class, 'decode' ), (array) $rows );
+	}
+
+	/** The owner's most recently submitted reservation, or null. */
+	public static function last_for_owner( int $user_id, string $email, bool $verified ): ?array {
+		global $wpdb;
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . Activator::table() . ' WHERE ' . self::owner_where( $verified ) . ' ORDER BY created_at DESC, id DESC LIMIT %d', ...self::owner_args( $user_id, $email, $verified, 1 ) ), ARRAY_A );
+		return $row ? self::decode( $row ) : null;
+	}
+
+	private static function owner_where( bool $verified ): string {
+		return $verified ? '(user_id = %d OR owner_email = %s)' : 'user_id = %d';
+	}
+
+	private static function owner_args( int $user_id, string $email, bool $verified, int $limit ): array {
+		return $verified ? array( $user_id, $email, $limit ) : array( $user_id, $limit );
+	}
+
+	/** Rows the overview needs: every pending request, and stays touching the next 14 nights. */
+	public static function for_stats( string $today ): array {
+		global $wpdb;
+		$until = ( new \DateTimeImmutable( $today ) )->modify( '+' . Stats::NIGHTS . ' days' )->format( 'Y-m-d' );
+		return (array) $wpdb->get_results(
+			$wpdb->prepare( 'SELECT status, check_in, check_out FROM ' . Activator::table() . " WHERE status = 'pending' OR ( check_out >= %s AND check_in <= %s )", $today, $until ),
+			ARRAY_A
+		);
+	}
+
+	/** Every stored answer keyed by field id: table columns plus details. */
+	public static function values( array $r ): array {
+		$values = (array) $r['details'];
+		foreach ( Fields::COLUMNS as $col ) {
+			$values[ $col ] = (string) ( $r[ $col ] ?? '' );
+		}
+		return $values;
+	}
+
 	/** @return array<string, int> Count per status, every status present. */
 	public static function counts(): array {
 		global $wpdb;
@@ -149,6 +193,11 @@ final class Reservations {
 			array( 'status' => $status, 'status_log' => wp_json_encode( $log ), 'updated_at' => $now ),
 			array( 'id' => $id )
 		);
+	}
+
+	public static function link_user( int $id, int $user_id ): bool {
+		global $wpdb;
+		return (bool) $wpdb->update( Activator::table(), array( 'user_id' => $user_id ), array( 'id' => $id ) );
 	}
 
 	public static function set_notes( int $id, string $notes ): bool {

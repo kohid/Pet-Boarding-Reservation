@@ -132,13 +132,40 @@ final class Settings {
 		<div class="wrap paw-admin">
 			<h1><?php esc_html_e( 'Pawfectly settings', 'pawfectly-reservations' ); ?></h1>
 
-			<div class="paw-card paw-card--note">
-				<h2><?php esc_html_e( 'Add the form to a page', 'pawfectly-reservations' ); ?></h2>
-				<p><?php esc_html_e( 'Paste this shortcode into any page, or into an Elementor Shortcode widget.', 'pawfectly-reservations' ); ?></p>
-				<p class="paw-copy">
-					<code id="paw-shortcode">[<?php echo esc_html( Shortcode::TAG ); ?>]</code>
-					<button type="button" class="button" data-paw-copy="#paw-shortcode"><?php esc_html_e( 'Copy', 'pawfectly-reservations' ); ?></button>
-				</p>
+			<div class="paw-card">
+				<h2><?php esc_html_e( 'Shortcodes', 'pawfectly-reservations' ); ?></h2>
+				<p class="paw-muted"><?php esc_html_e( 'Paste a shortcode into any page, or into an Elementor Shortcode widget. "Create page" makes a draft for you to publish.', 'pawfectly-reservations' ); ?></p>
+				<table class="widefat striped paw-shortcodes">
+					<thead><tr><th><?php esc_html_e( 'Shortcode', 'pawfectly-reservations' ); ?></th><th><?php esc_html_e( 'Shows', 'pawfectly-reservations' ); ?></th><th><?php esc_html_e( 'Used on', 'pawfectly-reservations' ); ?></th><th></th></tr></thead>
+					<tbody>
+						<?php foreach ( Pages::TAGS as $paw_tag => $paw_info ) : ?>
+							<?php $paw_url = Pages::url( $paw_tag ); ?>
+							<tr>
+								<td><code id="paw-sc-<?php echo esc_attr( $paw_tag ); ?>">[<?php echo esc_html( $paw_tag ); ?>]</code> <button type="button" class="button button-small" data-paw-copy="#paw-sc-<?php echo esc_attr( $paw_tag ); ?>"><?php esc_html_e( 'Copy', 'pawfectly-reservations' ); ?></button></td>
+								<td><?php echo esc_html( $paw_info[1] ); ?></td>
+								<td>
+									<?php if ( '' !== $paw_url ) : ?>
+										<a href="<?php echo esc_url( $paw_url ); ?>"><?php echo esc_html( $paw_url ); ?></a>
+									<?php elseif ( 'pawfectly_user_menu' === $paw_tag ) : ?>
+										<span class="paw-muted"><?php esc_html_e( 'Your header template', 'pawfectly-reservations' ); ?></span>
+									<?php else : ?>
+										<span class="paw-muted"><?php esc_html_e( 'Not on a published page yet', 'pawfectly-reservations' ); ?></span>
+									<?php endif; ?>
+								</td>
+								<td>
+									<?php if ( 'pawfectly_user_menu' !== $paw_tag ) : ?>
+										<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+											<input type="hidden" name="action" value="paw_create_page">
+											<input type="hidden" name="tag" value="<?php echo esc_attr( $paw_tag ); ?>">
+											<?php wp_nonce_field( 'paw_create_page' ); ?>
+											<button type="submit" class="button button-small"><?php esc_html_e( 'Create page', 'pawfectly-reservations' ); ?></button>
+										</form>
+									<?php endif; ?>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
 			</div>
 
 			<div class="paw-card paw-card--note">

@@ -83,6 +83,48 @@ final class Mailer {
 		);
 	}
 
+	/** The link that confirms an owner's email address. */
+	public static function verify_email( \WP_User $user, string $url ): void {
+		$settings = Settings::get();
+		/* translators: %s: owner's first name */
+		$body = '<p>' . esc_html( sprintf( __( 'Hi %s,', 'pawfectly-reservations' ), $user->first_name ? $user->first_name : $user->display_name ) ) . '</p>'
+			. '<p>' . esc_html__( 'Please confirm your email address so your reservations show in your account.', 'pawfectly-reservations' ) . '</p>'
+			. '<p><a href="' . esc_url( $url ) . '" style="display:inline-block;padding:10px 20px;border-radius:24px;background:#ff7f50;color:#ffffff;text-decoration:none;font-weight:600;">' . esc_html__( 'Confirm my email', 'pawfectly-reservations' ) . '</a></p>'
+			. '<p style="color:#6b7280;font-size:13px;">' . esc_html__( 'The link works for 7 days. If you did not create an account, you can ignore this email.', 'pawfectly-reservations' ) . '</p>';
+		self::send(
+			(string) $user->user_email,
+			/* translators: %s: business name */
+			sprintf( __( 'Confirm your email for %s', 'pawfectly-reservations' ), $settings['business_name'] ),
+			EmailTemplate::render( __( 'Confirm your email', 'pawfectly-reservations' ), $body, $settings ),
+			''
+		);
+	}
+
+	/** Tells staff an owner cancelled online. */
+	public static function owner_cancelled( array $r ): void {
+		$settings = Settings::get();
+		$staff    = Settings::staff_emails( $settings );
+		if ( ! $staff ) {
+			return;
+		}
+		$body = EmailTemplate::rows(
+			array(
+				__( 'Reference', 'pawfectly-reservations' ) => $r['reference'],
+				__( 'Pet', 'pawfectly-reservations' )       => $r['pet_name'],
+				__( 'Owner', 'pawfectly-reservations' )     => trim( $r['owner_first_name'] . ' ' . $r['owner_last_name'] ),
+				__( 'Check-in', 'pawfectly-reservations' )  => self::date( $r['check_in'] ),
+				__( 'Check-out', 'pawfectly-reservations' ) => self::date( $r['check_out'] ),
+			)
+		) . '<p><a href="' . esc_url( admin_url( 'admin.php?page=paw-reservations&view=' . (int) $r['id'] ) ) . '">' . esc_html__( 'View in wp-admin', 'pawfectly-reservations' ) . '</a></p>';
+		self::send(
+			$staff,
+			/* translators: 1: reference, 2: pet name */
+			sprintf( __( 'Reservation %1$s cancelled by the owner: %2$s', 'pawfectly-reservations' ), $r['reference'], $r['pet_name'] ),
+			EmailTemplate::render( __( 'Cancelled by the owner', 'pawfectly-reservations' ), $body, $settings ),
+			(string) $r['owner_email']
+		);
+	}
+
 	/** m/d/Y for an ISO date, as shown on the form. */
 	public static function date( string $iso ): string {
 		$d = \DateTimeImmutable::createFromFormat( '!Y-m-d', $iso );

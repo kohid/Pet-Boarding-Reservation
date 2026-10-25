@@ -91,7 +91,7 @@ final class Validator {
 	 * No HTML filtering here, so "<3" or "50%Beef" survive; every output escapes instead.
 	 * REST body params arrive already unslashed.
 	 */
-	private static function read( $raw, string $type ): string {
+	public static function read( $raw, string $type ): string {
 		if ( ! is_scalar( $raw ) ) {
 			return '';
 		}
@@ -108,7 +108,7 @@ final class Validator {
 	}
 
 	/** The first problem with one value, or null. */
-	private static function check( array $field, string $value ): ?string {
+	public static function check( array $field, string $value ): ?string {
 		if ( '' === $value ) {
 			if ( ! $field['required'] ) {
 				return null;

@@ -31,6 +31,7 @@ final class Shortcode {
 
 	/** The form's HTML for the given settings. */
 	public static function markup( array $settings ): string {
+		$account   = self::account();
 		$steps     = Fields::steps();
 		$countries = Fields::countries();
 		$logo      = $settings['logo_id'] ? wp_get_attachment_image_url( (int) $settings['logo_id'], 'medium' ) : '';
@@ -39,6 +40,24 @@ final class Shortcode {
 		ob_start();
 		include PAW_DIR . 'templates/form.php';
 		return (string) ob_get_clean();
+	}
+
+	/** Who is filling in the form, and the links the owner step offers. */
+	public static function account(): array {
+		$user     = wp_get_current_user();
+		$in       = $user->exists();
+		$customer = $in && Accounts::may_use_customer_login( $user );
+		$here     = (string) ( get_permalink() ?: home_url( '/' ) );
+		return array(
+			'signedIn'  => $in,
+			// Staff using the form are booking for a customer: nothing of theirs is filled in or linked.
+			'staff'     => $in && ! $customer,
+			'name'      => $in ? (string) $user->display_name : '',
+			'prefill'   => $customer ? Accounts::prefill( (int) $user->ID ) : array(),
+			'loginRest' => rest_url( Rest::NS . '/account/login' ),
+			'lostUrl'   => wp_lostpassword_url( $here ),
+			'logoutUrl' => wp_logout_url( $here ),
+		);
 	}
 
 	/** Everything form.js needs, passed as window.PAW_FORM. */
@@ -66,6 +85,7 @@ final class Shortcode {
 			'maxBytes' => Uploads::max_file_bytes(),
 			'maxTotal' => Uploads::max_request_bytes(),
 			'maxNights' => Validator::MAX_NIGHTS,
+			'account'  => self::account(),
 			'i18n'     => array(
 				'required'     => __( 'This field is required.', 'pawfectly-reservations' ),
 				'email'        => __( 'Please enter a valid email address.', 'pawfectly-reservations' ),
@@ -85,6 +105,10 @@ final class Shortcode {
 				'tooLarge'     => Uploads::total_message(),
 				'fileType'     => __( 'Only PDF, JPG or PNG files are accepted.', 'pawfectly-reservations' ),
 				'signature'    => __( 'Please sign in the box above.', 'pawfectly-reservations' ),
+				'passwordShort' => sprintf( /* translators: %d: minimum number of characters */ __( 'Use at least %d characters.', 'pawfectly-reservations' ), AccountRules::MIN_PASSWORD ),
+				'signinFailed'  => __( 'The email or password is not right.', 'pawfectly-reservations' ),
+				'signingIn'     => __( 'Signing in…', 'pawfectly-reservations' ),
+				'accountReady'  => __( 'Your account is ready. Please confirm your email with the link we sent, then your reservations will show under My Bookings.', 'pawfectly-reservations' ),
 				'remove'       => __( 'Remove', 'pawfectly-reservations' ),
 				'sending'      => __( 'Sending…', 'pawfectly-reservations' ),
 				'tooMany'      => __( 'Too many attempts, please try again in a few minutes.', 'pawfectly-reservations' ),

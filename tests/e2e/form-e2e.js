@@ -10,6 +10,7 @@ const zlib = require('zlib');
 const ROOT = path.resolve(__dirname, '../..');
 const PORT = 8124;
 const URL = `http://127.0.0.1:${PORT}/tests/e2e/out/index.html`;
+// Run `php tests/e2e/build.php signed-in` too: the sign-in test reloads into that page.
 const SHOTS = process.env.PAW_SHOTS || '';
 
 let passed = 0;
@@ -70,10 +71,12 @@ async function fillOwner(page) {
 }
 
 /** Walks from the welcome screen to the waiver step, checking behaviour on the way. */
-async function walkToWaiver(page, width, label) {
+async function walkToWaiver(page, width, label, opts = {}) {
   const narrow = width < 500;
   ok(`${label}: starts on the welcome screen`, (await visibleStep(page)) === '0');
-  ok(`${label}: back is disabled on welcome`, await page.isDisabled('[data-paw-prev]'));
+  ok(`${label}: back is hidden on welcome`, await page.isHidden('[data-paw-prev]'));
+  ok(`${label}: form background is transparent`, (await page.evaluate(() => getComputedStyle(document.querySelector('.paw-app')).backgroundColor)) === 'rgba(0, 0, 0, 0)');
+  ok(`${label}: back/next are not fixed to the screen`, (await page.evaluate(() => getComputedStyle(document.querySelector('.paw-nav')).position)) !== 'fixed');
   await shot(page, `${label}-0-welcome`);
   await next(page);
   ok(`${label}: → opens step 1`, (await visibleStep(page)) === '1');
@@ -84,11 +87,24 @@ async function walkToWaiver(page, width, label) {
   ok(`${label}: invalid field focused`, await page.evaluate(() => document.activeElement && document.activeElement.name === 'owner_first_name'));
   await fillOwner(page);
   ok(`${label}: typing clears the error`, await page.isHidden('#paw-owner_first_name-error'));
+  if (opts.createAccount) {
+    ok(`${label}: password field hidden until the box is ticked`, await page.isHidden('[data-field=account_password]'));
+    await page.click('input[name=create_account] >> xpath=..');
+    ok(`${label}: ticking "create an account" asks for a password`, await page.isVisible('[name=account_password]'));
+    await page.fill('[name=account_password]', 'short');
+    await next(page);
+    ok(`${label}: short account password blocks Next`, (await visibleStep(page)) === '1' && (await page.textContent('#paw-account_password-error')).trim() === 'Use at least 8 characters.');
+    await page.fill('[name=account_password]', 'correct horse');
+  }
   if (narrow) await noHorizontalScroll(page, width, `${label} step 1`);
   await shot(page, `${label}-1-owner`);
   await next(page);
   ok(`${label}: valid step 1 → step 2`, (await visibleStep(page)) === '2');
   ok(`${label}: progress advanced`, (await page.getAttribute('.paw-progress', 'aria-valuenow')) === '2');
+  ok(`${label}: progress bar sits above the step title`, await page.evaluate(() => document.querySelector('.paw-progress').getBoundingClientRect().top <= document.querySelector('[data-step="2"] h2').getBoundingClientRect().top));
+  ok(`${label}: Elementor kit form styles do not override the underline style either`, await page.evaluate(() => document.body.classList.contains('elementor-kit-5') && getComputedStyle(document.querySelector('[name=pet_breed]')).borderTopWidth === '0px'));
+  ok(`${label}: theme input borders do not override the underline style`, await page.evaluate(() => { const s = getComputedStyle(document.querySelector('[name=pet_name]')); return s.borderTopWidth === '0px' && s.borderBottomWidth === '1px'; }));
+  ok(`${label}: back/next follow the step content`, await page.evaluate(() => document.querySelector('.paw-nav').getBoundingClientRect().top > document.querySelector('[data-step="2"] .paw-card').getBoundingClientRect().bottom));
 
   ok(`${label}: "specify" hidden until Other`, await page.isHidden('[data-field=pet_type_other]'));
   await radio(page, 'pet_type', 'other');
@@ -243,6 +259,7 @@ let window_today;
       ok('payload has a UUID submission id', /name="submission_id"\r\n\r\n[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/.test(body));
       ok('payload dates are ISO', body.includes(`name="check_in"\r\n\r\n${day(3)}`));
       ok('payload drops the HEIC that was refused', !body.includes('rabies.heic'));
+      ok('no account fields sent when the box is not ticked', !body.includes('name="account_password"') && !body.includes('name="create_account"'));
       ok('draft cleared after submitting', await page.evaluate(() => localStorage.getItem('paw_draft_v1') === null));
       ok('desktop: no script errors', errors.length === 0 || (console.log(errors), false));
       await ctx.close();
@@ -255,24 +272,34 @@ let window_today;
       const errors = [];
       page.on('pageerror', e => errors.push(e.message));
       let calls = 0;
+      let phoneBody = '';
+      const nonces = [];
+      await page.route('**/mock/nonce', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ nonce: 'fresh-nonce' }) }));
       await page.route('**/mock/reservations', route => {
         calls++;
+        nonces.push(route.request().headers()['x-wp-nonce']);
         if (calls === 1) {
-          return route.fulfill({ status: 413, contentType: 'text/html', body: '<html><body><h1>413 Request Entity Too Large</h1></body></html>' });
+          // What WordPress core answers for an expired nonce on a cached page.
+          return route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ code: 'rest_cookie_invalid_nonce', message: 'Cookie check failed', data: { status: 403 } }) });
         }
         if (calls === 2) {
+          return route.fulfill({ status: 413, contentType: 'text/html', body: '<html><body><h1>413 Request Entity Too Large</h1></body></html>' });
+        }
+        if (calls === 3) {
           return route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ code: 'paw_invalid', message: 'Please check the highlighted fields.', data: { status: 400, fields: { owner_email: 'Please enter a valid email address.' } } }) });
         }
-        return route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ reference: 'PAW-ABCDEF' }) });
+        phoneBody = route.request().postDataBuffer().toString('latin1');
+        return route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ reference: 'PAW-ABCDEF', account: true }) });
       });
       await page.goto(URL);
       await noHorizontalScroll(page, 375, 'phone welcome');
-      await walkToWaiver(page, 375, 'phone');
+      await walkToWaiver(page, 375, 'phone', { createAccount: true });
       await page.click('input[name=waiver_agree] >> xpath=..');
       await sign(page);
       await noHorizontalScroll(page, 375, 'phone step 7');
       await page.click('[data-paw-submit]');
       await page.waitForSelector('[data-paw-form-error]:not([hidden])');
+      ok("phone: core's stale-nonce answer gets one retry with a fresh nonce", calls >= 2 && nonces[1] === 'fresh-nonce');
       ok('phone: a web-server 413 (HTML body) says the files are too large', (await page.textContent('[data-paw-form-error]')).includes('too large'));
       await page.click('[data-paw-submit]');
       await page.waitForFunction(() => !document.querySelector('[data-step="1"]').hidden);
@@ -283,7 +310,58 @@ let window_today;
       await page.click('[data-paw-submit]');
       await page.waitForSelector('[data-step=done]:not([hidden])');
       ok('phone: retry succeeds', (await page.textContent('[data-paw-reference]')).trim() === 'PAW-ABCDEF');
+      ok('phone: account request sent with the reservation', /name="create_account"\r\n\r\n1/.test(phoneBody) && /name="account_password"\r\n\r\ncorrect horse/.test(phoneBody));
+      ok('phone: thank-you says the account is ready', (await page.textContent('[data-step=done]')).includes('Your account is ready'));
       ok('phone: no script errors', errors.length === 0 || (console.log(errors), false));
+      await ctx.close();
+    }
+
+    // Inline sign-in on the owner step: wrong password, then success → reload signed in, filled in, on step 1.
+    {
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+      const page = await ctx.newPage();
+      const errors = [];
+      page.on('pageerror', e => errors.push(e.message));
+      let loginCalls = 0;
+      let signedIn = false;
+      await page.route('**/mock/login', route => {
+        loginCalls++;
+        if (loginCalls === 1) {
+          return route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ code: 'paw_login', message: 'The email or password is not right.', data: { status: 400 } }) });
+        }
+        signedIn = true;
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, reload: true }) });
+      });
+      await page.route('**/tests/e2e/out/index.html', async route => {
+        if (!signedIn) return route.continue();
+        const res = await route.fetch({ url: route.request().url().replace('index.html', 'signed-in.html') });
+        return route.fulfill({ response: res });
+      });
+      await page.goto(URL);
+      await next(page);
+      ok('sign-in: box hidden until asked for', await page.isHidden('#paw-signin'));
+      await page.click('[data-paw-signin-toggle]');
+      ok('sign-in: link opens the box', await page.isVisible('#paw-signin'));
+      await page.fill('[name=owner_phone]', '555 222 3333');
+      await page.fill('#paw-login-email', 'jay@example.com');
+      await page.fill('#paw-login-password', 'wrong pass');
+      await page.click('[data-paw-signin]');
+      await page.waitForSelector('[data-paw-signin-error]:not([hidden])');
+      ok('sign-in: wrong password message', (await page.textContent('[data-paw-signin-error]')).trim() === 'The email or password is not right.');
+      await page.fill('#paw-login-password', 'some pass1');
+      await page.click('[data-paw-signin]');
+      await page.waitForSelector('text=Signed in as');
+      ok('sign-in: back on the owner step after the reload', (await visibleStep(page)) === '1');
+      ok('sign-in: details filled in from the account', (await page.inputValue('[name=owner_first_name]')) === 'Jay' && (await page.inputValue('[name=owner_email]')) === 'jay@example.com');
+      ok('sign-in: what the owner typed before signing in is kept', (await page.inputValue('[name=owner_phone]')) === '555 222 3333');
+      ok('sign-in: no account prompts once signed in', (await page.locator('[name=create_account]').count()) === 0);
+      await page.waitForTimeout(700); // Let the draft save.
+      // Stay on the page: the form's own click handler runs first, then this one stops the navigation.
+      await page.evaluate(() => document.querySelector('.paw-account--in a').addEventListener('click', e => e.preventDefault()));
+      ok('sign-in: a draft exists before logging out', await page.evaluate(() => localStorage.getItem('paw_draft_v1') !== null));
+      await page.click('.paw-account--in a');
+      ok('sign-in: "Not you? Log out" clears the saved draft', await page.evaluate(() => localStorage.getItem('paw_draft_v1') === null));
+      ok('sign-in: no script errors', errors.length === 0 || (console.log(errors), false));
       await ctx.close();
     }
 
