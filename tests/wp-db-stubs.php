@@ -86,8 +86,3 @@ class WP_REST_Response {
 	public function get_status() { return $this->status; }
 }
 
-$GLOBALS['paw_valid_nonce'] = 'good-nonce';
-function wp_verify_nonce( $nonce, $action = -1 ) { return 'wp_rest' === $action && $nonce === $GLOBALS['paw_valid_nonce'] ? 1 : false; }
-function wp_create_nonce( $action = -1 ) { return $GLOBALS['paw_valid_nonce']; }
-function current_time( $type, $gmt = 0 ) { return gmdate( 'Y-m-d H:i:s' ); }
-function absint( $v ) { return abs( (int) $v ); }

@@ -88,3 +88,32 @@ function done(): never {
 	echo $GLOBALS['paw_fail'] ? "\n{$GLOBALS['paw_fail']} failed\n" : "\nall passed\n";
 	exit( $GLOBALS['paw_fail'] ? 1 : 0 );
 }
+
+// Rendering and settings stand-ins.
+$GLOBALS['paw_roles'] = array();
+class Fake_Role {
+	public $name;
+	public $caps = array();
+	public function __construct( $name ) { $this->name = $name; }
+	public function add_cap( $cap ) { $this->caps[ $cap ] = true; }
+	public function remove_cap( $cap ) { unset( $this->caps[ $cap ] ); }
+	public function has_cap( $cap ) { return ! empty( $this->caps[ $cap ] ); }
+}
+foreach ( array( 'administrator' => 'Administrator', 'editor' => 'Editor', 'shop_manager' => 'Shop manager', 'subscriber' => 'Subscriber' ) as $slug => $label ) {
+	$GLOBALS['paw_roles'][ $slug ] = new Fake_Role( $slug );
+}
+function get_role( $r ) { return $GLOBALS['paw_roles'][ $r ] ?? null; }
+function wp_roles() { return (object) array( 'role_names' => array( 'administrator' => 'Administrator', 'editor' => 'Editor', 'shop_manager' => 'Shop manager', 'subscriber' => 'Subscriber' ) ); }
+function wp_kses( $html, $allowed ) { return strip_tags( (string) $html, array_keys( $allowed ) ); }
+function wp_kses_post( $html ) { return strip_tags( (string) $html, array( 'p', 'strong', 'em', 'ul', 'ol', 'li', 'br', 'a' ) ); }
+function wp_get_attachment_image_url( $id, $size = 'thumbnail' ) { return $id ? "https://example.test/logo-$id.png" : false; }
+function selected( $a, $b, $echo = true ) { $r = (string) $a === (string) $b ? ' selected="selected"' : ''; if ( $echo ) { echo $r; } return $r; }
+function checked( $a, $b = true, $echo = true ) { $r = (string) $a === (string) $b ? ' checked="checked"' : ''; if ( $echo ) { echo $r; } return $r; }
+function rest_url( $p = '' ) { return 'https://example.test/wp-json/' . ltrim( $p, '/' ); }
+function admin_url( $p = '' ) { return 'https://example.test/wp-admin/' . ltrim( $p, '/' ); }
+function wp_nonce_url( $url, $action = -1 ) { return $url . ( str_contains( $url, '?' ) ? '&' : '?' ) . '_wpnonce=nonce-' . $action; }
+$GLOBALS['paw_valid_nonce'] = 'good-nonce';
+function wp_verify_nonce( $nonce, $action = -1 ) { return 'wp_rest' === $action && $nonce === $GLOBALS['paw_valid_nonce'] ? 1 : false; }
+function wp_create_nonce( $action = -1 ) { return $GLOBALS['paw_valid_nonce']; }
+function current_time( $type, $gmt = 0 ) { return gmdate( 'Y-m-d H:i:s' ); }
+function absint( $v ) { return abs( (int) $v ); }

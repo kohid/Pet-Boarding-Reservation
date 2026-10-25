@@ -1,0 +1,783 @@
+/*
+ * Pawfectly — front-end reservation form.
+ *
+ * Tokens follow Metronic 8's component scale (radius .475rem, soft card shadow,
+ * solid controls) with Pawfectly's coral as the single action colour on a warm cream page.
+ * Everything is scoped under .paw-app so it cannot leak into, or be broken by, the host theme.
+ */
+
+.paw-app {
+	--paw-primary: #ff7f50;
+	--paw-primary-dark: #e8663a;
+	--paw-primary-tint: #fff1eb;
+	--paw-info: #30afff;
+	--paw-danger: #bc0202;
+	--paw-danger-tint: #fdeaea;
+	--paw-ink: #2c3947;
+	--paw-steel: #3b7597;
+	--paw-success: #06d6a0;
+	--paw-royal: #0f42c0;
+	--paw-cream: #fff8f3;
+	--paw-card: #fff;
+	--paw-line: #e4e6ef;
+	--paw-hairline: #f3f1ef;
+	--paw-muted: #6b7280;
+	--paw-fill: #f6f6f8;
+	--paw-radius: 0.475rem;
+	--paw-pill: 2rem;
+	--paw-shadow: 0 0.1rem 1rem 0.25rem rgba(44, 57, 71, 0.05);
+	--paw-shadow-option: 0 1px 3px rgba(44, 57, 71, 0.16);
+	--paw-ring: 0 0 0 3px rgba(255, 127, 80, 0.3);
+
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 70vh;
+	margin: 0;
+	padding: 2rem 1rem 7.5rem;
+	background: var(--paw-cream);
+	color: var(--paw-ink);
+	font-family: Nunito, ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, -apple-system, sans-serif;
+	font-size: 1rem;
+	line-height: 1.5;
+	text-align: left;
+	-webkit-font-smoothing: antialiased;
+}
+
+.paw-app *,
+.paw-app *::before,
+.paw-app *::after {
+	box-sizing: inherit;
+}
+
+.paw-app [hidden] {
+	display: none !important;
+}
+
+.paw-app h1,
+.paw-app h2,
+.paw-app p,
+.paw-app fieldset,
+.paw-app legend,
+.paw-app ul {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.paw-app button,
+.paw-app input,
+.paw-app select,
+.paw-app textarea {
+	font: inherit;
+	color: inherit;
+	letter-spacing: normal;
+	text-transform: none;
+}
+
+.paw-form {
+	max-width: 760px;
+	margin: 0 auto;
+}
+
+/* ---------- Welcome ---------- */
+
+.paw-welcome {
+	padding: 2rem 0 1rem;
+	text-align: center;
+}
+
+.paw-welcome__logo {
+	display: grid;
+	place-items: center;
+	width: 12.5rem;
+	height: 12.5rem;
+	margin: 0 auto 2.5rem;
+	overflow: hidden;
+	border-radius: 50%;
+	background: #f6e7d4;
+}
+
+.paw-welcome__logo img {
+	width: 78%;
+	height: 78%;
+	object-fit: contain;
+}
+
+.paw-welcome__title {
+	font-size: clamp(1.75rem, 4vw, 2.125rem);
+	font-weight: 700;
+	line-height: 1.2;
+	color: var(--paw-ink);
+}
+
+.paw-welcome__intro {
+	max-width: 42rem;
+	margin: 0.75rem auto 0;
+	color: var(--paw-ink);
+	opacity: 0.85;
+}
+
+.paw-draft {
+	display: inline-flex;
+	gap: 0.5rem;
+	align-items: center;
+	margin-top: 1.5rem;
+	padding: 0.5rem 1rem;
+	border-radius: var(--paw-pill);
+	background: var(--paw-card);
+	box-shadow: var(--paw-shadow);
+	font-size: 0.875rem;
+}
+
+/* ---------- Steps and cards ---------- */
+
+.paw-step__title {
+	margin-bottom: 0.875rem;
+	font-size: 1.5rem;
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+.paw-step__title:focus {
+	outline: none;
+}
+
+.paw-step__intro {
+	margin-bottom: 1rem;
+}
+
+.paw-waiver {
+	margin-bottom: 1.75rem;
+	color: var(--paw-ink);
+}
+
+.paw-waiver p + p {
+	margin-top: 0.75rem;
+}
+
+.paw-card {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	border-radius: var(--paw-radius);
+	background: var(--paw-card);
+	box-shadow: var(--paw-shadow);
+}
+
+.paw-field {
+	min-width: 0;
+	padding: 1.25rem 1.25rem 1.5rem;
+	border-bottom: 1px solid var(--paw-hairline);
+}
+
+.paw-field:last-child {
+	border-bottom: 0;
+}
+
+.paw-group-title {
+	padding: 1.25rem 1.25rem 0;
+	color: var(--paw-ink);
+}
+
+.paw-group-title ~ .paw-field--half {
+	padding-top: 0.75rem;
+	border-bottom: 0;
+}
+
+@media (min-width: 640px) {
+	.paw-card {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.paw-card > * {
+		grid-column: 1 / -1;
+	}
+
+	.paw-card > .paw-field--half {
+		grid-column: auto;
+	}
+
+	.paw-field {
+		padding: 1.5rem 1.5rem 1.75rem;
+	}
+
+	.paw-group-title {
+		padding: 1.5rem 1.5rem 0;
+	}
+}
+
+.paw-label {
+	display: block;
+	margin-bottom: 0.25rem;
+	font-size: 1rem;
+	font-weight: 500;
+	color: var(--paw-ink);
+}
+
+.paw-field--half .paw-label {
+	font-size: 0.875rem;
+}
+
+.paw-req {
+	margin-left: 1px;
+}
+
+.paw-help {
+	margin-bottom: 0.5rem;
+	font-size: 0.8125rem;
+	color: var(--paw-muted);
+}
+
+/* ---------- Text controls: underlined, as in the mock-ups ---------- */
+
+.paw-input,
+.paw-select {
+	display: block;
+	width: 100%;
+	min-height: 2.5rem;
+	padding: 0.375rem 0;
+	border: 0;
+	border-bottom: 1px solid var(--paw-line);
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+	outline: none;
+	transition: border-color 0.15s ease;
+}
+
+.paw-select {
+	appearance: none;
+	padding-right: 1.5rem;
+	color: var(--paw-primary);
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%232c3947' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right center;
+	background-size: 1.25rem;
+	cursor: pointer;
+}
+
+.paw-textarea {
+	display: block;
+	width: 100%;
+	min-height: 6rem;
+	padding: 0.75rem;
+	border: 1px solid transparent;
+	border-radius: 0.25rem;
+	background: #f4f4f4;
+	resize: vertical;
+	outline: none;
+	transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.paw-input::placeholder,
+.paw-textarea::placeholder {
+	color: #9a9fa8;
+	opacity: 1;
+}
+
+.paw-input:focus,
+.paw-select:focus {
+	border-bottom: 2px solid var(--paw-primary);
+	padding-bottom: calc(0.375rem - 1px);
+}
+
+.paw-textarea:focus {
+	border-color: var(--paw-primary);
+	background: var(--paw-card);
+}
+
+.paw-field.is-invalid .paw-input,
+.paw-field.is-invalid .paw-select {
+	border-bottom-color: var(--paw-danger);
+}
+
+.paw-field.is-invalid .paw-textarea {
+	border-color: var(--paw-danger);
+}
+
+/* ---------- Dates ---------- */
+
+.paw-date {
+	display: flex;
+	gap: 0.75rem;
+	align-items: center;
+	max-width: 16rem;
+}
+
+.paw-date .paw-input {
+	flex: 1;
+	cursor: pointer;
+}
+
+.paw-date input[readonly] {
+	color: var(--paw-primary);
+	cursor: default;
+}
+
+.paw-date__icon {
+	flex: none;
+	width: 1.125rem;
+	height: 1.125rem;
+	fill: var(--paw-primary);
+}
+
+/* ---------- Option cards (radio / checkbox rows) ---------- */
+
+.paw-options {
+	display: grid;
+	gap: 0.625rem;
+	margin-top: 0.5rem;
+}
+
+.paw-option {
+	position: relative;
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+	justify-content: space-between;
+	min-height: 2.75rem;
+	padding: 0.625rem 1rem;
+	border: 1px solid transparent;
+	border-radius: 0.3rem;
+	background: var(--paw-fill);
+	box-shadow: var(--paw-shadow-option);
+	cursor: pointer;
+	transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.paw-option input,
+.paw-yesno__opt input {
+	position: absolute;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.paw-option__mark {
+	flex: none;
+	width: 0.875rem;
+	height: 0.875rem;
+	border: 1.5px solid #8a8f98;
+	border-radius: 50%;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.paw-field--agree .paw-option__mark {
+	border-radius: 0.2rem;
+}
+
+.paw-option:hover {
+	border-color: var(--paw-line);
+}
+
+.paw-option:has(input:checked) {
+	border-color: var(--paw-primary);
+	background: var(--paw-primary-tint);
+}
+
+.paw-option input:checked ~ .paw-option__mark {
+	border-color: var(--paw-primary);
+	background: var(--paw-primary);
+	box-shadow: inset 0 0 0 2px var(--paw-primary-tint);
+}
+
+.paw-option:has(input:focus-visible) {
+	box-shadow: var(--paw-ring);
+}
+
+/* ---------- Yes / No ---------- */
+
+.paw-yesno {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.25rem;
+	margin-top: 0.5rem;
+}
+
+.paw-yesno__opt {
+	position: relative;
+	display: grid;
+	place-items: center;
+	min-height: 2.25rem;
+	padding: 0.375rem;
+	border-radius: 0.2rem;
+	background: var(--paw-fill);
+	box-shadow: var(--paw-shadow-option);
+	font-size: 0.8125rem;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	cursor: pointer;
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.paw-yesno__opt:hover {
+	background: #efeff2;
+}
+
+.paw-yesno__opt:has(input:checked) {
+	background: var(--paw-primary);
+	color: #fff;
+}
+
+.paw-yesno__opt:has(input:focus-visible) {
+	box-shadow: var(--paw-ring);
+}
+
+.paw-alert {
+	margin-top: 0.75rem;
+	padding: 0.75rem 1rem;
+	border-left: 3px solid var(--paw-danger);
+	border-radius: 0.25rem;
+	background: var(--paw-danger-tint);
+	color: var(--paw-danger);
+	font-size: 0.875rem;
+}
+
+/* ---------- File upload ---------- */
+
+.paw-file__input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+.paw-file__button {
+	display: inline-flex;
+	align-items: center;
+	min-height: 2.5rem;
+	padding: 0.5rem 1.75rem;
+	border-radius: var(--paw-pill);
+	background: var(--paw-card);
+	box-shadow: 0 2px 6px rgba(44, 57, 71, 0.18);
+	color: var(--paw-primary);
+	font-weight: 500;
+	cursor: pointer;
+	transition: box-shadow 0.15s ease;
+}
+
+.paw-file__button:hover {
+	box-shadow: 0 3px 10px rgba(44, 57, 71, 0.22);
+}
+
+.paw-file__input:focus-visible + .paw-file__button {
+	box-shadow: var(--paw-ring);
+}
+
+.paw-file__list {
+	display: grid;
+	gap: 0.375rem;
+	margin-top: 0.75rem;
+	list-style: none;
+}
+
+.paw-file__item {
+	display: flex;
+	gap: 0.75rem;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.5rem 0.75rem;
+	border-radius: 0.25rem;
+	background: var(--paw-fill);
+	font-size: 0.875rem;
+}
+
+.paw-file__name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.paw-file__size {
+	flex: none;
+	margin-left: auto;
+	color: var(--paw-muted);
+}
+
+/* ---------- Signature ---------- */
+
+.paw-sig {
+	position: relative;
+	margin-top: 0.5rem;
+}
+
+.paw-sig__canvas {
+	display: block;
+	width: 100%;
+	height: 11.5rem;
+	border: 1px solid #d5d7dd;
+	background: var(--paw-card);
+	touch-action: none;
+	cursor: crosshair;
+}
+
+.paw-sig__hint {
+	position: absolute;
+	top: 5.75rem;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	color: #d6d8dc;
+	font-size: 1.25rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	pointer-events: none;
+}
+
+.paw-sig.is-signed .paw-sig__hint {
+	display: none;
+}
+
+.paw-sig__clear {
+	margin-top: 0.5rem;
+}
+
+/* ---------- Links, errors, submit ---------- */
+
+.paw-link {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--paw-steel);
+	font-size: 0.875rem;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	cursor: pointer;
+}
+
+.paw-link:focus-visible {
+	outline: 2px solid var(--paw-primary);
+	outline-offset: 2px;
+}
+
+.paw-error {
+	margin-top: 0.5rem;
+	color: var(--paw-danger);
+	font-size: 0.8125rem;
+}
+
+.paw-form-error {
+	margin-top: 1rem;
+	padding: 0.75rem 1rem;
+	border-radius: var(--paw-radius);
+	background: var(--paw-danger-tint);
+	color: var(--paw-danger);
+}
+
+.paw-submit {
+	display: block;
+	width: 100%;
+	min-height: 3rem;
+	margin-top: 1.75rem;
+	border: 0;
+	border-radius: var(--paw-pill);
+	background: var(--paw-primary);
+	box-shadow: 0 4px 12px rgba(255, 127, 80, 0.35);
+	color: #fff;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+}
+
+.paw-submit:hover {
+	background: var(--paw-primary-dark);
+}
+
+.paw-submit:focus-visible {
+	box-shadow: var(--paw-ring);
+	outline: none;
+}
+
+.paw-submit[disabled] {
+	opacity: 0.7;
+	cursor: progress;
+}
+
+/* ---------- Thank you ---------- */
+
+.paw-done {
+	padding: 3rem 0 1rem;
+	text-align: center;
+}
+
+.paw-done__mark {
+	display: grid;
+	place-items: center;
+	width: 4.5rem;
+	height: 4.5rem;
+	margin: 0 auto 1.5rem;
+	border-radius: 50%;
+	background: var(--paw-success);
+}
+
+.paw-done__mark svg {
+	width: 2.25rem;
+	height: 2.25rem;
+	fill: #fff;
+}
+
+.paw-done__title {
+	font-size: 1.875rem;
+	font-weight: 700;
+}
+
+.paw-done__title:focus {
+	outline: none;
+}
+
+.paw-done__text {
+	max-width: 32rem;
+	margin: 0.75rem auto 0;
+}
+
+.paw-done__ref {
+	color: var(--paw-primary-dark);
+	white-space: nowrap;
+}
+
+/* ---------- Bottom nav: ← progress → ---------- */
+
+.paw-nav {
+	position: fixed;
+	bottom: 1rem;
+	left: 50%;
+	z-index: 50;
+	display: flex;
+	align-items: stretch;
+	width: min(20.5rem, calc(100% - 2rem));
+	height: 2.5rem;
+	overflow: hidden;
+	border-radius: var(--paw-pill);
+	background: #eee;
+	box-shadow: 0 4px 14px rgba(44, 57, 71, 0.22);
+	transform: translateX(-50%);
+}
+
+.paw-nav__btn {
+	position: relative;
+	z-index: 2;
+	display: grid;
+	flex: none;
+	place-items: center;
+	width: 4rem;
+	padding: 0;
+	border: 0;
+	background: var(--paw-primary);
+	color: #fff;
+	cursor: pointer;
+	transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.paw-nav__btn svg {
+	width: 1.25rem;
+	height: 1.25rem;
+	fill: currentColor;
+}
+
+.paw-nav__btn:hover {
+	background: var(--paw-primary-dark);
+}
+
+.paw-nav__btn:focus-visible {
+	outline: 3px solid var(--paw-ink);
+	outline-offset: -3px;
+}
+
+.paw-nav__btn[disabled] {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.paw-nav__btn[disabled]:hover {
+	background: var(--paw-primary);
+}
+
+.paw-progress {
+	position: relative;
+	flex: 1;
+}
+
+.paw-progress__fill {
+	position: absolute;
+	inset: 0 auto 0 0;
+	width: var(--paw-progress, 0%);
+	background: var(--paw-primary);
+	box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.35);
+	transition: width 0.35s ease;
+}
+
+/* The paw walks along with the fill: the one playful moment on the page. */
+.paw-progress__paw {
+	position: absolute;
+	top: 50%;
+	left: clamp(0.25rem, calc(var(--paw-progress, 0%) - 1.25rem), calc(100% - 1.25rem));
+	width: 1rem;
+	height: 1rem;
+	fill: #fff;
+	opacity: 0;
+	transform: translateY(-50%) rotate(12deg);
+	transition: left 0.35s ease, opacity 0.2s ease;
+}
+
+.paw-progress.is-moving .paw-progress__paw,
+.paw-app[data-current]:not([data-current="0"]) .paw-progress__paw {
+	opacity: 0.9;
+}
+
+.paw-app.is-done .paw-nav {
+	display: none;
+}
+
+/* ---------- Step change ---------- */
+
+.paw-step.is-entering {
+	animation: paw-enter 0.25s ease both;
+}
+
+@keyframes paw-enter {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+}
+
+/* ---------- Bits ---------- */
+
+.paw-hp {
+	position: absolute !important;
+	left: -9999px !important;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+}
+
+.paw-noscript {
+	max-width: 760px;
+	margin: 1rem auto;
+	padding: 1rem;
+	border-radius: var(--paw-radius);
+	background: var(--paw-danger-tint);
+	color: var(--paw-danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.paw-app *,
+	.paw-app *::before,
+	.paw-app *::after {
+		animation: none !important;
+		transition: none !important;
+	}
+}
+
+/* flatpickr, recoloured to the brand. */
+.flatpickr-calendar .flatpickr-day.selected,
+.flatpickr-calendar .flatpickr-day.selected:hover,
+.flatpickr-calendar .flatpickr-day.startRange,
+.flatpickr-calendar .flatpickr-day.endRange {
+	border-color: #ff7f50;
+	background: #ff7f50;
+}
+
+.flatpickr-calendar .flatpickr-day.today {
+	border-color: #ff7f50;
+}

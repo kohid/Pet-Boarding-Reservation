@@ -98,7 +98,16 @@ final class Fields {
 				'title'  => __( 'Health & Vaccination Records', 'pawfectly-reservations' ),
 				'intro'  => '',
 				'fields' => array(
-					self::f( 'vaccinations_current', 'yesno', __( 'Are all vaccinations up to date?', 'pawfectly-reservations' ), array( 'options' => $yes_no, 'help' => __( 'All pets must have current vaccinations to board with us', 'pawfectly-reservations' ) ) ),
+					self::f(
+						'vaccinations_current',
+						'yesno',
+						__( 'Are all vaccinations up to date?', 'pawfectly-reservations' ),
+						array(
+							'options' => $yes_no,
+							'help'    => __( 'All pets must have current vaccinations to board with us', 'pawfectly-reservations' ),
+							'warn'    => array( 'no' => __( "We're sorry, all pets must have current vaccinations to board with us. Please contact us once vaccinations are updated.", 'pawfectly-reservations' ) ),
+						)
+					),
 					self::f( 'vaccination_files', 'file', __( 'Upload Vaccination Records', 'pawfectly-reservations' ), array( 'help' => __( 'Please upload proof of current vaccinations (PDF or image files)', 'pawfectly-reservations' ) ) ),
 					self::f( 'medical_conditions', 'yesno', __( 'Does your pet have any medical conditions?', 'pawfectly-reservations' ), array( 'options' => $yes_no ) ),
 					self::f( 'medical_conditions_details', 'textarea', __( 'Please describe the medical conditions', 'pawfectly-reservations' ), array( 'show_if' => array( 'medical_conditions' => 'yes' ) ) ),
@@ -195,6 +204,7 @@ final class Fields {
 				'show_if'     => array(),
 				'half'        => false,
 				'readonly'    => false,
+				'warn'        => array(),
 			),
 			$extra
 		);
