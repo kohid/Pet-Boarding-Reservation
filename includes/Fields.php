@@ -1,0 +1,202 @@
+<?php
+/**
+ * The one list of reservation fields. The form template, the browser rules and
+ * the server Validator all read from here, so a field is defined exactly once.
+ *
+ * @package Pawfectly
+ */
+
+namespace Pawfectly;
+
+defined( 'ABSPATH' ) || exit;
+
+final class Fields {
+
+	/** Field ids stored in their own table columns; everything else goes in `details`. */
+	public const COLUMNS = array( 'owner_first_name', 'owner_last_name', 'owner_email', 'owner_phone', 'pet_name', 'pet_type', 'check_in', 'check_out' );
+
+	private const SHORT = 60;
+	private const LONG  = 2000;
+
+	/**
+	 * Ordered steps, each with its fields.
+	 *
+	 * @return array<int, array{id: string, title: string, intro: string, fields: array<int, array>}>
+	 */
+	public static function steps(): array {
+		$yes_no = array(
+			'yes' => __( 'Yes', 'pawfectly-reservations' ),
+			'no'  => __( 'No', 'pawfectly-reservations' ),
+		);
+
+		return array(
+			array(
+				'id'     => 'owner',
+				'title'  => __( 'Owner Information', 'pawfectly-reservations' ),
+				'intro'  => '',
+				'fields' => array(
+					self::f( 'owner_first_name', 'text', __( 'First Name', 'pawfectly-reservations' ) ),
+					self::f( 'owner_last_name', 'text', __( 'Last Name', 'pawfectly-reservations' ) ),
+					self::f( 'owner_email', 'email', __( 'Email Address', 'pawfectly-reservations' ), array( 'max' => 100 ) ),
+					self::f( 'owner_phone', 'tel', __( 'Phone Number', 'pawfectly-reservations' ), array( 'max' => 30 ) ),
+					self::f( 'address_street', 'text', __( 'Street', 'pawfectly-reservations' ), array( 'max' => 120, 'half' => true, 'group' => __( 'Home Address', 'pawfectly-reservations' ) ) ),
+					self::f( 'address_city', 'text', __( 'City/Suburb', 'pawfectly-reservations' ), array( 'required' => false, 'half' => true ) ),
+					self::f( 'address_state', 'text', __( 'State', 'pawfectly-reservations' ), array( 'half' => true ) ),
+					self::f( 'address_postcode', 'text', __( 'Zip/Post Code', 'pawfectly-reservations' ), array( 'max' => 20, 'half' => true ) ),
+					self::f( 'address_country', 'country', __( 'Country', 'pawfectly-reservations' ), array( 'max' => 2 ) ),
+				),
+			),
+			array(
+				'id'     => 'pet',
+				'title'  => __( 'Pet Information', 'pawfectly-reservations' ),
+				'intro'  => '',
+				'fields' => array(
+					self::f( 'pet_name', 'text', __( "Pet's Name", 'pawfectly-reservations' ) ),
+					self::f(
+						'pet_type',
+						'choice',
+						__( 'Pet Type', 'pawfectly-reservations' ),
+						array(
+							'options' => array(
+								'dog'   => __( 'Dog', 'pawfectly-reservations' ),
+								'cat'   => __( 'Cat', 'pawfectly-reservations' ),
+								'other' => __( 'Other', 'pawfectly-reservations' ),
+							),
+						)
+					),
+					self::f( 'pet_type_other', 'text', __( 'Please specify', 'pawfectly-reservations' ), array( 'show_if' => array( 'pet_type' => 'other' ) ) ),
+					self::f( 'pet_breed', 'text', __( 'Breed', 'pawfectly-reservations' ) ),
+					self::f( 'pet_age', 'text', __( 'Age', 'pawfectly-reservations' ), array( 'placeholder' => __( 'e.g., 3 years', 'pawfectly-reservations' ) ) ),
+					self::f(
+						'pet_gender',
+						'choice',
+						__( 'Gender', 'pawfectly-reservations' ),
+						array(
+							'options' => array(
+								'male'   => __( 'Male', 'pawfectly-reservations' ),
+								'female' => __( 'Female', 'pawfectly-reservations' ),
+							),
+						)
+					),
+					self::f( 'pet_weight', 'text', __( 'Weight', 'pawfectly-reservations' ), array( 'placeholder' => __( 'e.g., 25 lbs', 'pawfectly-reservations' ) ) ),
+					self::f( 'pet_spayed', 'yesno', __( 'Is your pet spayed/neutered?', 'pawfectly-reservations' ), array( 'options' => $yes_no ) ),
+					self::f( 'pet_microchipped', 'yesno', __( 'Is your pet microchipped?', 'pawfectly-reservations' ), array( 'options' => $yes_no ) ),
+				),
+			),
+			array(
+				'id'     => 'stay',
+				'title'  => __( 'Reservation Details', 'pawfectly-reservations' ),
+				'intro'  => '',
+				'fields' => array(
+					self::f( 'check_in', 'date', __( 'Check-In Date', 'pawfectly-reservations' ), array( 'max' => 10 ) ),
+					self::f( 'check_out', 'date', __( 'Check-Out Date', 'pawfectly-reservations' ), array( 'max' => 10 ) ),
+					self::f( 'special_requests', 'textarea', __( 'Special Requests or Notes', 'pawfectly-reservations' ), array( 'required' => false, 'help' => __( "Any specific preferences for your pet's stay?", 'pawfectly-reservations' ) ) ),
+				),
+			),
+			array(
+				'id'     => 'health',
+				'title'  => __( 'Health & Vaccination Records', 'pawfectly-reservations' ),
+				'intro'  => '',
+				'fields' => array(
+					self::f( 'vaccinations_current', 'yesno', __( 'Are all vaccinations up to date?', 'pawfectly-reservations' ), array( 'options' => $yes_no, 'help' => __( 'All pets must have current vaccinations to board with us', 'pawfectly-reservations' ) ) ),
+					self::f( 'vaccination_files', 'file', __( 'Upload Vaccination Records', 'pawfectly-reservations' ), array( 'help' => __( 'Please upload proof of current vaccinations (PDF or image files)', 'pawfectly-reservations' ) ) ),
+					self::f( 'medical_conditions', 'yesno', __( 'Does your pet have any medical conditions?', 'pawfectly-reservations' ), array( 'options' => $yes_no ) ),
+					self::f( 'medical_conditions_details', 'textarea', __( 'Please describe the medical conditions', 'pawfectly-reservations' ), array( 'show_if' => array( 'medical_conditions' => 'yes' ) ) ),
+					self::f( 'medications', 'yesno', __( 'Is your pet currently taking any medications?', 'pawfectly-reservations' ), array( 'options' => $yes_no ) ),
+					self::f( 'medications_details', 'textarea', __( 'Please list the medications', 'pawfectly-reservations' ), array( 'show_if' => array( 'medications' => 'yes' ), 'help' => __( 'Name, dose and schedule', 'pawfectly-reservations' ) ) ),
+					self::f( 'allergies', 'yesno', __( 'Does your pet have any allergies?', 'pawfectly-reservations' ), array( 'options' => $yes_no ) ),
+					self::f( 'allergies_details', 'textarea', __( 'Please describe the allergies', 'pawfectly-reservations' ), array( 'show_if' => array( 'allergies' => 'yes' ) ) ),
+				),
+			),
+			array(
+				'id'     => 'care',
+				'title'  => __( 'Special Care Instructions', 'pawfectly-reservations' ),
+				'intro'  => '',
+				'fields' => array(
+					self::f( 'feeding_schedule', 'textarea', __( 'Feeding Schedule', 'pawfectly-reservations' ), array( 'help' => __( 'Please describe feeding times and portion sizes', 'pawfectly-reservations' ) ) ),
+					self::f(
+						'food_preference',
+						'choice',
+						__( 'Food Preference', 'pawfectly-reservations' ),
+						array(
+							'options' => array(
+								'own'      => __( "I will provide my pet's food", 'pawfectly-reservations' ),
+								'facility' => __( 'Please use facility food', 'pawfectly-reservations' ),
+							),
+						)
+					),
+					self::f( 'dietary_notes', 'textarea', __( 'Dietary Restrictions or Preferences', 'pawfectly-reservations' ), array( 'required' => false, 'placeholder' => __( 'e.g., grain-free, no chicken, etc.', 'pawfectly-reservations' ) ) ),
+					self::f( 'behavior_notes', 'textarea', __( 'Behavioral Notes', 'pawfectly-reservations' ), array( 'required' => false, 'help' => __( 'Any important behavioral information we should know? (e.g., gets along with other pets, anxious tendencies, favorite toys, etc.)', 'pawfectly-reservations' ) ) ),
+					self::f( 'exercise_needs', 'textarea', __( 'Exercise Needs', 'pawfectly-reservations' ), array( 'required' => false, 'help' => __( 'How much exercise does your pet need daily?', 'pawfectly-reservations' ) ) ),
+				),
+			),
+			array(
+				'id'     => 'emergency',
+				'title'  => __( 'Emergency Contacts & Veterinarian', 'pawfectly-reservations' ),
+				'intro'  => '',
+				'fields' => array(
+					self::f( 'emergency_name', 'text', __( 'Emergency Contact Name', 'pawfectly-reservations' ), array( 'help' => __( 'Someone we can reach if we cannot contact you', 'pawfectly-reservations' ) ) ),
+					self::f( 'emergency_phone', 'tel', __( 'Emergency Contact Phone', 'pawfectly-reservations' ), array( 'max' => 30 ) ),
+					self::f( 'emergency_relationship', 'text', __( 'Relationship to Owner', 'pawfectly-reservations' ), array( 'placeholder' => __( 'e.g., spouse, friend, family member', 'pawfectly-reservations' ) ) ),
+					self::f( 'vet_name', 'text', __( 'Veterinarian Name', 'pawfectly-reservations' ) ),
+					self::f( 'vet_clinic', 'text', __( 'Veterinary Clinic Name', 'pawfectly-reservations' ) ),
+					self::f( 'vet_phone', 'tel', __( 'Veterinarian Phone Number', 'pawfectly-reservations' ), array( 'max' => 30 ) ),
+					self::f( 'vet_authorization', 'yesno', __( 'Do you authorize us to seek veterinary care if needed?', 'pawfectly-reservations' ), array( 'options' => $yes_no, 'help' => __( 'In case of emergency, we will contact you first, but this authorization allows us to act quickly if we cannot reach you', 'pawfectly-reservations' ) ) ),
+				),
+			),
+			array(
+				'id'     => 'waiver',
+				'title'  => __( 'Liability Waiver & Agreement', 'pawfectly-reservations' ),
+				'intro'  => __( 'Please read and acknowledge the following terms:', 'pawfectly-reservations' ),
+				'fields' => array(
+					self::f( 'waiver_agree', 'agree', __( 'Agreement', 'pawfectly-reservations' ), array( 'options' => array( '1' => __( 'I have read and agree to the above terms and conditions', 'pawfectly-reservations' ) ) ) ),
+					self::f( 'signature', 'signature', __( 'Owner Signature', 'pawfectly-reservations' ), array( 'help' => __( 'Please sign below to confirm your agreement', 'pawfectly-reservations' ) ) ),
+					self::f( 'signed_date', 'date', __( 'Date', 'pawfectly-reservations' ), array( 'max' => 10, 'readonly' => true ) ),
+				),
+			),
+		);
+	}
+
+	/**
+	 * Every field keyed by id, each with its 1-based step number added.
+	 *
+	 * @return array<string, array>
+	 */
+	public static function all(): array {
+		$all = array();
+		foreach ( self::steps() as $i => $step ) {
+			foreach ( $step['fields'] as $field ) {
+				$all[ $field['id'] ] = $field + array( 'step' => $i + 1 );
+			}
+		}
+		return $all;
+	}
+
+	/** @return array<string, string> ISO 3166-1 alpha-2 code => English name. */
+	public static function countries(): array {
+		static $countries = null;
+		if ( null === $countries ) {
+			$countries = require __DIR__ . '/data/countries.php';
+		}
+		return $countries;
+	}
+
+	private static function f( string $id, string $type, string $label, array $extra = array() ): array {
+		return array_merge(
+			array(
+				'id'          => $id,
+				'type'        => $type,
+				'label'       => $label,
+				'help'        => '',
+				'placeholder' => '',
+				'required'    => true,
+				'max'         => 'textarea' === $type ? self::LONG : self::SHORT,
+				'options'     => array(),
+				'show_if'     => array(),
+				'half'        => false,
+				'readonly'    => false,
+			),
+			$extra
+		);
+	}
+}
