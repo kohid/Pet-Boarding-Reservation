@@ -355,6 +355,12 @@ let window_today;
       ok('sign-in: details filled in from the account', (await page.inputValue('[name=owner_first_name]')) === 'Jay' && (await page.inputValue('[name=owner_email]')) === 'jay@example.com');
       ok('sign-in: what the owner typed before signing in is kept', (await page.inputValue('[name=owner_phone]')) === '555 222 3333');
       ok('sign-in: no account prompts once signed in', (await page.locator('[name=create_account]').count()) === 0);
+      await page.waitForTimeout(700); // Let the draft save.
+      // Stay on the page: the form's own click handler runs first, then this one stops the navigation.
+      await page.evaluate(() => document.querySelector('.paw-account--in a').addEventListener('click', e => e.preventDefault()));
+      ok('sign-in: a draft exists before logging out', await page.evaluate(() => localStorage.getItem('paw_draft_v1') !== null));
+      await page.click('.paw-account--in a');
+      ok('sign-in: "Not you? Log out" clears the saved draft', await page.evaluate(() => localStorage.getItem('paw_draft_v1') === null));
       ok('sign-in: no script errors', errors.length === 0 || (console.log(errors), false));
       await ctx.close();
     }

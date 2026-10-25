@@ -720,6 +720,12 @@
 		});
 	}
 
+	// On a shared computer the next person must not find this owner's details waiting for them.
+	var logout = root.querySelector('[data-paw-logout]');
+	if (logout) {
+		logout.addEventListener('click', clearDraft);
+	}
+
 	/** Fills only what is still empty, so anything typed (or restored from the draft) wins. */
 	function applyPrefill() {
 		var prefill = ACCOUNT.prefill || {};

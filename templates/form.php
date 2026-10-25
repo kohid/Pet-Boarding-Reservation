@@ -57,7 +57,7 @@ $paw_count = count( $steps );
 					<?php elseif ( $account['signedIn'] ) : ?>
 						<p class="paw-account paw-account--in" data-paw-account>
 							<?php esc_html_e( 'Signed in as', 'pawfectly-reservations' ); ?> <strong><?php echo esc_html( $account['name'] ); ?></strong>.
-							<a href="<?php echo esc_url( $account['logoutUrl'] ); ?>"><?php esc_html_e( 'Not you? Log out', 'pawfectly-reservations' ); ?></a>
+							<a href="<?php echo esc_url( $account['logoutUrl'] ); ?>" data-paw-logout><?php esc_html_e( 'Not you? Log out', 'pawfectly-reservations' ); ?></a>
 						</p>
 					<?php else : ?>
 						<div class="paw-account" data-paw-account>
