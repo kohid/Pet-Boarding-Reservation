@@ -59,6 +59,15 @@ $paw_saved = (array) $settings['services'];
 				<textarea name="waiver" rows="8"><?php echo esc_textarea( $settings['waiver'] ); ?></textarea>
 				<small><?php esc_html_e( 'Shown on the last step. You can use paragraphs, bold, italic and lists.', 'pawfectly-reservations' ); ?></small>
 			</label>
+			<label class="paw-dash__field paw-dash__field--wide" data-paw-setting="grooming_waiver">
+				<span><?php esc_html_e( 'Grooming waiver', 'pawfectly-reservations' ); ?></span>
+				<textarea name="grooming_waiver" rows="8"><?php echo esc_textarea( $settings['grooming_waiver'] ); ?></textarea>
+				<small><?php esc_html_e( 'Shown instead of the boarding waiver for grooming-only bookings, and after it for boarding + grooming.', 'pawfectly-reservations' ); ?></small>
+			</label>
+			<label class="paw-dash__check paw-dash__field--wide" data-paw-setting="grooming_needs_vaccines">
+				<input type="checkbox" name="grooming_needs_vaccines"<?php echo $settings['grooming_needs_vaccines'] ? ' checked' : ''; ?>>
+				<?php esc_html_e( 'Require vaccination records for grooming-only bookings', 'pawfectly-reservations' ); ?>
+			</label>
 			<label class="paw-dash__field" data-paw-setting="default_country">
 				<span><?php esc_html_e( 'Default country', 'pawfectly-reservations' ); ?></span>
 				<select name="default_country">

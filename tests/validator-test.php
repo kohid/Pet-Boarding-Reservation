@@ -136,4 +136,9 @@ $long['pets'][1]['pet_name'] = str_repeat( 'é', 40 );
 $ln = Validator::validate( $long, $today )['columns']['pet_name'];
 t( 'a long joined name is cut to 60 characters with …', 60 === mb_strlen( $ln ) && str_ends_with( $ln, '…' ) );
 
+// Grooming skips care and the emergency contact.
+$short = paw_with( $groom, array( 'emergency_name' => '', 'emergency_phone' => '', 'emergency_relationship' => '', 'feeding_schedule' => '', 'food_preference' => '' ) );
+$sv    = Validator::validate( $short, $today );
+t( 'grooming: valid without care or emergency-contact answers', is_array( $sv ) && ! isset( $sv['details']['pets'][0]['feeding_schedule'] ) && ! isset( $sv['details']['emergency_name'] ) && 'Dr. Who' === $sv['details']['vet_name'] );
+
 done();

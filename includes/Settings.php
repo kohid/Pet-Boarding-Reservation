@@ -42,6 +42,10 @@ final class Settings {
 			'boarding_rates'  => array( 'small' => '', 'large' => '', 'other' => '' ),
 			'services'        => Services::defaults(),
 			'groomers'        => array(),
+			'grooming_waiver' => '<p>' . __( 'I understand that grooming involves handling, bathing, drying and the use of sharp tools, and that pets can move suddenly. Small nicks, clipper irritation or razor burn can happen despite every care. I certify that my pet is in good health and up to date on vaccinations.', 'pawfectly-reservations' ) . '</p>'
+				. '<p>' . __( 'If my pet is heavily matted, I agree that the safest option may be to shave the coat short, and that removing mats can reveal skin problems that were already there. Senior pets and pets with health conditions can find grooming stressful; I will tell staff about any condition before the appointment.', 'pawfectly-reservations' ) . '</p>'
+				. '<p>' . __( 'Pawfectly may stop a groom if my pet becomes aggressive or too stressed, and I will be charged for the work done. I authorize Pawfectly to seek veterinary care if my pet is injured or unwell during the visit and agree to be responsible for the costs; every effort will be made to contact me first.', 'pawfectly-reservations' ) . '</p>',
+			'grooming_needs_vaccines' => true,
 		);
 	}
 
@@ -123,7 +127,11 @@ final class Settings {
 			}
 		}
 
+		$gwaiver = trim( wp_kses( (string) ( $input['grooming_waiver'] ?? $current['grooming_waiver'] ?? '' ), self::WAIVER_TAGS ) );
+
 		return array(
+			'grooming_waiver'         => '' !== $gwaiver ? $gwaiver : self::defaults()['grooming_waiver'],
+			'grooming_needs_vaccines' => array_key_exists( 'grooming_needs_vaccines', $input ) ? ! empty( $input['grooming_needs_vaccines'] ) : (bool) ( $current['grooming_needs_vaccines'] ?? true ),
 			'groomers'       => $groomers,
 			'currency'       => '' !== $currency ? $currency : '$',
 			'boarding_rates' => $rates,
@@ -273,6 +281,13 @@ final class Settings {
 						<td>
 							<textarea class="large-text" rows="10" id="paw-waiver" name="<?php echo esc_attr( $name ); ?>[waiver]"><?php echo esc_textarea( $s['waiver'] ); ?></textarea>
 							<p class="description"><?php esc_html_e( 'Shown on the last step. You can use paragraphs, bold, italic and lists.', 'pawfectly-reservations' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="paw-gwaiver"><?php esc_html_e( 'Grooming waiver', 'pawfectly-reservations' ); ?></label></th>
+						<td>
+							<textarea class="large-text" rows="8" id="paw-gwaiver" name="<?php echo esc_attr( $name ); ?>[grooming_waiver]"><?php echo esc_textarea( $s['grooming_waiver'] ); ?></textarea>
+							<label><input type="hidden" name="<?php echo esc_attr( $name ); ?>[grooming_needs_vaccines]" value="0"><input type="checkbox" name="<?php echo esc_attr( $name ); ?>[grooming_needs_vaccines]" value="1"<?php checked( $s['grooming_needs_vaccines'] ); ?>> <?php esc_html_e( 'Require vaccination records for grooming-only bookings', 'pawfectly-reservations' ); ?></label>
 						</td>
 					</tr>
 					<tr>

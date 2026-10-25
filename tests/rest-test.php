@@ -201,6 +201,24 @@ $six = $good;
 $six['pets'] = array_fill( 0, 6, $good['pets'][0] );
 t( 'six pets → 400', 400 === Rest::submit( request( $six ) )->get_error_data()['status'] && 0 === inserts() );
 
+// Grooming: vaccination files per the setting; the waiver that was signed.
+$groom_only = paw_with( $good, array( 'booking_type' => 'grooming', 'dog_size' => 'small', 'service' => 'basic_bath', 'grooming_frequency' => 'once', 'appointment_date' => gmdate( 'Y-m-d', strtotime( '+1 day' ) ), 'appointment_time' => 'morning', 'check_in' => '', 'check_out' => '' ) );
+reset_state();
+$GLOBALS['paw_options'][ \Pawfectly\Settings::OPTION ] = array( 'grooming_needs_vaccines' => false, 'grooming_waiver' => '<p>Grooming terms</p>' );
+$res = Rest::submit( request( $groom_only, array(), array() ) );
+t( 'grooming without files when the switch is off → 201', $res instanceof WP_REST_Response && 201 === $res->get_status() );
+t( 'grooming keeps the grooming waiver it was signed with', '<p>Grooming terms</p>' === ( json_decode( $wpdb->rows[1]['details'] ?? '{}', true )['waiver_text'] ?? '' ) );
+reset_state();
+$GLOBALS['paw_options'][ \Pawfectly\Settings::OPTION ] = array( 'grooming_needs_vaccines' => true );
+$res = Rest::submit( request( $groom_only, array(), array() ) );
+t( 'grooming without files when records are needed → field error', is_wp_error( $res ) && isset( $res->get_error_data()['fields']['vaccination_files_0'] ) );
+reset_state();
+$GLOBALS['paw_options'][ \Pawfectly\Settings::OPTION ] = array( 'waiver' => '<p>Boarding terms</p>', 'grooming_waiver' => '<p>Grooming terms</p>' );
+Rest::submit( request( paw_with( $good, array( 'booking_type' => 'both', 'service' => 'nail_trim', 'grooming_frequency' => 'once', 'appointment_date' => gmdate( 'Y-m-d', strtotime( '+4 days' ) ) ) ) ) );
+$wt = json_decode( $wpdb->rows[1]['details'] ?? '{}', true )['waiver_text'] ?? '';
+t( 'boarding + grooming keeps both waivers', str_contains( $wt, 'Boarding terms' ) && str_contains( $wt, 'Grooming terms' ) );
+unset( $GLOBALS['paw_options'][ \Pawfectly\Settings::OPTION ] );
+
 t( 'nonce endpoint', 'good-nonce' === Rest::nonce()->get_data()['nonce'] );
 
 fixture_rmrf( $GLOBALS['paw_upload_base'] );

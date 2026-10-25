@@ -85,6 +85,10 @@ t( 'groomers: trimmed, blanks and duplicates dropped, 60 characters, order kept'
 $GLOBALS['paw_options'][ Settings::OPTION ] = $g;
 t( 'groomers: kept when not sent', array( 'Ana', 'Ben', str_repeat( 'x', 60 ) ) === Settings::sanitize( array( 'business_name' => 'P' ) )['groomers'] );
 t( 'groomers: an array works too', array( 'Cy' ) === Settings::sanitize( array( 'groomers' => array( ' Cy ', '' ) ) )['groomers'] );
+t( 'grooming waiver: a default draft', str_contains( Settings::defaults()['grooming_waiver'], 'matted' ) );
+t( 'vaccination records needed for grooming by default', true === Settings::defaults()['grooming_needs_vaccines'] );
+t( 'grooming waiver keeps allowed tags only', '<p>Groom <strong>terms</strong></p>x' === Settings::sanitize( array( 'grooming_waiver' => '<p>Groom <strong>terms</strong></p><script>x</script>' ) )['grooming_waiver'] );
+t( 'vaccination switch can be turned off', false === Settings::sanitize( array( 'grooming_needs_vaccines' => false ) )['grooming_needs_vaccines'] );
 t( 'staff email list helper', array( 'a@example.com', 'b@example.com' ) === Settings::staff_emails( array( 'staff_emails' => 'a@example.com, b@example.com' ) ) );
 
 done();

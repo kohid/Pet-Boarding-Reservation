@@ -71,6 +71,7 @@ final class Shortcode {
 				'max'      => $field['max'],
 				'step'     => $field['step'],
 				'perPet'   => (bool) $field['per_pet'],
+				'past'     => (bool) $field['past'],
 				'showIf'   => (object) $field['show_if'],
 				'warn'     => (object) $field['warn'],
 			);
@@ -90,6 +91,7 @@ final class Shortcode {
 		return array(
 			'services' => $services,
 			'maxPets'  => Fields::MAX_PETS,
+			'groomingNeedsVaccines' => (bool) $settings['grooming_needs_vaccines'],
 			'groomers' => Services::groomers(),
 			'rates'    => $rates,
 			'currency' => (string) $settings['currency'],
@@ -124,6 +126,10 @@ final class Shortcode {
 				'fileType'     => __( 'Only PDF, JPG or PNG files are accepted.', 'pawfectly-reservations' ),
 				'signature'    => __( 'Please sign in the box above.', 'pawfectly-reservations' ),
 				/* translators: %d: pet number */
+				/* translators: %d: number of nights, after the pet's name */
+				'boardingPetOne'  => __( 'Boarding, %d night', 'pawfectly-reservations' ),
+				/* translators: %d: number of nights, after the pet's name */
+				'boardingPetMany' => __( 'Boarding, %d nights', 'pawfectly-reservations' ),
 				'petN'          => __( 'Pet %d', 'pawfectly-reservations' ),
 				'removePet'     => __( 'Remove', 'pawfectly-reservations' ),
 				'dogsOnly'      => __( 'Grooming is for dogs only. Choose Boarding + grooming to board your other pets.', 'pawfectly-reservations' ),

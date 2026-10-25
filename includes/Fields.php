@@ -37,6 +37,8 @@ final class Fields {
 		// Grooming extras show once a pet has a real service; the day and time only for a repeat schedule.
 		$groomed = array( 'service' => array_keys( Services::enabled() ) );
 		$repeats = array( 'grooming_frequency' => array( '2', '4', '6', '8' ) );
+		// Asked only when the pet stays overnight.
+		$stays = array( 'booking_type' => array( 'boarding', 'both' ) );
 
 		$steps = array(
 			array(
@@ -229,11 +231,13 @@ final class Fields {
 			array(
 				'id'     => 'emergency',
 				'title'  => __( 'Emergency Contacts & Veterinarian', 'pawfectly-reservations' ),
+				// Grooming-only visits skip the emergency contact; the vet stays.
+				'title_grooming' => __( 'Veterinarian', 'pawfectly-reservations' ),
 				'intro'  => '',
 				'fields' => array(
-					self::f( 'emergency_name', 'text', __( 'Emergency Contact Name', 'pawfectly-reservations' ), array( 'help' => __( 'Someone we can reach if we cannot contact you', 'pawfectly-reservations' ) ) ),
-					self::f( 'emergency_phone', 'tel', __( 'Emergency Contact Phone', 'pawfectly-reservations' ), array( 'max' => 30 ) ),
-					self::f( 'emergency_relationship', 'text', __( 'Relationship to Owner', 'pawfectly-reservations' ), array( 'placeholder' => __( 'e.g., spouse, friend, family member', 'pawfectly-reservations' ) ) ),
+					self::f( 'emergency_name', 'text', __( 'Emergency Contact Name', 'pawfectly-reservations' ), array( 'help' => __( 'Someone we can reach if we cannot contact you', 'pawfectly-reservations' ), 'show_if' => $stays ) ),
+					self::f( 'emergency_phone', 'tel', __( 'Emergency Contact Phone', 'pawfectly-reservations' ), array( 'max' => 30, 'show_if' => $stays ) ),
+					self::f( 'emergency_relationship', 'text', __( 'Relationship to Owner', 'pawfectly-reservations' ), array( 'placeholder' => __( 'e.g., spouse, friend, family member', 'pawfectly-reservations' ), 'show_if' => $stays ) ),
 					self::f( 'vet_name', 'text', __( 'Veterinarian Name', 'pawfectly-reservations' ) ),
 					self::f( 'vet_clinic', 'text', __( 'Veterinary Clinic Name', 'pawfectly-reservations' ) ),
 					self::f( 'vet_phone', 'tel', __( 'Veterinarian Phone Number', 'pawfectly-reservations' ), array( 'max' => 30 ) ),
@@ -257,6 +261,9 @@ final class Fields {
 			if ( in_array( $step['id'], self::PET_STEPS, true ) ) {
 				foreach ( $step['fields'] as &$field ) {
 					$field['per_pet'] = true;
+					if ( 'care' === $step['id'] ) {
+						$field['show_if'] += $stays; // Feeding and exercise only matter for a stay.
+					}
 				}
 				unset( $field );
 			}

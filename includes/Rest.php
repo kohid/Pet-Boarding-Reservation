@@ -83,8 +83,14 @@ final class Rest {
 		// Each pet brings its own vaccination files: vaccination_files_N.
 		$pet_count = is_array( $params['pets'] ?? null ) ? min( count( $params['pets'] ), Fields::MAX_PETS ) : 0;
 		$checked   = array();
+		$settings       = Settings::get();
+		$files_optional = 'grooming' === ( $params['booking_type'] ?? '' ) && ! $settings['grooming_needs_vaccines'];
 		for ( $n = 0; $n < $pet_count; $n++ ) {
-			$result = Uploads::check( (array) ( $files[ 'vaccination_files_' . $n ] ?? array() ) );
+			$field = (array) ( $files[ 'vaccination_files_' . $n ] ?? array() );
+			if ( $files_optional && ! array_filter( (array) ( $field['name'] ?? array() ), 'strlen' ) ) {
+				continue; // Grooming without records, as Settings allow.
+			}
+			$result = Uploads::check( $field );
 			if ( is_wp_error( $result ) ) {
 				$errors[ 'vaccination_files_' . $n ] = $result->get_error_data()['fields']['vaccination_files'];
 			} else {
@@ -118,7 +124,9 @@ final class Rest {
 		}
 
 		// Keep the exact waiver wording that was signed: Settings can change later.
-		$clean['details']['waiver_text'] = Settings::get()['waiver'];
+		$type                            = $clean['columns']['booking_type'];
+		$clean['details']['waiver_text'] = 'grooming' === $type ? $settings['grooming_waiver']
+			: ( 'both' === $type ? $settings['waiver'] . '<hr>' . $settings['grooming_waiver'] : $settings['waiver'] );
 		// And the prices the owner saw: Settings can change later too.
 		$clean['details']['pricing'] = Services::estimate( $clean['columns'] + $clean['details'] );
 

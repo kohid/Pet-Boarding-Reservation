@@ -77,11 +77,12 @@ $paw_count = count( $steps );
 		<?php foreach ( $steps as $paw_i => $paw_step ) : ?>
 			<?php $paw_n = $paw_i + 1; ?>
 			<section class="paw-step" data-step="<?php echo esc_attr( (string) $paw_n ); ?>" id="paw-step-<?php echo esc_attr( (string) $paw_n ); ?>" aria-labelledby="paw-step-<?php echo esc_attr( (string) $paw_n ); ?>-title" hidden>
-				<h2 class="paw-step__title" id="paw-step-<?php echo esc_attr( (string) $paw_n ); ?>-title" tabindex="-1"><?php echo esc_html( $paw_step['title'] ); ?></h2>
+				<h2 class="paw-step__title" id="paw-step-<?php echo esc_attr( (string) $paw_n ); ?>-title" tabindex="-1"<?php echo isset( $paw_step['title_grooming'] ) ? ' data-title="' . esc_attr( $paw_step['title'] ) . '" data-title-grooming="' . esc_attr( $paw_step['title_grooming'] ) . '"' : ''; ?>><?php echo esc_html( $paw_step['title'] ); ?></h2>
 
 				<?php if ( 'waiver' === $paw_step['id'] ) : ?>
 					<p class="paw-step__intro"><?php echo esc_html( $paw_step['intro'] ); ?></p>
-					<div class="paw-waiver"><?php echo wp_kses_post( $settings['waiver'] ); ?></div>
+					<div class="paw-waiver" data-paw-waiver="boarding"><?php echo wp_kses_post( $settings['waiver'] ); ?></div>
+					<div class="paw-waiver" data-paw-waiver="grooming" hidden><?php echo wp_kses_post( $settings['grooming_waiver'] ); ?></div>
 				<?php endif; ?>
 
 				<?php if ( 'owner' === $paw_step['id'] ) : ?>
@@ -122,6 +123,9 @@ $paw_count = count( $steps );
 				<?php endif; ?>
 
 				<div class="paw-card">
+					<?php if ( 'stay' === $paw_step['id'] ) : ?>
+						<p class="paw-form-error" data-paw-step-error role="alert" hidden></p>
+					<?php endif; ?>
 					<?php
 					// Booking answers before the pet cards, the cards (one per pet, plus a template for more), then the rest.
 					$paw_pet_fields = array_filter( $paw_step['fields'], static fn( array $f ): bool => $f['per_pet'] );

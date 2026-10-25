@@ -107,6 +107,9 @@ t( 'pet 1 card with an add button and a template for more', str_contains( $html,
 t( 'remove link only in the template (pet 1 stays)', ! str_contains( $cut( $html, 'data-paw-pets="pet"', '<template' ), 'data-paw-remove-pet' ) && str_contains( $cut( $html, '<template data-paw-pet-template="pet">', '</template>' ), 'data-paw-remove-pet' ) );
 t( 'health and care have a section per pet', str_contains( $html, 'data-paw-pets="health"' ) && str_contains( $html, 'data-paw-pets="care"' ) && str_contains( $html, 'name="pets[0][feeding_schedule]"' ) );
 t( 'special requests after the grooming cards', strpos( $html, 'name="special_requests"' ) > strpos( $html, '<template data-paw-pet-template="stay"' ) );
+t( 'both waivers on the waiver step', str_contains( $html, 'data-paw-waiver="boarding"' ) && str_contains( $html, 'data-paw-waiver="grooming"' ) );
+t( 'the vet step has a grooming title', str_contains( $html, 'data-title-grooming="Veterinarian"' ) );
+t( 'config: vaccination switch', true === $cfg['groomingNeedsVaccines'] );
 t( 'contact consent on the waiver step', str_contains( $html, 'name="contact_consent"' ) );
 t( 'estimate box in the stay step, hidden at first', (bool) preg_match( '/data-paw-estimate[^>]*hidden/', $html ) && strpos( $html, 'data-paw-estimate' ) > strpos( $html, 'data-step="3"' ) && strpos( $html, 'data-paw-estimate' ) < strpos( $html, 'data-step="4"' ) );
 t( 'config: prices by size, null when on request', 20.0 === $cfg['services']['nail_trim']['large'] && null === $cfg['services']['basic_bath']['small'] && true === $cfg['services']['bath_membership']['monthly'] );

@@ -74,4 +74,10 @@ t( 'five pets at most', 5 === Fields::MAX_PETS );
 t( 'pet count is a column', in_array( 'pet_count', Fields::COLUMNS, true ) );
 unset( $GLOBALS['paw_options'][ \Pawfectly\Settings::OPTION ] );
 
+// The form follows the booking type.
+$all = Fields::all();
+t( 'care questions only for stays', array( 'boarding', 'both' ) === $all['feeding_schedule']['show_if']['booking_type'] && array( 'boarding', 'both' ) === $all['exercise_needs']['show_if']['booking_type'] );
+t( 'emergency contact only for stays, the vet always', array( 'boarding', 'both' ) === $all['emergency_name']['show_if']['booking_type'] && ! isset( $all['vet_name']['show_if']['booking_type'] ) );
+t( 'the vet step is titled Veterinarian for grooming', 'Veterinarian' === Fields::steps()[ $all['vet_name']['step'] - 1 ]['title_grooming'] );
+
 done();
