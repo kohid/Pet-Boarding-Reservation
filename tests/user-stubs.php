@@ -101,7 +101,15 @@ function wp_login_url( $redirect = '' ) { return 'https://example.test/wp-login.
 function wp_lostpassword_url( $redirect = '' ) { return 'https://example.test/wp-login.php?action=lostpassword'; }
 function wp_logout_url( $redirect = '' ) { return 'https://example.test/wp-login.php?action=logout'; }
 function add_query_arg( $args, $url ) { return $url . ( str_contains( $url, '?' ) ? '&' : '?' ) . http_build_query( $args ); }
-function add_role( $role, $name, $caps ) { $GLOBALS['paw_added_roles'][ $role ] = $caps; return true; }
+function add_role( $role, $name, $caps ) {
+	$GLOBALS['paw_added_roles'][ $role ] = $caps;
+	$GLOBALS['paw_roles'][ $role ]       = new Fake_Role( $role );
+	foreach ( array_keys( array_filter( $caps ) ) as $cap ) {
+		$GLOBALS['paw_roles'][ $role ]->add_cap( $cap );
+	}
+	return $GLOBALS['paw_roles'][ $role ];
+}
+function user_can( $user, $cap ) { return $user instanceof WP_User && $user->exists() && $user->has_cap( $cap ); }
 $GLOBALS['paw_actions'] = array();
 function do_action( $hook, ...$args ) { $GLOBALS['paw_actions'][] = $hook; }
 /** Core's wp_authenticate runs the `authenticate` filter (lockout and 2FA plugins); the stand-in records the call. */

@@ -13,6 +13,7 @@ final class Plugin {
 
 	public static function init(): void {
 		load_plugin_textdomain( 'pawfectly-reservations', false, dirname( plugin_basename( PAW_FILE ) ) . '/languages' );
+		Access::init();
 		Rest::init();
 		AccountRest::init();
 		Accounts::init();

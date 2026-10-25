@@ -15,7 +15,7 @@
 defined( 'ABSPATH' ) || exit;
 
 define( 'PAW_VERSION', '0.2.0' );
-define( 'PAW_DB_VERSION', '2' );
+define( 'PAW_DB_VERSION', '3' );
 define( 'PAW_FILE', __FILE__ );
 define( 'PAW_DIR', plugin_dir_path( __FILE__ ) );
 define( 'PAW_URL', plugin_dir_url( __FILE__ ) );

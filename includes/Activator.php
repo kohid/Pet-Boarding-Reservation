@@ -24,6 +24,7 @@ final class Activator {
 		dbDelta( self::schema_sql( self::table(), $wpdb->get_charset_collate() ) );
 
 		Accounts::add_roles();
+		Access::add_developer_role();
 		$admin = get_role( 'administrator' );
 		if ( $admin ) {
 			$admin->add_cap( self::CAPABILITY );
