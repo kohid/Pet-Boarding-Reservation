@@ -27,7 +27,7 @@ t( 'thank-you screen', str_contains( $html, 'data-step="done"' ) );
 foreach ( array_keys( Fields::all() ) as $id ) {
 	t( "field $id rendered", str_contains( $html, "data-field=\"$id\"" ) );
 }
-t( 'three pet type radios', 3 === substr_count( $html, 'name="pet_type"' ) );
+t( 'three pet type radios for pet 1', 3 === substr_count( $html, 'name="pets[0][pet_type]"' ) );
 t( 'two radios per yes/no', 2 === substr_count( $html, 'name="vet_authorization"' ) );
 t( 'conditional fields carry show-if', (bool) preg_match( '/data-field="medications_details"[^>]*data-show-if="\{&quot;medications&quot;:&quot;yes&quot;\}"/', $html ) );
 t( 'conditional fields start hidden', (bool) preg_match( '/data-field="medications_details"[^>]*hidden/', $html ) );
@@ -42,7 +42,7 @@ t( 'submit button', str_contains( $html, 'data-paw-submit' ) );
 t( 'noscript notice', str_contains( $html, '<noscript>' ) );
 t( 'waiver text printed', str_contains( $html, 'inherent risks' ) );
 t( 'US preselected', str_contains( $html, '<option value="US" selected="selected">United States</option>' ) );
-t( 'file input accepts only allowed types', str_contains( $html, 'accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"' ) && str_contains( $html, 'name="vaccination_files[]"' ) && str_contains( $html, 'multiple' ) );
+t( 'file input accepts only allowed types', str_contains( $html, 'accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"' ) && str_contains( $html, 'name="vaccination_files_0[]"' ) && str_contains( $html, 'multiple' ) );
 t( 'signature canvas and hidden value', str_contains( $html, '<canvas' ) && str_contains( $html, 'name="signature"' ) );
 t( 'labels tied to inputs', str_contains( $html, 'for="paw-owner_email"' ) && str_contains( $html, 'id="paw-owner_email"' ) );
 t( 'required fields marked', str_contains( $html, 'First Name<span class="paw-req" aria-hidden="true">*</span>' ) );
@@ -78,16 +78,36 @@ t( 'config: size messages name the real limits', 'Each file must be 10 MB or sma
 t( 'config: field rules without labels', isset( $cfg['fields']['owner_email']['type'] ) && ! isset( $cfg['fields']['owner_email']['label'] ) );
 t( 'signed out: no prefill sent to the browser', false === $cfg['account']['signedIn'] && array() === $cfg['account']['prefill'] && str_ends_with( $cfg['account']['loginRest'], 'pawfectly/v1/account/login' ) );
 t( 'config: messages', 'This field is required.' === $cfg['i18n']['required'] );
+t( 'config: pets', 5 === $cfg['maxPets'] && true === $cfg['fields']['pet_name']['perPet'] && false === $cfg['fields']['owner_email']['perPet'] && 'Pet %d' === $cfg['i18n']['petN'] );
 
 // Services and estimate.
-preg_match_all( '/data-paw-svc="([a-z_]+)"/', $html, $svc );
-t( 'seven service cards in the listed order', array( 'nail_trim', 'nail_membership', 'bath_membership', 'basic_bath', 'deluxe_bath', 'basic_haircut', 'premium_haircut' ) === $svc[1] );
-t( 'service cards are radios named service', 7 === substr_count( $html, 'name="service"' ) );
-t( 'monthly tag on the two memberships', 2 === substr_count( $html, 'class="paw-svc__tag"' ) );
+$cut = static function ( string $html, string $from, string $to ): string {
+	$a = strpos( $html, $from );
+	$b = strpos( $html, $to, (int) $a );
+	return false === $a || false === $b ? '' : substr( $html, $a, $b - $a );
+};
+$stay0 = $cut( $html, 'data-paw-pets="stay"', '<template data-paw-pet-template="stay"' );
+preg_match_all( '/data-paw-svc="([a-z_]+)"/', $stay0, $svc );
+t( "pet 1's service cards in the listed order, then No grooming", array( 'nail_trim', 'nail_membership', 'bath_membership', 'basic_bath', 'deluxe_bath', 'basic_haircut', 'premium_haircut', 'none' ) === $svc[1] );
+t( 'service cards are radios named per pet', 8 === substr_count( $stay0, 'name="pets[0][service]"' ) );
+t( '"No grooming for this pet" only for boarding + grooming', (bool) preg_match( '/data-paw-svc="none"[^>]*data-paw-both-only/', $stay0 ) && str_contains( $stay0, 'No grooming for this pet' ) );
+t( 'monthly tag on the two memberships', 2 === substr_count( $stay0, 'class="paw-svc__tag"' ) );
 t( "what's included listed", str_contains( $html, 'Paw pad inspection' ) && str_contains( $html, 'What&#039;s included' ) );
-t( 'price range before a size is chosen', str_contains( $html, '$15–$20' ) && str_contains( $html, 'Price on request' ) );
-t( 'boarding is preselected', (bool) preg_match( '/name="booking_type" value="boarding"[^>]*checked/', $html ) );
-t( 'grooming options marked dogs-only', 2 === substr_count( $html, 'data-paw-dog-only' ) );
+t( 'price range before a size is chosen', str_contains( $stay0, '$15–$20' ) && str_contains( $stay0, 'Price on request' ) );
+t( 'groomer: Any / Flexible first', (bool) preg_match( '/name="pets\[0\]\[groomer\]" value="any"/', $stay0 ) );
+
+// Welcome: the booking choice and the menu.
+$welcome = $cut( $html, 'data-step="0"', 'data-step="1"' );
+t( 'booking type on the welcome screen, boarding preselected', (bool) preg_match( '/name="booking_type" value="boarding"[^>]*checked/', $welcome ) );
+t( 'service menu on the welcome screen: boarding plus seven services', str_contains( $welcome, 'data-paw-menu' ) && 8 === substr_count( $welcome, 'class="paw-menu__item' ) && str_contains( $welcome, 'Monthly memberships' ) );
+t( 'welcome menu notes grooming is for dogs', str_contains( $welcome, 'Grooming is for dogs. You&#039;ll choose a service for each pet later.' ) );
+
+// Pets.
+t( 'pet 1 card with an add button and a template for more', str_contains( $html, 'data-paw-pet="0"' ) && str_contains( $html, 'data-paw-add-pet' ) && str_contains( $html, '<template data-paw-pet-template="pet">' ) && str_contains( $html, 'name="pets[__N__][pet_name]"' ) );
+t( 'remove link only in the template (pet 1 stays)', ! str_contains( $cut( $html, 'data-paw-pets="pet"', '<template' ), 'data-paw-remove-pet' ) && str_contains( $cut( $html, '<template data-paw-pet-template="pet">', '</template>' ), 'data-paw-remove-pet' ) );
+t( 'health and care have a section per pet', str_contains( $html, 'data-paw-pets="health"' ) && str_contains( $html, 'data-paw-pets="care"' ) && str_contains( $html, 'name="pets[0][feeding_schedule]"' ) );
+t( 'special requests after the grooming cards', strpos( $html, 'name="special_requests"' ) > strpos( $html, '<template data-paw-pet-template="stay"' ) );
+t( 'contact consent on the waiver step', str_contains( $html, 'name="contact_consent"' ) );
 t( 'estimate box in the stay step, hidden at first', (bool) preg_match( '/data-paw-estimate[^>]*hidden/', $html ) && strpos( $html, 'data-paw-estimate' ) > strpos( $html, 'data-step="3"' ) && strpos( $html, 'data-paw-estimate' ) < strpos( $html, 'data-step="4"' ) );
 t( 'config: prices by size, null when on request', 20.0 === $cfg['services']['nail_trim']['large'] && null === $cfg['services']['basic_bath']['small'] && true === $cfg['services']['bath_membership']['monthly'] );
 t( 'config: rates and currency', array_key_exists( 'other', $cfg['rates'] ) && '$' === $cfg['currency'] );
