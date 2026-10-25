@@ -9,7 +9,7 @@
 
 A WordPress plugin that lets Pawfectly's customers request a boarding stay through a branded, multi-step form. Staff review, confirm, and manage each request in wp-admin. Success for v0.1 means:
 
-1. A visitor can complete all 8 steps on a phone or a desktop, upload vaccination records, sign the waiver, and get a reference number.
+1. A visitor can complete all 7 steps on a phone or a desktop, upload vaccination records, sign the waiver, and get a reference number.
 2. The server rejects anything the form would reject, even if the browser is bypassed.
 3. Staff are emailed, can find the reservation in wp-admin, view every answer, open the files and signature, change the status, print the reservation, and export a CSV.
 4. Uploaded records and signatures cannot be fetched by anyone who isn't signed in as staff.
@@ -196,7 +196,7 @@ The look follows the mock-ups, using Metronic 8 tokens re-implemented in CSS. No
 
 ### 6.2 Behavior (`form.js`, vanilla JS)
 
-- **Steps:** the welcome screen (index 0) plus steps 1–8. → validates only the current step. ← never validates. The progress fill is `current / 8`.
+- **Steps:** the welcome screen (index 0) plus steps 1–7. → validates only the current step. ← never validates. The progress fill is `current / 7`.
 - The URL hash (`#step-3`) is kept in sync so the browser Back button moves between steps. Jumping ahead past an invalid step is not allowed.
 - **Conditionals:** `show_if` fields are hidden with the `hidden` attribute, and their values are ignored while hidden.
 - **Dates:** flatpickr with display format `m/d/Y`, a hidden value in ISO format, and `minDate: today`. The check-out `minDate` is check-in + 1. The waiver date defaults to today and is read-only.
@@ -292,7 +292,7 @@ Emails are HTML, sent with `wp_mail`, and wrapped in `EmailTemplate`: a logo hea
   - `reference-test.php`: format, alphabet, and collision retry.
   - `fields-test.php`: unique ids, valid types, every `show_if` target exists, every `column` exists in the schema.
   - `csv-test.php`: formula-injection escaping.
-- **E2E test** (`tests/e2e/form-e2e.js`, Playwright): a build script renders the form into static HTML with a mocked REST endpoint, the same way Sprint-Booking's `tests/e2e/build.php` does. The test fills all 8 steps, checks that → is blocked on an empty required field, that conditionals appear, and that the vaccination "No" block works, draws a signature, submits, and asserts the thank-you screen and the multipart request payload.
+- **E2E test** (`tests/e2e/form-e2e.js`, Playwright): a build script renders the form into static HTML with a mocked REST endpoint, the same way Sprint-Booking's `tests/e2e/build.php` does. The test fills all 7 steps, checks that → is blocked on an empty required field, that conditionals appear, and that the vaccination "No" block works, draws a signature, submits, and asserts the thank-you screen and the multipart request payload.
 - **Manual pass** on a real WordPress install before tagging v0.1.0: activate, submit, check the files are denied by direct URL, check the admin list, detail, print, CSV, and status email.
 
 ## 12. Out of scope for v0.1 (possible later work)
