@@ -19,6 +19,11 @@ $paw_label = static function ( array $field ): string {
 $paw_count = count( $steps );
 ?>
 <div class="paw-app" data-paw-form>
+	<div class="paw-progress" role="progressbar" aria-valuemin="0" aria-valuemax="<?php echo esc_attr( (string) $paw_count ); ?>" aria-valuenow="0" aria-label="<?php esc_attr_e( 'Progress', 'pawfectly-reservations' ); ?>">
+		<span class="paw-progress__fill"></span>
+		<svg class="paw-progress__paw" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 13c-2.8 0-5.5 2.6-5.5 5 0 1.4 1 2 2.2 2 1.4 0 2.2-.8 3.3-.8s1.9.8 3.3.8c1.2 0 2.2-.6 2.2-2 0-2.4-2.7-5-5.5-5zM6.3 11.6c1.1-.4 1.5-1.9 1-3.3S5.5 6.1 4.4 6.5s-1.5 1.9-1 3.3 1.8 2.2 2.9 1.8zm11.4 0c1.1.4 2.4-.4 2.9-1.8s.1-2.9-1-3.3-2.4.4-2.9 1.8-.1 2.9 1 3.3zM9.6 8.4c1.2-.2 1.9-1.7 1.6-3.3S9.7 2.4 8.5 2.6 6.6 4.3 6.9 5.9s1.5 2.7 2.7 2.5zm4.8 0c1.2.2 2.4-.9 2.7-2.5s-.4-3.1-1.6-3.3-2.4.9-2.7 2.5.4 3.1 1.6 3.3z"/></svg>
+	</div>
+
 	<form class="paw-form" novalidate>
 		<section class="paw-step paw-welcome" data-step="0" aria-labelledby="paw-welcome-title">
 			<div class="paw-welcome__logo">
@@ -173,24 +178,23 @@ $paw_count = count( $steps );
 			</p>
 		</section>
 
+		<nav class="paw-nav" aria-label="<?php esc_attr_e( 'Form steps', 'pawfectly-reservations' ); ?>" data-paw-nav>
+			<button type="button" class="paw-nav__btn paw-nav__btn--back" data-paw-prev hidden>
+				<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg>
+				<?php esc_html_e( 'Back', 'pawfectly-reservations' ); ?>
+			</button>
+			<button type="button" class="paw-nav__btn paw-nav__btn--next" data-paw-next>
+				<?php esc_html_e( 'Next', 'pawfectly-reservations' ); ?>
+				<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 11h12.2l-5.6-5.6L12 4l8 8-8 8-1.4-1.4 5.6-5.6H4z"/></svg>
+			</button>
+		</nav>
+
 		<div class="paw-hp" aria-hidden="true">
 			<label for="paw-website"><?php esc_html_e( 'Leave this field empty', 'pawfectly-reservations' ); ?></label>
 			<input type="text" id="paw-website" name="website" tabindex="-1" autocomplete="off">
 		</div>
 	</form>
 
-	<nav class="paw-nav" aria-label="<?php esc_attr_e( 'Form steps', 'pawfectly-reservations' ); ?>" data-paw-nav>
-		<button type="button" class="paw-nav__btn" data-paw-prev aria-label="<?php esc_attr_e( 'Previous step', 'pawfectly-reservations' ); ?>" disabled>
-			<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg>
-		</button>
-		<div class="paw-progress" role="progressbar" aria-valuemin="0" aria-valuemax="<?php echo esc_attr( (string) $paw_count ); ?>" aria-valuenow="0" aria-label="<?php esc_attr_e( 'Progress', 'pawfectly-reservations' ); ?>">
-			<span class="paw-progress__fill"></span>
-			<svg class="paw-progress__paw" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 13c-2.8 0-5.5 2.6-5.5 5 0 1.4 1 2 2.2 2 1.4 0 2.2-.8 3.3-.8s1.9.8 3.3.8c1.2 0 2.2-.6 2.2-2 0-2.4-2.7-5-5.5-5zM6.3 11.6c1.1-.4 1.5-1.9 1-3.3S5.5 6.1 4.4 6.5s-1.5 1.9-1 3.3 1.8 2.2 2.9 1.8zm11.4 0c1.1.4 2.4-.4 2.9-1.8s.1-2.9-1-3.3-2.4.4-2.9 1.8-.1 2.9 1 3.3zM9.6 8.4c1.2-.2 1.9-1.7 1.6-3.3S9.7 2.4 8.5 2.6 6.6 4.3 6.9 5.9s1.5 2.7 2.7 2.5zm4.8 0c1.2.2 2.4-.9 2.7-2.5s-.4-3.1-1.6-3.3-2.4.9-2.7 2.5.4 3.1 1.6 3.3z"/></svg>
-		</div>
-		<button type="button" class="paw-nav__btn" data-paw-next aria-label="<?php esc_attr_e( 'Next step', 'pawfectly-reservations' ); ?>">
-			<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 11h12.2l-5.6-5.6L12 4l8 8-8 8-1.4-1.4 5.6-5.6H4z"/></svg>
-		</button>
-	</nav>
 
 	<noscript><p class="paw-noscript"><?php esc_html_e( 'This form needs JavaScript to save your answers and capture your signature. Please turn JavaScript on, or call us to book.', 'pawfectly-reservations' ); ?></p></noscript>
 </div>

@@ -73,7 +73,9 @@ async function fillOwner(page) {
 async function walkToWaiver(page, width, label) {
   const narrow = width < 500;
   ok(`${label}: starts on the welcome screen`, (await visibleStep(page)) === '0');
-  ok(`${label}: back is disabled on welcome`, await page.isDisabled('[data-paw-prev]'));
+  ok(`${label}: back is hidden on welcome`, await page.isHidden('[data-paw-prev]'));
+  ok(`${label}: form background is transparent`, (await page.evaluate(() => getComputedStyle(document.querySelector('.paw-app')).backgroundColor)) === 'rgba(0, 0, 0, 0)');
+  ok(`${label}: back/next are not fixed to the screen`, (await page.evaluate(() => getComputedStyle(document.querySelector('.paw-nav')).position)) !== 'fixed');
   await shot(page, `${label}-0-welcome`);
   await next(page);
   ok(`${label}: → opens step 1`, (await visibleStep(page)) === '1');
@@ -89,6 +91,9 @@ async function walkToWaiver(page, width, label) {
   await next(page);
   ok(`${label}: valid step 1 → step 2`, (await visibleStep(page)) === '2');
   ok(`${label}: progress advanced`, (await page.getAttribute('.paw-progress', 'aria-valuenow')) === '2');
+  ok(`${label}: progress bar sits above the step title`, await page.evaluate(() => document.querySelector('.paw-progress').getBoundingClientRect().top <= document.querySelector('[data-step="2"] h2').getBoundingClientRect().top));
+  ok(`${label}: theme input borders do not override the underline style`, await page.evaluate(() => { const s = getComputedStyle(document.querySelector('[name=pet_name]')); return s.borderTopWidth === '0px' && s.borderBottomWidth === '1px'; }));
+  ok(`${label}: back/next follow the step content`, await page.evaluate(() => document.querySelector('.paw-nav').getBoundingClientRect().top > document.querySelector('[data-step="2"] .paw-card').getBoundingClientRect().bottom));
 
   ok(`${label}: "specify" hidden until Other`, await page.isHidden('[data-field=pet_type_other]'));
   await radio(page, 'pet_type', 'other');

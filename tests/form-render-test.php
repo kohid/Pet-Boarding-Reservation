@@ -30,6 +30,9 @@ t( 'conditional fields start hidden', (bool) preg_match( '/data-field="medicatio
 t( 'vaccination warning present and hidden', (bool) preg_match( '/data-paw-warn="vaccinations_current"[^>]*hidden/', $html ) );
 t( 'business name escaped', ! str_contains( $html, '<script>alert(1)</script>' ) && str_contains( $html, '&lt;script&gt;' ) );
 t( 'honeypot present and hidden from people', (bool) preg_match( '/class="paw-hp"[^>]*aria-hidden="true"/', $html ) && str_contains( $html, 'name="website"' ) && str_contains( $html, 'tabindex="-1"' ) );
+t( 'progress bar comes before the steps', strpos( $html, 'class="paw-progress"' ) < strpos( $html, 'data-step="0"' ) );
+t( 'back/next come after the steps', strpos( $html, 'class="paw-nav"' ) > strpos( $html, 'data-step="done"' ) );
+t( 'back and next have visible labels', (bool) preg_match( '/data-paw-prev[^>]*>.*Back/s', $html ) && (bool) preg_match( '/data-paw-next[^>]*>.*Next/s', $html ) );
 t( 'nav controls', str_contains( $html, 'data-paw-prev' ) && str_contains( $html, 'data-paw-next' ) && str_contains( $html, 'class="paw-progress"' ) );
 t( 'submit button', str_contains( $html, 'data-paw-submit' ) );
 t( 'noscript notice', str_contains( $html, '<noscript>' ) );

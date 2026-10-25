@@ -194,6 +194,10 @@
 		if (target && target.focus) {
 			target.focus({ preventScroll: true });
 		}
+		// Point at the date field without opening its calendar over the buttons below it.
+		if (pickers[id]) {
+			pickers[id].close();
+		}
 	}
 
 	/* ---------- Conditional questions and warnings ---------- */
@@ -236,7 +240,7 @@
 		reached = Math.max(reached, n);
 		root.setAttribute('data-current', String(n));
 
-		prevBtn.disabled = n === 0;
+		prevBtn.hidden = n === 0;
 		nextBtn.hidden = n === N;
 		progress.style.setProperty('--paw-progress', (n / N * 100) + '%');
 		progress.setAttribute('aria-valuenow', String(n));

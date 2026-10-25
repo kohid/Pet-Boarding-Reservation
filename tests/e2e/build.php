@@ -31,6 +31,7 @@ $page = '<!doctype html>
 </head>
 <body>
 ' . $html . '
+<style>/* A theme that styles every input, like the one in the screenshot. */ input[type=text],input[type=email],input[type=tel],select,textarea{border:1px solid #000;background:#fff;border-radius:2px}</style>
 <script>window.PAW_FORM = ' . json_encode( $config ) . ';</script>
 <script src="/assets/vendor/flatpickr/flatpickr.min.js"></script>
 <script src="/assets/js/signature-pad.js"></script>
