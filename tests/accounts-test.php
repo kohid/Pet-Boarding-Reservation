@@ -70,7 +70,7 @@ t( 'signed in as someone else: refused, token kept', 'wrong_user' === Accounts::
 t( 'signed in as the account: confirmed', 'ok' === Accounts::verify_request( $id2, $t2, $id2 ) && Accounts::is_verified( $id2 ) );
 t( 'used link: bad', 'bad' === Accounts::verify_request( $id2, $t2, $id2 ) );
 t( 'after confirming, sent on with paw_verified=1', str_contains( Accounts::verify_redirect( 'ok', $id2, $t2 ), 'paw_verified=1' ) );
-$to_signin = Accounts::verify_redirect( 'signin', $id2, $t2 );
+$to_signin = rawurldecode( Accounts::verify_redirect( 'signin', $id2, $t2 ) ); // No My Profile page here: wp-login.php?redirect_to=…
 t( 'sign-in redirect keeps the link so it completes after signing in', str_contains( $to_signin, 'paw_verify_u=' . $id2 ) && str_contains( $to_signin, 'paw_verify_t=' . $t2 ) && str_contains( $to_signin, 'paw_verified=signin' ) );
 t( 'wrong account redirect says so', str_contains( Accounts::verify_redirect( 'wrong_user', $id2, $t2 ), 'paw_verified=wrong' ) );
 

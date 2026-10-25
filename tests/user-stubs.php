@@ -97,7 +97,7 @@ function get_current_user_id() { return (int) $GLOBALS['paw_current_user']; }
 function wp_get_current_user() { return get_user_by( 'id', get_current_user_id() ) ?: new WP_User(); }
 function is_user_logged_in() { return get_current_user_id() > 0; }
 function current_user_can( $cap ) { $u = wp_get_current_user(); return $u->exists() && $u->has_cap( $cap ); }
-function wp_login_url( $redirect = '' ) { return 'https://example.test/wp-login.php'; }
+function wp_login_url( $redirect = '' ) { return 'https://example.test/wp-login.php' . ( $redirect ? '?redirect_to=' . rawurlencode( $redirect ) : '' ); }
 function wp_lostpassword_url( $redirect = '' ) { return 'https://example.test/wp-login.php?action=lostpassword'; }
 function wp_logout_url( $redirect = '' ) { return 'https://example.test/wp-login.php?action=logout'; }
 function add_query_arg( $args, $url ) { return $url . ( str_contains( $url, '?' ) ? '&' : '?' ) . http_build_query( $args ); }
