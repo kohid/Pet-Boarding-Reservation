@@ -73,6 +73,11 @@ t( 'grooming email: service and estimate', str_contains( $g, 'Basic Bath' ) && s
 t( 'grooming staff subject names the day', str_contains( $GLOBALS['paw_mail'][1]['subject'] ?? '', '(10/29/2026 · Afternoon (12–5))' ) );
 
 $GLOBALS['paw_mail'] = array();
+Mailer::reservation_received( array_merge( $reservation, array( 'pet_name' => 'Rex + Tom', 'booking_type' => 'both', 'appointment_date' => '2026-10-29', 'service' => 'nail_trim', 'details' => array( 'pets' => array( array( 'pet_name' => 'Rex', 'service' => 'nail_trim', 'groomer' => 'Ana' ), array( 'pet_name' => 'Tom' ) ) ) ) ) );
+$m2 = $GLOBALS['paw_mail'][0]['message'] ?? '';
+t( 'two pets: both listed, with the service and groomer', str_contains( $m2, 'Rex: Nail Trimming, groomer Ana' ) && str_contains( $m2, 'Tom' ) );
+
+$GLOBALS['paw_mail'] = array();
 Mailer::status_changed( array_merge( $reservation, array( 'status' => 'confirmed' ) ) );
 t( 'status email to the owner', 1 === count( $GLOBALS['paw_mail'] ) && 'zoe@example.com' === $GLOBALS['paw_mail'][0]['to'] );
 t( 'status email subject', 'Your reservation PAW-7K3QX9 is now Confirmed' === $GLOBALS['paw_mail'][0]['subject'] );

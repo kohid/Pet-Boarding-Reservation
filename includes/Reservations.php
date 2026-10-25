@@ -186,13 +186,14 @@ final class Reservations {
 		if ( isset( $details['pets'] ) && is_array( $details['pets'] ) ) {
 			$out = array();
 			foreach ( array_values( $details['pets'] ) as $n => $pet ) {
-				$out[] = (array) $pet + array( 'files' => array_values( array_filter( $files, static fn( $f ): bool => (int) ( $f['pet'] ?? 0 ) === $n ) ) );
+				// Files keep their index in the booking's list: download links use it.
+				$out[] = (array) $pet + array( 'files' => array_filter( $files, static fn( $f ): bool => (int) ( $f['pet'] ?? 0 ) === $n ) );
 			}
 			return $out;
 		}
 		$values = self::values( $r );
 		$pet    = array_intersect_key( $values, Fields::pet_fields() );
-		return array( $pet + array( 'files' => array_values( $files ) ) );
+		return array( $pet + array( 'files' => $files ) );
 	}
 
 	/** When it happens, as a person reads it: "10/28/2026 → 10/30/2026", or a grooming day and time. */
@@ -204,10 +205,14 @@ final class Reservations {
 		return Mailer::date( (string) $r['check_in'] ) . ' → ' . Mailer::date( (string) $r['check_out'] );
 	}
 
-	/** The booked service's name, or '' for boarding only. */
-	public static function service_name( array $r ): string {
-		$id = (string) ( $r['service'] ?? '' );
-		return '' !== $id ? (string) ( Services::catalog()[ $id ]['name'] ?? $id ) : '';
+	/** The booked services' names ("Nail Trimming, Basic Bath"), or '' for boarding only. */
+	public static function service_names( array $r ): string {
+		$catalog = Services::catalog();
+		$names   = array();
+		foreach ( array_filter( explode( ',', (string) ( $r['service'] ?? '' ) ) ) as $id ) {
+			$names[] = (string) ( $catalog[ $id ]['name'] ?? $id );
+		}
+		return implode( ', ', $names );
 	}
 
 	/** @return array<string, int> Count per status, every status present. */

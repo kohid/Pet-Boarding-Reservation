@@ -28,8 +28,27 @@ final class Mailer {
 			$summary[ __( 'Check-in', 'pawfectly-reservations' ) ]  = self::date( $r['check_in'] );
 			$summary[ __( 'Check-out', 'pawfectly-reservations' ) ] = self::date( $r['check_out'] );
 		}
-		if ( '' !== Reservations::service_name( $r ) ) {
-			$summary[ __( 'Service', 'pawfectly-reservations' ) ] = Reservations::service_name( $r );
+		$pets = Reservations::pets( $r );
+		if ( count( $pets ) > 1 ) {
+			// One line per pet: "Rex: Nail Trimming, groomer Ana".
+			$catalog = Services::catalog();
+			foreach ( $pets as $n => $p ) {
+				$line = (string) ( $p['pet_name'] ?? '' );
+				if ( isset( $catalog[ $p['service'] ?? '' ] ) ) {
+					$line .= ': ' . $catalog[ $p['service'] ]['name'];
+				}
+				if ( '' !== (string) ( $p['groomer'] ?? '' ) && 'any' !== $p['groomer'] ) {
+					/* translators: %s: groomer's name */
+					$line .= ', ' . sprintf( __( 'groomer %s', 'pawfectly-reservations' ), $p['groomer'] );
+				}
+				/* translators: %d: pet number */
+				$summary[ sprintf( __( 'Pet %d', 'pawfectly-reservations' ), $n + 1 ) ] = $line;
+			}
+		}
+		if ( '' !== Reservations::service_names( $r ) ) {
+			if ( count( $pets ) < 2 ) {
+				$summary[ __( 'Service', 'pawfectly-reservations' ) ] = Reservations::service_names( $r );
+			}
 			if ( 'both' === $type && ! empty( $r['appointment_date'] ) ) {
 				$summary[ __( 'Grooming day', 'pawfectly-reservations' ) ] = self::date( (string) $r['appointment_date'] );
 			}

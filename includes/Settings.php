@@ -284,6 +284,13 @@ final class Settings {
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><label for="paw-groomers"><?php esc_html_e( 'Groomers', 'pawfectly-reservations' ); ?></label></th>
+						<td>
+							<textarea class="regular-text" rows="4" id="paw-groomers" name="<?php echo esc_attr( $name ); ?>[groomers]"><?php echo esc_textarea( implode( "\n", (array) $s['groomers'] ) ); ?></textarea>
+							<p class="description"><?php esc_html_e( 'One name per line. Owners can ask for one of them, or choose "Any / Flexible".', 'pawfectly-reservations' ); ?></p>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><label for="paw-gwaiver"><?php esc_html_e( 'Grooming waiver', 'pawfectly-reservations' ); ?></label></th>
 						<td>
 							<textarea class="large-text" rows="8" id="paw-gwaiver" name="<?php echo esc_attr( $name ); ?>[grooming_waiver]"><?php echo esc_textarea( $s['grooming_waiver'] ); ?></textarea>

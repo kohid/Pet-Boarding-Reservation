@@ -52,6 +52,7 @@ t( 'settings link stays in the dashboard', str_contains( $html, 'href="https://e
 t( 'settings view: general and pricing', str_contains( $html, 'data-paw-view="settings"' ) && str_contains( $html, 'name="business_name"' ) && str_contains( $html, 'name="boarding_rates[small]"' ) && str_contains( $html, 'name="services[basic_bath][small]"' ) );
 t( 'settings view: current prices filled in', str_contains( $html, 'name="services[nail_trim][large]" value="20.00"' ) );
 t( 'settings view: every service listed', 7 === substr_count( $html, 'name="services[' ) / 6 );
+t( 'settings view: groomers, one per line', str_contains( $html, 'name="groomers"' ) );
 t( 'settings view: grooming waiver and vaccination switch', str_contains( $html, 'name="grooming_waiver"' ) && str_contains( $html, 'name="grooming_needs_vaccines"' ) );
 t( 'settings view: logo picker gets the media library', ! empty( $GLOBALS['paw_media'] ) );
 t( 'settings view: warns when nobody can reach wp-admin', str_contains( $html, 'PAW_WP_ADMIN_OPEN' ) );

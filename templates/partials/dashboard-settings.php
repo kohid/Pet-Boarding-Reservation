@@ -109,6 +109,15 @@ $paw_saved = (array) $settings['services'];
 			<?php endforeach; ?>
 		</div>
 
+		<h4 class="paw-dash__subtitle"><?php esc_html_e( 'Groomers', 'pawfectly-reservations' ); ?></h4>
+		<div class="paw-dash__fields">
+			<label class="paw-dash__field paw-dash__field--wide" data-paw-setting="groomers">
+				<span><?php esc_html_e( 'One name per line', 'pawfectly-reservations' ); ?></span>
+				<textarea name="groomers" rows="4"><?php echo esc_textarea( implode( "\n", (array) $settings['groomers'] ) ); ?></textarea>
+				<small><?php esc_html_e( 'Owners can ask for one of these groomers, or choose "Any / Flexible".', 'pawfectly-reservations' ); ?></small>
+			</label>
+		</div>
+
 		<h4 class="paw-dash__subtitle"><?php esc_html_e( 'Grooming services', 'pawfectly-reservations' ); ?></h4>
 		<div class="paw-dash__services">
 			<?php foreach ( Services::defaults() as $paw_id => $paw_default ) : ?>

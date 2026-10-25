@@ -95,6 +95,7 @@ $groom_row = Reservations::build_row(
 $groom_row['user_id'] = $zoe->ID;
 Reservations::insert( $groom_row );
 $html = MyBookings::render();
+t( 'grooming booking: services listed by name', str_contains( $html, 'Nail Trimming' ) );
 t( 'grooming booking shows the service and its day', str_contains( $html, 'Nail Trimming' ) && str_contains( $html, '02/03/2030 · Morning (8–12)' ) );
 wp_set_current_user( $other->ID );
 t( 'an owner with nothing sees an invitation to book', str_contains( MyBookings::render(), 'No reservations yet' ) || str_contains( MyBookings::render(), 'PAW-CCCCCC' ) );
