@@ -58,9 +58,11 @@ function ok(name, cond) { assert.ok(cond, name); passed++; console.log('ok   - '
     ok('create-account tab switches panels', await page.isVisible(`${out} #paw-panel-signup`) && (await page.getAttribute(`${out} [data-paw-tab=signup]`, 'aria-selected')) === 'true');
     let signupCalls = 0;
     let signupBody = null;
+    let signupHeaders = null;
     await page.route('**/mock/account/signup', route => {
       signupCalls++;
       signupBody = route.request().postDataJSON();
+      signupHeaders = route.request().headers();
       if (signupCalls === 1) {
         return route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ code: 'paw_email_exists', message: 'An account already uses this email address.', data: { status: 409, fields: { email: 'An account already uses this email address.' } } }) });
       }
@@ -73,6 +75,7 @@ function ok(name, cond) { assert.ok(cond, name); passed++; console.log('ok   - '
     await page.click(`${out} #paw-panel-signup button[type=submit]`);
     await page.waitForSelector(`${out} #paw-panel-signup [data-paw-field=email] .paw-acct__error:not([hidden])`);
     ok('server field error shown under the field', (await page.textContent(`${out} #paw-panel-signup [data-paw-field=email] .paw-acct__error`)).includes('already uses'));
+    ok('sign-up sends no page nonce (cached pages must still work)', signupHeaders && !('x-wp-nonce' in signupHeaders));
     ok('sign-up sends the typed details as JSON', signupBody && signupBody.first_name === 'Zoë' && signupBody.password === 'correct horse' && signupBody.website === '');
     await page.fill(`${out} #paw-acct-up-email`, 'zoe@example.com');
     await Promise.all([page.waitForEvent('load'), page.click(`${out} #paw-panel-signup button[type=submit]`)]);

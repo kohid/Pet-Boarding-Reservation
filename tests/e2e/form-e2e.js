@@ -272,12 +272,19 @@ let window_today;
       page.on('pageerror', e => errors.push(e.message));
       let calls = 0;
       let phoneBody = '';
+      const nonces = [];
+      await page.route('**/mock/nonce', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ nonce: 'fresh-nonce' }) }));
       await page.route('**/mock/reservations', route => {
         calls++;
+        nonces.push(route.request().headers()['x-wp-nonce']);
         if (calls === 1) {
-          return route.fulfill({ status: 413, contentType: 'text/html', body: '<html><body><h1>413 Request Entity Too Large</h1></body></html>' });
+          // What WordPress core answers for an expired nonce on a cached page.
+          return route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ code: 'rest_cookie_invalid_nonce', message: 'Cookie check failed', data: { status: 403 } }) });
         }
         if (calls === 2) {
+          return route.fulfill({ status: 413, contentType: 'text/html', body: '<html><body><h1>413 Request Entity Too Large</h1></body></html>' });
+        }
+        if (calls === 3) {
           return route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ code: 'paw_invalid', message: 'Please check the highlighted fields.', data: { status: 400, fields: { owner_email: 'Please enter a valid email address.' } } }) });
         }
         phoneBody = route.request().postDataBuffer().toString('latin1');
@@ -291,6 +298,7 @@ let window_today;
       await noHorizontalScroll(page, 375, 'phone step 7');
       await page.click('[data-paw-submit]');
       await page.waitForSelector('[data-paw-form-error]:not([hidden])');
+      ok("phone: core's stale-nonce answer gets one retry with a fresh nonce", calls >= 2 && nonces[1] === 'fresh-nonce');
       ok('phone: a web-server 413 (HTML body) says the files are too large', (await page.textContent('[data-paw-form-error]')).includes('too large'));
       await page.click('[data-paw-submit]');
       await page.waitForFunction(() => !document.querySelector('[data-step="1"]').hidden);

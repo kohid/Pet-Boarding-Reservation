@@ -575,7 +575,9 @@
 			body: payload()
 		}).then(function (res) {
 			return res.json().catch(function () { return {}; }).then(function (body) {
-				if (res.status === 403 && body.code === 'paw_nonce' && !retried) {
+				// WordPress itself answers rest_cookie_invalid_nonce for an expired nonce on a cached page.
+				var staleNonce = body.code === 'paw_nonce' || body.code === 'rest_cookie_invalid_nonce';
+				if (res.status === 403 && staleNonce && !retried) {
 					return fetch(CFG.nonceUrl, { credentials: 'same-origin' })
 						.then(function (r) { return r.json(); })
 						.then(function (fresh) {

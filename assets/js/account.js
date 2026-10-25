@@ -12,11 +12,18 @@
 	}
 	var I18N = CFG.i18n;
 
+	/** Sign-in and sign-up send no nonce: on a cached page it may be stale, and they need none. */
+	var NO_NONCE = { 'account/login': true, 'account/signup': true };
+
 	function call(route, body) {
+		var headers = { 'Content-Type': 'application/json' };
+		if (!NO_NONCE[route]) {
+			headers['X-WP-Nonce'] = CFG.nonce;
+		}
 		return fetch(CFG.rest + route, {
 			method: 'POST',
 			credentials: 'same-origin',
-			headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': CFG.nonce },
+			headers: headers,
 			body: JSON.stringify(body || {})
 		}).then(function (res) {
 			return res.json().catch(function () { return {}; }).then(function (data) {
