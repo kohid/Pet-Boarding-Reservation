@@ -1,6 +1,6 @@
 <?php
 /**
- * Creates and upgrades the reservations table, the staff capability and the private files folder.
+ * Creates and upgrades the reservations table, the roles and capability, and the private files folder.
  *
  * @package Pawfectly
  */
@@ -23,6 +23,7 @@ final class Activator {
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( self::schema_sql( self::table(), $wpdb->get_charset_collate() ) );
 
+		Accounts::add_roles();
 		$admin = get_role( 'administrator' );
 		if ( $admin ) {
 			$admin->add_cap( self::CAPABILITY );
@@ -59,6 +60,7 @@ files LONGTEXT NOT NULL,
 signature_path VARCHAR(190) NOT NULL,
 signed_at DATETIME NOT NULL,
 signed_ip VARCHAR(45) NOT NULL,
+user_id BIGINT(20) UNSIGNED NULL,
 staff_notes TEXT NULL,
 status_log LONGTEXT NOT NULL,
 created_at DATETIME NOT NULL,
@@ -67,7 +69,8 @@ PRIMARY KEY  (id),
 UNIQUE KEY reference (reference),
 KEY status (status),
 KEY check_in (check_in),
-KEY owner_email (owner_email)
+KEY owner_email (owner_email),
+KEY user_id (user_id)
 ) {$charset};";
 	}
 }

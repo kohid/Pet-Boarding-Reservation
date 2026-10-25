@@ -123,6 +123,40 @@ final class Reservations {
 		);
 	}
 
+	/**
+	 * Reservations an owner may see: their own, plus (once their email is verified) those made
+	 * with the same email. Without verification anyone could sign up as someone else.
+	 */
+	public static function for_owner( int $user_id, string $email, bool $verified, int $limit = 50 ): array {
+		global $wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . Activator::table() . ' WHERE ' . self::owner_where( $verified ) . ' ORDER BY check_in DESC, id DESC LIMIT %d', ...self::owner_args( $user_id, $email, $verified, $limit ) ), ARRAY_A );
+		return array_map( array( self::class, 'decode' ), (array) $rows );
+	}
+
+	/** The owner's most recently submitted reservation, or null. */
+	public static function last_for_owner( int $user_id, string $email, bool $verified ): ?array {
+		global $wpdb;
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . Activator::table() . ' WHERE ' . self::owner_where( $verified ) . ' ORDER BY created_at DESC, id DESC LIMIT %d', ...self::owner_args( $user_id, $email, $verified, 1 ) ), ARRAY_A );
+		return $row ? self::decode( $row ) : null;
+	}
+
+	private static function owner_where( bool $verified ): string {
+		return $verified ? '(user_id = %d OR owner_email = %s)' : 'user_id = %d';
+	}
+
+	private static function owner_args( int $user_id, string $email, bool $verified, int $limit ): array {
+		return $verified ? array( $user_id, $email, $limit ) : array( $user_id, $limit );
+	}
+
+	/** Every stored answer keyed by field id: table columns plus details. */
+	public static function values( array $r ): array {
+		$values = (array) $r['details'];
+		foreach ( Fields::COLUMNS as $col ) {
+			$values[ $col ] = (string) ( $r[ $col ] ?? '' );
+		}
+		return $values;
+	}
+
 	/** @return array<string, int> Count per status, every status present. */
 	public static function counts(): array {
 		global $wpdb;

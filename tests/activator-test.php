@@ -36,6 +36,8 @@ foreach ( array(
 	'KEY status (status)',
 	'KEY check_in (check_in)',
 	'KEY owner_email (owner_email)',
+	'user_id BIGINT(20) UNSIGNED NULL',
+	'KEY user_id (user_id)',
 ) as $needle ) {
 	t( "has: $needle", str_contains( $sql, $needle ) );
 }

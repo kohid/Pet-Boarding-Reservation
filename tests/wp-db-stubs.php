@@ -15,6 +15,8 @@ class Fake_WPDB {
 	public $fail_insert = false;
 	/** @var array<int, mixed> Values handed back by get_var(), in order; then null. */
 	public $var_queue   = array();
+	/** @var array<int, array|null> Rows handed back by get_row() before any id lookup. */
+	public $row_queue   = array();
 
 	public function get_charset_collate() { return 'DEFAULT CHARSET=utf8mb4'; }
 	public function esc_like( $s ) { return addcslashes( $s, '_%\\' ); }
@@ -64,6 +66,9 @@ class Fake_WPDB {
 
 	public function get_row( $sql, $output = null ) {
 		$this->queries[] = $sql;
+		if ( $this->row_queue ) {
+			return array_shift( $this->row_queue );
+		}
 		return preg_match( '/WHERE id = (\d+)/', $sql, $m ) ? ( $this->rows[ (int) $m[1] ] ?? null ) : null;
 	}
 
