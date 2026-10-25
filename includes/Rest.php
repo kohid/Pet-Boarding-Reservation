@@ -148,7 +148,9 @@ final class Rest {
 		} elseif ( null !== AccountRules::password( $password, $confirm ) ) {
 			$errors['account_password_confirm'] = __( "The two passwords don't match.", 'pawfectly-reservations' );
 		}
-		if ( '' !== $email && email_exists( $email ) ) {
+		if ( '' !== $email && Accounts::is_admin_email( $email ) ) {
+			$errors['owner_email'] = __( "This email address belongs to the site's administrator. Book without an account, or use another email.", 'pawfectly-reservations' );
+		} elseif ( '' !== $email && email_exists( $email ) ) {
 			$errors['owner_email'] = __( "An account already uses this email. Sign in above, or untick 'Create an account'.", 'pawfectly-reservations' );
 		}
 		return array( 'create' => true, 'password' => $password, 'errors' => $errors );

@@ -34,6 +34,9 @@ t( 'redirect_to on this site wins', 'https://example.test/book/' === Login::targ
 t( 'redirect_to on another site is ignored', 'https://example.test/my-bookings/' === Login::target( 'https://evil.test/x', $cust ) );
 t( 'empty redirect_to → home', 'https://example.test/dashboard/' === Login::target( '', $staff ) );
 
+$deep = 'https://example.test/wp-admin/post.php?post=5&action=edit';
+t( 'redirect_to is encoded, so its own & and ? survive', str_ends_with( Login::url_for( $deep ), 'redirect_to=' . rawurlencode( $deep ) ) );
+t( 'wp-login.php hand-over encodes it too', str_contains( (string) Login::wp_login_redirect( array( 'redirect_to' => $deep ), 'GET' ), 'redirect_to=' . rawurlencode( $deep ) ) );
 t( 'login url carries redirect_to', str_starts_with( Login::url_for( 'https://example.test/book/' ), 'https://example.test/login/?redirect_to=' ) );
 
 $to = Login::wp_login_redirect( array(), 'GET' );

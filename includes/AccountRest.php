@@ -58,6 +58,9 @@ final class AccountRest {
 			return self::too_many();
 		}
 		$v = AccountRules::signup( $in );
+		if ( ! isset( $v['errors']['email'] ) && Accounts::is_admin_email( $v['clean']['email'] ) ) {
+			$v['errors']['email'] = self::reserved();
+		}
 		if ( $v['errors'] ) {
 			return self::invalid( $v['errors'] );
 		}
@@ -91,36 +94,46 @@ final class AccountRest {
 			return new \WP_Error( 'paw_email_exists', $e['email'], array( 'status' => 409, 'fields' => $e ) );
 		}
 		$changed = strtolower( $c['email'] ) !== strtolower( (string) $user->user_email );
-		if ( $changed && ! Accounts::may_use_customer_login( $user ) ) {
-			// Staff change their email on the WordPress profile screen, which confirms the new address first.
-			$e = array( 'email' => __( 'Staff change their email on the WordPress profile screen.', 'pawfectly-reservations' ) );
+		if ( $changed && Accounts::is_admin_email( $c['email'] ) ) {
+			return self::invalid( array( 'email' => self::reserved() ) );
+		}
+		if ( $changed && Access::is_admin_user( $user ) ) {
+			// Moving the site owner's account off the admin email would end its wp-admin access.
+			$e = array( 'email' => __( 'Change this email on the WordPress profile screen.', 'pawfectly-reservations' ) );
 			return new \WP_Error( 'paw_staff_email', $e['email'], array( 'status' => 403, 'fields' => $e, 'profile_url' => get_edit_profile_url() ) );
 		}
+		// Staff keep their current address until the new one is confirmed; owners switch at once and re-confirm.
+		$pending = $changed && ! Accounts::may_use_customer_login( $user );
 		$res     = wp_update_user(
 			array(
 				'ID'           => $user->ID,
 				'first_name'   => $c['first_name'],
 				'last_name'    => $c['last_name'],
 				'display_name' => trim( $c['first_name'] . ' ' . $c['last_name'] ),
-				'user_email'   => $c['email'],
+				'user_email'   => $pending ? (string) $user->user_email : $c['email'],
 			)
 		);
 		if ( is_wp_error( $res ) ) {
 			return new \WP_Error( 'paw_save', __( 'We could not save your details. Please try again.', 'pawfectly-reservations' ), array( 'status' => 500 ) );
 		}
 		update_user_meta( $user->ID, Accounts::META_PHONE, $c['phone'] );
-		if ( $changed ) {
+		if ( $pending ) {
+			update_user_meta( $user->ID, Accounts::META_PENDING_EMAIL, $c['email'] );
+			Accounts::send_verification( (int) $user->ID, $c['email'] );
+		} elseif ( $changed ) {
 			Accounts::unverify( (int) $user->ID );
 			Accounts::send_verification( (int) $user->ID );
 		}
 		return new \WP_REST_Response(
 			array(
 				'ok'      => true,
-				'message' => $changed
-					? __( 'Your details are saved. Please confirm your new email address with the link we just sent.', 'pawfectly-reservations' )
-					: __( 'Your details are saved.', 'pawfectly-reservations' ),
+				'message' => $pending
+					? __( 'Your details are saved. Your email changes once you click the link we sent to the new address.', 'pawfectly-reservations' )
+					: ( $changed
+						? __( 'Your details are saved. Please confirm your new email address with the link we just sent.', 'pawfectly-reservations' )
+						: __( 'Your details are saved.', 'pawfectly-reservations' ) ),
 				'name'    => trim( $c['first_name'] . ' ' . $c['last_name'] ),
-				'email'   => $c['email'],
+				'email'   => $pending ? (string) $user->user_email : $c['email'],
 			)
 		);
 	}
@@ -202,6 +215,10 @@ final class AccountRest {
 
 	private static function invalid( array $fields ): \WP_Error {
 		return new \WP_Error( 'paw_invalid', (string) reset( $fields ), array( 'status' => 400, 'fields' => $fields ) );
+	}
+
+	private static function reserved(): string {
+		return __( "This email address belongs to the site's administrator. Please use another one.", 'pawfectly-reservations' );
 	}
 
 	private static function too_many(): \WP_Error {

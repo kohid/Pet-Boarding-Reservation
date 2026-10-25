@@ -60,6 +60,7 @@ async function mock(page, log) {
     await page.click('[data-paw-nav="reservations"]');
     await page.waitForSelector('.paw-dash__table tbody tr');
     ok('reservations: rows listed', (await page.locator('.paw-dash__table tbody tr').count()) === 3);
+    ok('reservations: Export CSV goes through admin-post with a nonce', /admin-post\.php\?action=paw_export&_wpnonce=/.test(await page.getAttribute('[data-paw-export]', 'href')));
     ok('reservations: a grooming row shows its day and service', (await page.textContent('.paw-dash__table tbody tr[data-id="9"]')).includes('10/27/2026 · Morning (8–12)') && (await page.textContent('.paw-dash__table tbody tr[data-id="9"]')).includes('Nail Trimming'));
     ok('reservations: text is not parsed as HTML', (await page.textContent('.paw-dash__table')).includes('<b>Luna</b>'));
     ok('reservations: address shows the view', page.url().includes('paw_view=reservations'));

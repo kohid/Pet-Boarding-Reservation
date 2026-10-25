@@ -118,14 +118,18 @@ final class Settings {
 		);
 	}
 
-	/** Ticked roles get the staff capability, every other role loses it; administrators always keep it. */
+	/** Ticked roles get the staff capability, every other role loses it; administrators and Developers always keep it. */
 	private static function apply_roles( array $roles ): void {
+		$developer = get_role( Access::DEVELOPER );
+		if ( $developer ) {
+			$developer->add_cap( Activator::CAPABILITY );
+		}
 		foreach ( array_keys( wp_roles()->role_names ) as $slug ) {
 			$role = get_role( $slug );
 			if ( ! $role ) {
 				continue;
 			}
-			if ( 'administrator' === $slug || in_array( $slug, $roles, true ) ) {
+			if ( in_array( $slug, array( 'administrator', Access::DEVELOPER ), true ) || in_array( $slug, $roles, true ) ) {
 				$role->add_cap( Activator::CAPABILITY );
 			} else {
 				$role->remove_cap( Activator::CAPABILITY );

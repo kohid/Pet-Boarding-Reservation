@@ -56,6 +56,10 @@ t( 'detail has the answers html', str_contains( $d['answers_html'], 'Beagle' ) &
 t( 'answers html escapes owner text', ! str_contains( $d['answers_html'], '<script>x</script>' ) && str_contains( $d['answers_html'], '&lt;script&gt;' ) );
 t( 'files and signature through the staff-only handler', str_contains( $d['files'][0]['url'], 'action=paw_file' ) && str_contains( $d['signature_url'], 'n=sig' ) );
 t( 'history with labels', 'Pending' === $d['history'][0]['label'] );
+t( 'the admin-email account gets the wp-admin (print) link', str_contains( $d['admin_url'], 'page=paw-reservations' ) );
+$GLOBALS['paw_options']['admin_email'] = 'boss@example.com';
+t( 'no wp-admin link for staff who cannot open wp-admin', '' === StaffRest::detail( req( array(), array( 'id' => (string) $id ) ) )->get_data()['admin_url'] );
+$GLOBALS['paw_options']['admin_email'] = 'desk@example.com';
 t( 'missing reservation → 404', 404 === StaffRest::detail( req( array(), array( 'id' => '999' ) ) )->get_error_data()['status'] );
 
 $GLOBALS['paw_mail'] = array();

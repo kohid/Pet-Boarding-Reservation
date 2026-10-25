@@ -29,6 +29,7 @@ Requires WordPress 6.0+ and PHP 8.0+. This is v0.3. See `docs/superpowers/specs/
 - **New accounts confirm their email with a link,** valid for 7 days. Until they do, My Bookings shows only reservations made while signed in. After confirming, it also shows earlier reservations made with that email.
 - **Everyone signs in on the login page,** owners, staff and admins alike, with their email or username. It goes through WordPress's own sign-in, so login-limit and security plugins still apply. After signing in, staff land on the Dashboard and owners on My Bookings (or wherever they were headed).
 - **Create account** asks for the password twice, and every password box has a Show/Hide button, on the booking form too.
+- **Changing email in My Profile:** owners switch at once and confirm the new address. Staff keep their current address until they click the link sent to the new one. The admin-email account changes its email in wp-admin.
 - **Forgotten passwords** use WordPress's own reset page.
 
 ## Who can open the WordPress dashboard (wp-admin)
@@ -41,7 +42,9 @@ Everyone else, other administrators and staff included, is sent to the front-end
 
 `/wp-login.php` sends people to the login page. Log out, lost password and reset password still work on wp-login.php. If a two-factor plugin needs wp-login.php, add `add_filter( 'paw_redirect_wp_login', '__return_false' );`.
 
-**Locked out?** Put `define( 'PAW_WP_ADMIN_OPEN', true );` in `wp-config.php`. That turns off the wp-admin restriction and the login redirect until you remove it.
+The Administration Email Address is reserved: nobody can sign up with it or switch their account to it through Pawfectly's pages.
+
+If no account uses the Administration Email Address and there is no Developer, administrators keep wp-admin access so the site is never locked, and the dashboard's Settings view shows a warning. To turn the restriction and the login redirect off completely, put `define( 'PAW_WP_ADMIN_OPEN', true );` in `wp-config.php`.
 
 ## Staff dashboard
 
@@ -49,6 +52,7 @@ Put `[pawfectly_dashboard]` on a page, for example `/dashboard/`.
 - **Overview:** today's check-ins and check-outs, pets boarding tonight, grooming appointments today, requests to review, and a 14-night chart of pets per night.
 - **Reservations:** search, status tabs, a check-in date range, and a side panel with every answer, the vaccination files, the signature, status change (optionally emailing the owner), staff notes, history and delete.
 
+- **Export CSV** on the Reservations view downloads the current filter.
 - **Settings** (administrators, Developers and the admin-email account): everything below, including prices.
 
 The **Pawfectly staff** role can use the dashboard. Give it to front-desk people under **Users**. You can also tick other roles in **Settings → Who can manage reservations**.

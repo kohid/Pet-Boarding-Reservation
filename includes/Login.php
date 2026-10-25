@@ -37,7 +37,8 @@ final class Login {
 		if ( '' === $page ) {
 			return wp_login_url( $redirect_to );
 		}
-		return '' !== $redirect_to ? add_query_arg( array( 'redirect_to' => $redirect_to ), $page ) : $page;
+		// add_query_arg() does not encode values: encode the address so its own ? and & survive.
+		return '' !== $redirect_to ? add_query_arg( array( 'redirect_to' => rawurlencode( $redirect_to ) ), $page ) : $page;
 	}
 
 	/** Where someone goes after signing in when nothing else was asked for. */
@@ -68,7 +69,7 @@ final class Login {
 		}
 		$args = array();
 		if ( is_string( $get['redirect_to'] ?? null ) && '' !== $get['redirect_to'] ) {
-			$args['redirect_to'] = $get['redirect_to'];
+			$args['redirect_to'] = rawurlencode( $get['redirect_to'] );
 		}
 		if ( 'register' === $action ) {
 			$args['tab'] = 'signup';

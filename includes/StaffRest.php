@@ -87,10 +87,9 @@ final class StaffRest {
 		return new \WP_REST_Response( array( 'ok' => true, 'settings' => $clean ) );
 	}
 
-	/** True when nobody could open wp-admin: no account has the admin email and there is no Developer. */
+	/** True when nobody could open wp-admin (administrators then keep it, see Access::gate_target). */
 	public static function lockout_risk(): bool {
-		$admin = get_user_by( 'email', (string) get_option( 'admin_email' ) );
-		return ! $admin && ! get_users( array( 'role' => Access::DEVELOPER, 'number' => 1, 'fields' => 'ID' ) );
+		return Access::nobody_can_enter();
 	}
 
 	public static function stats( \WP_REST_Request $req ): \WP_REST_Response {
@@ -169,7 +168,7 @@ final class StaffRest {
 				),
 				'signature_url' => Uploads::url( (int) $r['id'], 'sig' ),
 				'history'       => self::history( $r ),
-				'admin_url'     => Admin::detail_url( (int) $r['id'] ),
+				'admin_url'     => Access::is_admin_user( wp_get_current_user() ) ? Admin::detail_url( (int) $r['id'] ) : '',
 			)
 		);
 	}

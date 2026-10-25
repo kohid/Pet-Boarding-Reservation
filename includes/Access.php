@@ -33,9 +33,13 @@ final class Access {
 		if ( ! $u->exists() ) {
 			return false;
 		}
-		$admin_email = strtolower( trim( (string) get_option( 'admin_email' ) ) );
-		return ( '' !== $admin_email && strtolower( trim( (string) $u->user_email ) ) === $admin_email )
-			|| in_array( self::DEVELOPER, (array) $u->roles, true );
+		if ( in_array( self::DEVELOPER, (array) $u->roles, true ) ) {
+			return true;
+		}
+		// The admin email is reserved in every sign-up and email change the plugin offers. As a second
+		// guard, a plain customer account only counts once that inbox has confirmed the address.
+		return Accounts::is_admin_email( (string) $u->user_email )
+			&& ( ! Accounts::may_use_customer_login( $u ) || Accounts::is_verified( (int) $u->ID ) );
 	}
 
 	/** The dashboard's Settings view. */
@@ -48,7 +52,18 @@ final class Access {
 		if ( self::open() || $ajax || $cron || defined( 'WP_CLI' ) || in_array( $pagenow, self::PASS, true ) || self::is_admin_user( $u ) ) {
 			return null;
 		}
+		// Fail open rather than lock the site's administrators out: when no account could get in,
+		// administrators keep wp-admin (the dashboard's Settings view says how to fix it).
+		if ( user_can( $u, 'manage_options' ) && self::nobody_can_enter() ) {
+			return null;
+		}
 		return Login::home_for( $u );
+	}
+
+	/** True when no account has the admin email and there is no Developer. */
+	public static function nobody_can_enter(): bool {
+		$admin = get_user_by( 'email', (string) get_option( 'admin_email' ) );
+		return ! ( $admin && self::is_admin_user( $admin ) ) && ! get_users( array( 'role' => self::DEVELOPER, 'number' => 1, 'fields' => 'ID' ) );
 	}
 
 	public static function gate(): void {

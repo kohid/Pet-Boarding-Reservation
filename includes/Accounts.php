@@ -18,6 +18,7 @@ final class Accounts {
 	public const META_VERIFIED = 'paw_email_verified';
 	public const META_HASH     = 'paw_verify_hash';
 	public const META_EXPIRES  = 'paw_verify_expires';
+	public const META_PENDING_EMAIL = 'paw_pending_email';
 
 	private const TOKEN_TTL = 7 * DAY_IN_SECONDS;
 
@@ -107,11 +108,27 @@ final class Accounts {
 		return $token;
 	}
 
+	/** The site's Administration Email Address (any letter case). It belongs to the site owner. */
+	public static function is_admin_email( string $email ): bool {
+		$admin = strtolower( trim( (string) get_option( 'admin_email' ) ) );
+		return '' !== $admin && strtolower( trim( $email ) ) === $admin;
+	}
+
 	public static function verify( int $user_id, string $token ): bool {
 		$hash    = (string) get_user_meta( $user_id, self::META_HASH, true );
 		$expires = (int) get_user_meta( $user_id, self::META_EXPIRES, true );
 		if ( '' === $hash || $expires < time() || ! hash_equals( $hash, hash( 'sha256', $token ) ) ) {
 			return false;
+		}
+		// A staff email change waits for this click on the new address.
+		$pending = (string) get_user_meta( $user_id, self::META_PENDING_EMAIL, true );
+		if ( '' !== $pending ) {
+			delete_user_meta( $user_id, self::META_PENDING_EMAIL );
+			$other = email_exists( $pending );
+			if ( ( $other && (int) $other !== $user_id ) || self::is_admin_email( $pending ) ) {
+				return false;
+			}
+			wp_update_user( array( 'ID' => $user_id, 'user_email' => $pending ) );
 		}
 		update_user_meta( $user_id, self::META_VERIFIED, '1' );
 		delete_user_meta( $user_id, self::META_HASH );
@@ -190,11 +207,15 @@ final class Accounts {
 		exit;
 	}
 
-	/** Starts verification: new token, emailed link. */
-	public static function send_verification( int $user_id ): void {
+	/** Starts verification: new token, emailed link (to $to when given, e.g. a pending new address). */
+	public static function send_verification( int $user_id, string $to = '' ): void {
 		$user = get_user_by( 'id', $user_id );
 		if ( $user ) {
-			Mailer::verify_email( $user, self::verify_url( $user_id, self::new_token( $user_id ) ) );
+			$recipient = clone $user;
+			if ( '' !== $to ) {
+				$recipient->user_email = $to;
+			}
+			Mailer::verify_email( $recipient, self::verify_url( $user_id, self::new_token( $user_id ) ) );
 		}
 	}
 

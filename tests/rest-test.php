@@ -165,6 +165,10 @@ $res = Rest::submit( request( $good, array( 'create_account' => '1', 'account_pa
 t( 'create account: email already registered → field error on email', is_wp_error( $res ) && str_contains( $res->get_error_data()['fields']['owner_email'] ?? '', 'already uses this email' ) );
 
 reset_state();
+$res = Rest::submit( request( $good, array( 'owner_email' => 'Owner@example.com', 'create_account' => '1', 'account_password' => 'correct horse', 'account_password_confirm' => 'correct horse' ) ) );
+t( "create account: the site's admin email is refused", is_wp_error( $res ) && isset( $res->get_error_data()['fields']['owner_email'] ) && ! email_exists( 'owner@example.com' ) );
+
+reset_state();
 $GLOBALS['paw_mail'] = array();
 $res = Rest::submit( request( $good, array( 'owner_email' => 'new.owner@example.com', 'create_account' => '1', 'account_password' => 'correct horse', 'account_password_confirm' => 'correct horse' ) ) );
 $new = get_user_by( 'email', 'new.owner@example.com' );

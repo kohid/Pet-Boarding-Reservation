@@ -71,11 +71,12 @@ $paw_saved = (array) $settings['services'];
 				<legend><?php esc_html_e( 'Who can manage reservations', 'pawfectly-reservations' ); ?></legend>
 				<?php foreach ( wp_roles()->role_names as $paw_slug => $paw_role ) : ?>
 					<label class="paw-dash__check">
-						<input type="checkbox" name="roles[]" value="<?php echo esc_attr( $paw_slug ); ?>"<?php echo 'administrator' === $paw_slug || in_array( $paw_slug, (array) $settings['roles'], true ) ? ' checked' : ''; ?><?php echo 'administrator' === $paw_slug ? ' disabled' : ''; ?>>
+						<?php $paw_always = in_array( $paw_slug, array( 'administrator', 'developer' ), true ); ?>
+						<input type="checkbox" name="roles[]" value="<?php echo esc_attr( $paw_slug ); ?>"<?php echo $paw_always || in_array( $paw_slug, (array) $settings['roles'], true ) ? ' checked' : ''; ?><?php echo $paw_always ? ' disabled' : ''; ?>>
 						<?php echo esc_html( translate_user_role( $paw_role ) ); ?>
 					</label>
 				<?php endforeach; ?>
-				<small><?php esc_html_e( 'Administrators always can.', 'pawfectly-reservations' ); ?></small>
+				<small><?php esc_html_e( 'Administrators and Developers always can.', 'pawfectly-reservations' ); ?></small>
 			</fieldset>
 		</div>
 	</section>

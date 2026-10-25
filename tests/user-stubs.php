@@ -100,7 +100,8 @@ function current_user_can( $cap ) { $u = wp_get_current_user(); return $u->exist
 function wp_login_url( $redirect = '' ) { return 'https://example.test/wp-login.php' . ( $redirect ? '?redirect_to=' . rawurlencode( $redirect ) : '' ); }
 function wp_lostpassword_url( $redirect = '' ) { return 'https://example.test/wp-login.php?action=lostpassword'; }
 function wp_logout_url( $redirect = '' ) { return 'https://example.test/wp-login.php?action=logout'; }
-function add_query_arg( $args, $url ) { return $url . ( str_contains( $url, '?' ) ? '&' : '?' ) . http_build_query( $args ); }
+/** Like core: values are NOT url-encoded. */
+function add_query_arg( $args, $url ) { return $url . ( str_contains( $url, '?' ) ? '&' : '?' ) . implode( '&', array_map( fn( $k, $v ) => $k . '=' . $v, array_keys( $args ), $args ) ); }
 function add_role( $role, $name, $caps ) {
 	$GLOBALS['paw_added_roles'][ $role ] = $caps;
 	$GLOBALS['paw_roles'][ $role ]       = new Fake_Role( $role );

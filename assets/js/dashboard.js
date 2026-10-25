@@ -133,6 +133,20 @@
 				q.set(k, state[k]);
 			}
 		});
+		// Export CSV follows the same filters (the wp-admin export reads s, not search).
+		var exportLink = $('[data-paw-export]');
+		if (exportLink) {
+			var e = new URLSearchParams();
+			['status', 'from', 'to'].forEach(function (k) {
+				if (state[k]) {
+					e.set(k, state[k]);
+				}
+			});
+			if (state.search) {
+				e.set('s', state.search);
+			}
+			exportLink.href = CFG.urls.export + (e.toString() ? '&' + e.toString() : '');
+		}
 		api('staff/reservations?' + q.toString()).then(function (data) {
 			if (token !== listToken) {
 				return; // A newer search already answered.
@@ -278,7 +292,8 @@
 			$('[data-paw-signature]').src = d.signature_url;
 			$('[data-paw-answers]').innerHTML = d.answers_html; // Rendered and escaped by the server.
 			$('[data-paw-notes]').value = d.staff_notes;
-			$('[data-paw-admin-link]').href = d.admin_url;
+			$('[data-paw-admin-link]').href = d.admin_url || '#';
+			$('[data-paw-admin-link]').hidden = !d.admin_url; // Only for accounts that may open wp-admin.
 			renderHistory(d.history);
 			$('[data-paw-close]').focus();
 		}).catch(function (err) {

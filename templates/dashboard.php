@@ -94,6 +94,7 @@ $paw_tiles = array(
 					</div>
 				</div>
 				<div class="paw-dash__tabs" role="tablist" data-paw-status-tabs></div>
+				<p class="paw-dash__export"><a class="paw-dash__btn paw-dash__btn--light" data-paw-export href="<?php echo esc_url( $config['urls']['export'] ); ?>"><?php esc_html_e( 'Export CSV', 'pawfectly-reservations' ); ?></a></p>
 				<div class="paw-dash__tablewrap">
 					<table class="paw-dash__table">
 						<thead>

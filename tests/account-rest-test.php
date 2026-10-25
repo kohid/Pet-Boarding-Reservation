@@ -38,6 +38,8 @@ $dup = AccountRest::signup( req( array( 'first_name' => 'Z', 'last_name' => 'O',
 t( 'existing email → 409 on the email field', 409 === status( $dup ) && isset( $dup->get_error_data()['fields']['email'] ) );
 $bad = AccountRest::signup( req( array( 'first_name' => '', 'last_name' => 'O', 'email' => 'x@example.com', 'password' => 'short' ) ) );
 t( 'invalid sign-up → 400 with field errors', 400 === status( $bad ) && isset( $bad->get_error_data()['fields']['password'], $bad->get_error_data()['fields']['first_name'] ) );
+$taken = AccountRest::signup( req( array( 'first_name' => 'Mal', 'last_name' => 'Lory', 'email' => 'Owner@Example.com', 'password' => 'correct horse', 'confirm' => 'correct horse' ) ) );
+t( "nobody can sign up with the site's admin email", is_wp_error( $taken ) && isset( $taken->get_error_data()['fields']['email'] ) && ! email_exists( 'owner@example.com' ) );
 $bot = AccountRest::signup( req( array( 'first_name' => 'B', 'last_name' => 'O', 'email' => 'bot@example.com', 'password' => 'correct horse', 'confirm' => 'correct horse', 'website' => 'x' ) ) );
 t( 'honeypot refused, no account', is_wp_error( $bot ) && ! email_exists( 'bot@example.com' ) );
 
@@ -73,12 +75,22 @@ t( 'profile saved', 'ok' === code( $p ) && 'Zoë Miralles' === $zoe->display_nam
 t( 'same email stays verified, no email sent', Accounts::is_verified( $zoe->ID ) && array() === $GLOBALS['paw_mail'] );
 $p = AccountRest::profile( req( array( 'first_name' => 'Zoë', 'last_name' => 'Miralles', 'email' => 'zoe.new@example.com', 'phone' => '' ) ) );
 t( 'new email: saved, unverified, link sent', 'ok' === code( $p ) && 'zoe.new@example.com' === $zoe->user_email && ! Accounts::is_verified( $zoe->ID ) && 1 === count( $GLOBALS['paw_mail'] ) );
+$r = AccountRest::profile( req( array( 'first_name' => 'Zoë', 'last_name' => 'Miralles', 'email' => 'OWNER@example.com', 'phone' => '' ) ) );
+t( "an owner can't switch to the site's admin email", is_wp_error( $r ) && isset( $r->get_error_data()['fields']['email'] ) && 'zoe.new@example.com' === $zoe->user_email );
 $boss = paw_test_user( 'boss@example.com', 'admin pass', array( 'administrator' ) );
 wp_set_current_user( $boss->ID );
-$b = AccountRest::profile( req( array( 'first_name' => 'B', 'last_name' => 'Oss', 'email' => 'attacker@example.com' ) ) );
-t( 'staff/admin email cannot be changed here', is_wp_error( $b ) && isset( $b->get_error_data()['fields']['email'] ) && 'boss@example.com' === $boss->user_email );
-$b2 = AccountRest::profile( req( array( 'first_name' => 'Big', 'last_name' => 'Boss', 'email' => 'boss@example.com' ) ) );
+$GLOBALS['paw_mail'] = array();
+$b = AccountRest::profile( req( array( 'first_name' => 'B', 'last_name' => 'Oss', 'email' => 'boss.new@example.com' ) ) );
+t( 'staff/admin email change waits for the new address to confirm', 'ok' === code( $b ) && 'boss@example.com' === $boss->user_email && 'boss.new@example.com' === get_user_meta( $boss->ID, Accounts::META_PENDING_EMAIL, true ) );
+t( 'the confirmation link goes to the new address', 1 === count( $GLOBALS['paw_mail'] ) && 'boss.new@example.com' === $GLOBALS['paw_mail'][0]['to'] );
+preg_match( '/paw_verify_t=([a-f0-9]+)/', $GLOBALS['paw_mail'][0]['message'], $m );
+t( 'confirming applies the new address', Accounts::verify( $boss->ID, $m[1] ?? '' ) && 'boss.new@example.com' === $boss->user_email && '' === get_user_meta( $boss->ID, Accounts::META_PENDING_EMAIL, true ) );
+$b2 = AccountRest::profile( req( array( 'first_name' => 'Big', 'last_name' => 'Boss', 'email' => 'boss.new@example.com' ) ) );
 t( 'staff/admin can still change their name', 'ok' === code( $b2 ) && 'Big Boss' === $boss->display_name );
+$own = paw_test_user( 'owner@example.com', 'owner pass', array( 'administrator' ) );
+wp_set_current_user( $own->ID );
+$o = AccountRest::profile( req( array( 'first_name' => 'O', 'last_name' => 'W', 'email' => 'owner.new@example.com' ) ) );
+t( 'the admin-email account changes its email in wp-admin', is_wp_error( $o ) && isset( $o->get_error_data()['fields']['email'] ) && 'owner@example.com' === $own->user_email );
 wp_set_current_user( $zoe->ID );
 t( 'email used by someone else → 409', 409 === status( AccountRest::profile( req( array( 'first_name' => 'Z', 'last_name' => 'M', 'email' => 'desk@example.com' ) ) ) ) );
 

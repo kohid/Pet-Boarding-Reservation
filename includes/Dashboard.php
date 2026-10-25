@@ -77,6 +77,8 @@ final class Dashboard {
 				'overview'     => add_query_arg( array( 'paw_view' => 'overview' ), $here ),
 				'reservations' => add_query_arg( array( 'paw_view' => 'reservations' ), $here ),
 				'settings'     => Access::can_manage_settings( wp_get_current_user() ) ? add_query_arg( array( 'paw_view' => 'settings' ), $here ) : '',
+				// admin-post.php is open to staff (Access lets it through); the export checks the capability and nonce.
+				'export'       => wp_nonce_url( add_query_arg( array( 'action' => 'paw_export' ), admin_url( 'admin-post.php' ) ), 'paw_export' ),
 			),
 			'i18n'     => array(
 				'overview'      => __( 'Overview', 'pawfectly-reservations' ),

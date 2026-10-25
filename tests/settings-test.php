@@ -42,7 +42,10 @@ t( 'unknown roles dropped', array( 'editor' ) === $s['roles'] );
 t( 'ticked role gets the capability', get_role( 'editor' )->has_cap( Activator::CAPABILITY ) );
 t( 'administrator always keeps it', get_role( 'administrator' )->has_cap( Activator::CAPABILITY ) );
 
+$GLOBALS['paw_roles']['developer'] = new Fake_Role( 'developer' );
+$GLOBALS['paw_roles']['developer']->add_cap( Activator::CAPABILITY );
 $s2 = Settings::sanitize( array( 'roles' => array( 'shop_manager' ) ) );
+t( 'developers always keep the staff capability', get_role( 'developer' )->has_cap( Activator::CAPABILITY ) );
 t( 'unticked role loses the capability', ! get_role( 'editor' )->has_cap( Activator::CAPABILITY ) && get_role( 'shop_manager' )->has_cap( Activator::CAPABILITY ) );
 t( 'empty staff emails fall back to the admin email', 'owner@example.com' === $s2['staff_emails'] );
 t( 'empty business name falls back to Pawfectly', 'Pawfectly' === $s2['business_name'] );
