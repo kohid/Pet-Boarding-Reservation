@@ -10,7 +10,6 @@ require dirname( __DIR__ ) . '/wp-db-stubs.php';
 require dirname( __DIR__ ) . '/user-stubs.php';
 function get_permalink( $id = 0 ) { return '/tests/e2e/out/account.html'; }
 function home_url( $p = '' ) { return '/' . ltrim( $p, '/' ); }
-function get_edit_profile_url() { return '/wp-admin/profile.php'; }
 function get_post( $id ) { return null; }
 function get_post_meta( $id, $k = '', $s = false ) { return ''; }
 function shortcode_atts( $pairs, $atts, $tag = '' ) { return array_merge( $pairs, array_intersect_key( (array) $atts, $pairs ) ); }

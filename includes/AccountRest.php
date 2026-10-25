@@ -93,6 +93,11 @@ final class AccountRest {
 			return new \WP_Error( 'paw_email_exists', $e['email'], array( 'status' => 409, 'fields' => $e ) );
 		}
 		$changed = strtolower( $c['email'] ) !== strtolower( (string) $user->user_email );
+		if ( $changed && ! Accounts::may_use_customer_login( $user ) ) {
+			// Staff change their email on the WordPress profile screen, which confirms the new address first.
+			$e = array( 'email' => __( 'Staff change their email on the WordPress profile screen.', 'pawfectly-reservations' ) );
+			return new \WP_Error( 'paw_staff_email', $e['email'], array( 'status' => 403, 'fields' => $e, 'profile_url' => get_edit_profile_url() ) );
+		}
 		$res     = wp_update_user(
 			array(
 				'ID'           => $user->ID,
@@ -142,7 +147,8 @@ final class AccountRest {
 		if ( is_wp_error( wp_update_user( array( 'ID' => $user->ID, 'user_pass' => self::raw( $in, 'password' ) ) ) ) ) { // Core keeps this session signed in.
 			return new \WP_Error( 'paw_save', __( 'We could not change your password. Please try again.', 'pawfectly-reservations' ), array( 'status' => 500 ) );
 		}
-		return new \WP_REST_Response( array( 'ok' => true, 'message' => __( 'Your password is changed.', 'pawfectly-reservations' ) ) );
+		// Changing the password renews the sign-in cookie, which retires this page's nonce: reload.
+		return new \WP_REST_Response( array( 'ok' => true, 'reload' => true, 'message' => __( 'Your password is changed.', 'pawfectly-reservations' ) ) );
 	}
 
 	/** @return \WP_REST_Response|\WP_Error */

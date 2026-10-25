@@ -110,3 +110,4 @@ function wp_authenticate( $login, $password ) {
 	$u = get_user_by( 'id', username_exists( $login ) ?: 0 );
 	return $u && wp_check_password( $password, $u->user_pass ) ? $u : new WP_Error( 'incorrect_password', 'no' );
 }
+function get_edit_profile_url( $id = 0 ) { return 'https://example.test/wp-admin/profile.php'; }

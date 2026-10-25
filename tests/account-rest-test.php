@@ -67,10 +67,19 @@ t( 'profile saved', 'ok' === code( $p ) && 'Zoë Miralles' === $zoe->display_nam
 t( 'same email stays verified, no email sent', Accounts::is_verified( $zoe->ID ) && array() === $GLOBALS['paw_mail'] );
 $p = AccountRest::profile( req( array( 'first_name' => 'Zoë', 'last_name' => 'Miralles', 'email' => 'zoe.new@example.com', 'phone' => '' ) ) );
 t( 'new email: saved, unverified, link sent', 'ok' === code( $p ) && 'zoe.new@example.com' === $zoe->user_email && ! Accounts::is_verified( $zoe->ID ) && 1 === count( $GLOBALS['paw_mail'] ) );
+$boss = paw_test_user( 'boss@example.com', 'admin pass', array( 'administrator' ) );
+wp_set_current_user( $boss->ID );
+$b = AccountRest::profile( req( array( 'first_name' => 'B', 'last_name' => 'Oss', 'email' => 'attacker@example.com' ) ) );
+t( 'staff/admin email cannot be changed here', is_wp_error( $b ) && isset( $b->get_error_data()['fields']['email'] ) && 'boss@example.com' === $boss->user_email );
+$b2 = AccountRest::profile( req( array( 'first_name' => 'Big', 'last_name' => 'Boss', 'email' => 'boss@example.com' ) ) );
+t( 'staff/admin can still change their name', 'ok' === code( $b2 ) && 'Big Boss' === $boss->display_name );
+wp_set_current_user( $zoe->ID );
 t( 'email used by someone else → 409', 409 === status( AccountRest::profile( req( array( 'first_name' => 'Z', 'last_name' => 'M', 'email' => 'desk@example.com' ) ) ) ) );
 
 t( 'wrong current password', isset( AccountRest::password( req( array( 'current' => 'nope', 'password' => 'brand new pass', 'confirm' => 'brand new pass' ) ) )->get_error_data()['fields']['current'] ) );
 t( 'mismatched confirmation', isset( AccountRest::password( req( array( 'current' => 'correct horse', 'password' => 'brand new pass', 'confirm' => 'brand new pas' ) ) )->get_error_data()['fields']['password'] ) );
-t( 'password changed', 'ok' === code( AccountRest::password( req( array( 'current' => 'correct horse', 'password' => 'brand new pass', 'confirm' => 'brand new pass' ) ) ) ) && wp_check_password( 'brand new pass', $zoe->user_pass ) );
+$pw = AccountRest::password( req( array( 'current' => 'correct horse', 'password' => 'brand new pass', 'confirm' => 'brand new pass' ) ) );
+t( 'password changed', 'ok' === code( $pw ) && wp_check_password( 'brand new pass', $zoe->user_pass ) );
+t( 'password change reloads the page (the sign-in cookie and nonce are renewed)', true === ( $pw->get_data()['reload'] ?? null ) );
 
 done();
