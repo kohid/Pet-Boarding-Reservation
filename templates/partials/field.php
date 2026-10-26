@@ -26,7 +26,7 @@ defined( 'ABSPATH' ) || exit;
 	$paw_class = 'paw-field paw-field--' . $paw_f['type'] . ( $paw_f['half'] ? ' paw-field--half' : '' );
 	$paw_desc  = $paw_dom . '-error' . ( $paw_f['help'] ? ' ' . $paw_dom . '-help' : '' );
 	$paw_aria  = ' aria-describedby="' . esc_attr( $paw_desc ) . '"' . ( $paw_f['required'] ? ' aria-required="true"' : '' );
-	$paw_group = in_array( $paw_f['type'], array( 'choice', 'yesno', 'agree', 'service' ), true );
+	$paw_group = in_array( $paw_f['type'], array( 'choice', 'yesno', 'agree', 'service' ), true ) && ! $paw_f['dropdown'];
 	?>
 	<?php if ( ! empty( $paw_f['group'] ) ) : ?>
 		<p class="paw-group-title"><?php echo esc_html( $paw_f['group'] ); ?><span class="paw-req" aria-hidden="true">*</span></p>
@@ -81,6 +81,17 @@ defined( 'ABSPATH' ) || exit;
 			</select>
 			<?php break; ?>
 <?php case 'choice': case 'agree': ?>
+			<?php if ( $paw_f['dropdown'] ) : ?>
+			<select class="paw-select" id="<?php echo esc_attr( $paw_dom ); ?>" name="<?php echo esc_attr( $paw_name ); ?>"<?php echo $paw_aria; // phpcs:ignore WordPress.Security.EscapeOutput ?>>
+				<?php if ( '' === $paw_f['default'] ) : ?>
+				<option value=""><?php esc_html_e( 'Choose…', 'pawfectly-reservations' ); ?></option>
+				<?php endif; ?>
+				<?php foreach ( $paw_f['options'] as $paw_value => $paw_text ) : ?>
+				<option value="<?php echo esc_attr( (string) $paw_value ); ?>"<?php echo (string) $paw_value === $paw_f['default'] ? ' selected' : ''; ?>><?php echo esc_html( $paw_text ); ?></option>
+				<?php endforeach; ?>
+			</select>
+			<?php break; ?>
+			<?php endif; ?>
 			<div class="paw-options">
 				<?php foreach ( $paw_f['options'] as $paw_value => $paw_text ) : ?>
 					<label class="paw-option"<?php echo in_array( (string) $paw_value, $paw_f['dog_only'], true ) ? ' data-paw-dog-only' : ''; ?>>

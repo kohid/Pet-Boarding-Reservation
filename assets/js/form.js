@@ -107,6 +107,10 @@
 		var k = parse(key);
 		var f = CFG.fields[k.id];
 		var name = nameOf(key);
+		var select = form.querySelector('select[name="' + name + '"]');
+		if (select) {
+			return select.value;
+		}
 		if (f.type === 'choice' || f.type === 'yesno' || f.type === 'service') {
 			var checked = form.querySelector('input[name="' + name + '"]:checked');
 			return checked ? checked.value : '';
@@ -516,6 +520,9 @@
 			card.querySelectorAll('input, textarea, select').forEach(function (input) {
 				if (input.type === 'radio' || input.type === 'checkbox') {
 					input.checked = input.defaultChecked;
+				} else if (input.tagName === 'SELECT') {
+					var first = input.querySelector('option[selected]') || input.options[0];
+					input.value = first ? first.value : '';
 				} else if (input.type !== 'file') {
 					input.value = '';
 				}
@@ -795,7 +802,13 @@
 	function setValue(key, v) {
 		var t = CFG.fields[parse(key).id].type;
 		var name = nameOf(key);
-		if (t === 'choice' || t === 'yesno' || t === 'service') {
+		var select = form.querySelector('select[name="' + name + '"]');
+		if (select) {
+			select.value = v;
+			if (select.selectedIndex < 0) {
+				select.selectedIndex = 0; // An answer no longer offered (a groomer removed from Settings).
+			}
+		} else if (t === 'choice' || t === 'yesno' || t === 'service') {
 			var r = form.querySelector('input[name="' + name + '"][value="' + CSS.escape(v) + '"]');
 			if (r) {
 				r.checked = true;
