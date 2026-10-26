@@ -65,6 +65,7 @@ $pf = Fields::pet_fields();
 t( 'per-pet fields', isset( $pf['pet_name'], $pf['dog_size'], $pf['service'], $pf['groomer'], $pf['vaccination_files'], $pf['feeding_schedule'] ) && ! isset( $pf['check_in'] ) && ! isset( $pf['owner_email'] ) );
 t( 'groomer: Any / Flexible first, then the names in order', array( 'any' => 'Any / Flexible', 'Ana' => 'Ana', 'Ben' => 'Ben' ) === $all['groomer']['options'] && 'any' === $all['groomer']['default'] );
 t( 'preferred day only for a repeat schedule', array( 'grooming_frequency' => array( '2', '4', '6', '8' ) ) === $all['preferred_day']['show_if'] && $all['preferred_time']['show_if'] === $all['preferred_day']['show_if'] );
+t( 'groomer, weeks between grooms and preferred day are dropdowns; the rest stay buttons', $all['groomer']['dropdown'] && $all['grooming_frequency']['dropdown'] && $all['preferred_day']['dropdown'] && ! $all['preferred_time']['dropdown'] && ! $all['pet_type']['dropdown'] );
 t( 'frequency options', array( 'once', '2', '4', '6', '8' ) === array_map( 'strval', array_keys( $all['grooming_frequency']['options'] ) ) );
 t( 'grooming extras shown only with a real service', array( 'service' => array_keys( \Pawfectly\Services::enabled() ) ) === $all['groomer']['show_if'] );
 t( 'last groom date and notes optional', false === $all['last_groom_date']['required'] && false === $all['grooming_notes']['required'] );

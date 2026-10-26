@@ -94,7 +94,10 @@ t( '"No grooming for this pet" only for boarding + grooming', (bool) preg_match(
 t( 'monthly tag on the two memberships', 2 === substr_count( $stay0, 'class="paw-svc__tag"' ) );
 t( "what's included listed", str_contains( $html, 'Paw pad inspection' ) && str_contains( $html, 'What&#039;s included' ) );
 t( 'price range before a size is chosen', str_contains( $stay0, '$15–$20' ) && str_contains( $stay0, 'Price on request' ) );
-t( 'groomer: Any / Flexible first', (bool) preg_match( '/name="pets\[0\]\[groomer\]" value="any"/', $stay0 ) );
+t( 'groomer: a dropdown with Any / Flexible first and chosen', (bool) preg_match( '/<select class="paw-select" id="[^"]+" name="pets\[0\]\[groomer\]"[^>]*>\s*<option value="any" selected/', $stay0 ) );
+t( 'weeks between grooms: a dropdown that starts on Choose…', (bool) preg_match( '/<select class="paw-select" id="[^"]+" name="pets\[0\]\[grooming_frequency\]"[^>]*>\s*<option value="">Choose…<\/option>\s*<option value="once">/', $stay0 ) );
+t( 'a dropdown has a label, not a legend', (bool) preg_match( '/<label class="paw-label" for="([^"]+)">Preferred day.*?<select class="paw-select" id="\1"/s', $stay0 ) );
+t( 'preferred time stays as buttons', str_contains( $stay0, 'type="radio" name="pets[0][preferred_time]"' ) );
 
 // Welcome: the booking choice and the menu.
 $welcome = $cut( $html, 'data-step="0"', 'data-step="1"' );
