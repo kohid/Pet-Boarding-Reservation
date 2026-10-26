@@ -34,6 +34,9 @@ $GLOBALS['paw_options'][ Settings::OPTION ] = array(
 	'services'       => array( 'nail_trim' => array( 'enabled' => false ) + Services::defaults()['nail_trim'] ),
 );
 t( 'a turned-off service has no price and is not offered', null === Services::price( 'nail_trim', 'small' ) && ! isset( Services::enabled()['nail_trim'] ) && isset( Services::enabled()['basic_bath'] ) );
+$GLOBALS['paw_options'][ Settings::OPTION ]['services']['basic_bath'] = array( 'cat' => '35' ) + Services::defaults()['basic_bath'];
+t( 'a cat price per service, blank by default', 35.0 === Services::price( 'basic_bath', 'cat' ) && null === Services::price( 'deluxe_bath', 'cat' ) && '' === Services::defaults()['nail_trim']['cat'] );
+t( 'the price key: dogs by size, cats their own, others none', 'small' === Services::price_key( 'dog', 'small' ) && '' === Services::price_key( 'dog', '' ) && 'cat' === Services::price_key( 'cat', 'large' ) && '' === Services::price_key( 'other', '' ) );
 t( 'boarding rate by dog size, cats and others share one', 40.0 === Services::rate( 'dog', 'large' ) && null === Services::rate( 'cat', '' ) );
 
 $both = Services::estimate( array( 'booking_type' => 'both', 'pet_type' => 'dog', 'dog_size' => 'large', 'check_in' => '2026-11-01', 'check_out' => '2026-11-04', 'service' => 'bath_membership' ) );
@@ -53,6 +56,10 @@ t( 'estimate: a line per pet and service', array( 'Rex: Boarding, 3 nights', 'Re
 t( 'estimate: total over every pet', 215.0 === $multi['total'] && false === $multi['on_request'] );
 t( 'estimate: "No grooming for this pet" adds nothing', 1 === count( Services::estimate( array( 'booking_type' => 'both', 'check_in' => '2026-11-01', 'check_out' => '2026-11-02', 'pets' => array( array( 'pet_name' => 'Rex', 'pet_type' => 'dog', 'dog_size' => 'large', 'service' => 'none' ) ) ) )['lines'] ) );
 t( 'estimate: older single-pet input still works', 'Boarding: 3 nights' === Services::estimate( array( 'booking_type' => 'boarding', 'pet_type' => 'dog', 'dog_size' => 'large', 'check_in' => '2026-11-01', 'check_out' => '2026-11-04' ) )['lines'][0]['label'] );
+$GLOBALS['paw_options'][ Settings::OPTION ] = array( 'services' => array( 'nail_trim' => array( 'cat' => '12' ) + Services::defaults()['nail_trim'] ) );
+$cats = Services::estimate( array( 'booking_type' => 'grooming', 'pets' => array( array( 'pet_name' => 'Tom', 'pet_type' => 'cat', 'dog_size' => 'large', 'service' => 'nail_trim' ), array( 'pet_name' => 'Kit', 'pet_type' => 'cat', 'service' => 'basic_bath' ) ) ) );
+t( 'estimate: a groomed cat pays the cat price, a blank one is on request', array( 12.0, null ) === array_column( $cats['lines'], 'amount' ) && 12.0 === $cats['total'] && true === $cats['on_request'] );
+t( 'price range runs lowest to highest across dog and cat prices', '$12–$20' === Services::price_range( Services::catalog()['nail_trim'] ) && '' === Services::price_range( Services::catalog()['basic_bath'] ) && '$59' === Services::price_range( Services::catalog()['bath_membership'] ) );
 t( 'groomers come from Settings', array() === Services::groomers() );
 
 done();

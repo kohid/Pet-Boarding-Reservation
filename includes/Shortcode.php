@@ -79,7 +79,7 @@ final class Shortcode {
 
 		$services = array();
 		foreach ( Services::enabled() as $id => $svc ) {
-			$services[ $id ] = array( 'small' => $svc['small'], 'large' => $svc['large'], 'monthly' => $svc['monthly'] );
+			$services[ $id ] = array( 'small' => $svc['small'], 'large' => $svc['large'], 'cat' => $svc['cat'], 'monthly' => $svc['monthly'] );
 		}
 		$settings = Settings::get();
 		$rates    = array();
@@ -132,7 +132,7 @@ final class Shortcode {
 				'boardingPetMany' => __( 'Boarding, %d nights', 'pawfectly-reservations' ),
 				'petN'          => __( 'Pet %d', 'pawfectly-reservations' ),
 				'removePet'     => __( 'Remove', 'pawfectly-reservations' ),
-				'dogsOnly'      => __( 'Grooming is for dogs only. Choose Boarding + grooming to board your other pets.', 'pawfectly-reservations' ),
+				'groomedOnly'   => __( 'Grooming is for dogs and cats. Choose Boarding + grooming to board your other pets.', 'pawfectly-reservations' ),
 				'oneGroomed'    => __( 'Choose a service for at least one pet, or book Boarding only.', 'pawfectly-reservations' ),
 				'lastGroom'     => __( "The last groom date can't be in the future.", 'pawfectly-reservations' ),
 				'onRequest'     => __( 'Price on request', 'pawfectly-reservations' ),

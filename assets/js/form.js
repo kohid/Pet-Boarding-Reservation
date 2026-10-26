@@ -286,8 +286,8 @@
 		var n;
 		if (type === 'grooming') {
 			for (n = 0; n < pets; n++) {
-				if (value('pets.' + n + '.pet_type') !== 'dog') {
-					return I18N.dogsOnly;
+				if (['dog', 'cat'].indexOf(value('pets.' + n + '.pet_type')) < 0) {
+					return I18N.groomedOnly;
 				}
 			}
 		}
@@ -598,7 +598,7 @@
 		progress.setAttribute('aria-valuetext', at ? format(I18N.stepOf, at, list.length) : '');
 	}
 
-	/* ---------- Grooming: dogs only, prices by size, estimated total (display only) ---------- */
+	/* ---------- Grooming: dogs and cats, prices by dog size or for cats, estimated total (display only) ---------- */
 
 	function money(n) {
 		var whole = Math.abs(n - Math.round(n)) < 0.005;
@@ -609,18 +609,28 @@
 		return amount === null ? I18N.onRequest : money(amount) + (monthly ? ' ' + I18N.perMonth : '');
 	}
 
-	/** Each pet's service cards show the price for that pet's size. */
+	/** Which of a service's prices pet n pays, as Services::price_key(): its dog size, 'cat', or ''. */
+	function priceKey(n) {
+		var type = value('pets.' + n + '.pet_type');
+		var size = value('pets.' + n + '.dog_size');
+		if (type === 'cat') {
+			return 'cat';
+		}
+		return type === 'dog' && (size === 'small' || size === 'large') ? size : '';
+	}
+
+	/** Each pet's service cards show the price that pet pays. */
 	function showPrices() {
 		root.querySelectorAll('[data-paw-pets="stay"] [data-paw-pet]').forEach(function (card) {
-			var size = value('pets.' + card.getAttribute('data-paw-pet') + '.dog_size');
-			if (size !== 'small' && size !== 'large') {
-				return; // Keep the server's "from–to" range until a size is chosen.
+			var key = priceKey(card.getAttribute('data-paw-pet'));
+			if (!key) {
+				return; // Keep the server's "from–to" range until the pet's type and size are known.
 			}
 			card.querySelectorAll('[data-paw-price]').forEach(function (el) {
 				var svc = CFG.services[el.getAttribute('data-paw-price')];
 				if (svc) {
-					el.textContent = priceText(svc[size], svc.monthly);
-					el.classList.toggle('is-request', svc[size] === null);
+					el.textContent = priceText(svc[key], svc.monthly);
+					el.classList.toggle('is-request', svc[key] === null);
 				}
 			});
 		});
@@ -650,7 +660,8 @@
 			var svc = CFG.services[id];
 			if (svc && (type === 'grooming' || type === 'both') && isShown('pets.' + n + '.service')) {
 				var card = root.querySelector('[data-paw-pets="stay"] [data-paw-pet="' + n + '"] [data-paw-svc="' + id + '"] .paw-svc__name');
-				lines.push({ label: name + ': ' + (card ? card.textContent : id), amount: size === 'small' || size === 'large' ? svc[size] : null, monthly: svc.monthly });
+				var key = priceKey(n);
+				lines.push({ label: name + ': ' + (card ? card.textContent : id), amount: key ? svc[key] : null, monthly: svc.monthly });
 			}
 		}
 		return lines;

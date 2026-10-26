@@ -62,7 +62,7 @@
 
 - The menu is a list of the enabled services in catalog order. Each entry shows its name, time and price range ("$15–$20", "$59 / month", or "Price on request"), with a collapsible "What's included".
 - Services are grouped under "Single visit" and "Monthly memberships".
-- A line under the menu says: "Grooming is for dogs. You'll choose a service for each pet later."
+- A line under the menu says: "Grooming is for dogs and cats. You'll choose a service for each pet later." (v0.4.1, see §3.4)
 - A Boarding entry is listed first, with nightly rates if they are set ("from $30 / night") and "Price on request" otherwise.
 
 ### 3.2 Grooming rules with several pets
@@ -95,6 +95,17 @@
   - `grooming_needs_vaccines`: on by default. When off, vaccination files are optional for grooming-only bookings.
   - "Vaccinations up to date" is still required either way.
 - **Stored waiver:** each booking keeps the waiver text(s) it was signed with: the grooming waiver for grooming, both for Boarding + grooming.
+
+### 3.4 Cats can be groomed (v0.4.1, approved)
+
+The v0.3 "dogs only" rule was an assumption read from the service copy, not a business rule. From v0.4.1:
+
+- Dogs and cats can book every grooming service (`Services::GROOMED`). Other pets board only.
+- **Grooming:** the error for an other pet reads "Grooming is for dogs and cats. Choose Boarding + grooming to board your other pets."
+- **Boarding + grooming:** a cat's grooming card offers "No grooming for this pet", like a dog's.
+- **Prices:** each service has a third price, `cat`, blank ("Price on request") by default, edited in Dashboard → Settings → Pricing. A pet pays its dog-size price or the cat price (`Services::price_key()`). Price ranges on the menu and service cards run from the lowest to the highest of the three.
+- Default descriptions say "your pet" instead of "your dog"; saved descriptions are unchanged.
+- §3.2's dogs-only rules are replaced by these.
 
 ## 4. Data
 

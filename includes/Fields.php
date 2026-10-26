@@ -127,7 +127,7 @@ final class Fields {
 							'show_if' => array( 'booking_type' => 'grooming' ),
 						)
 					),
-					self::f( 'service', 'service', __( 'Service', 'pawfectly-reservations' ), array( 'max' => 40, 'per_pet' => true, 'show_if' => array( 'booking_type' => array( 'grooming', 'both' ), 'pet_type' => 'dog' ) ) ),
+					self::f( 'service', 'service', __( 'Service', 'pawfectly-reservations' ), array( 'max' => 40, 'per_pet' => true, 'show_if' => array( 'booking_type' => array( 'grooming', 'both' ), 'pet_type' => Services::GROOMED ) ) ),
 					self::f( 'groomer', 'choice', __( 'Preferred groomer', 'pawfectly-reservations' ), array( 'per_pet' => true, 'options' => array( 'any' => __( 'Any / Flexible', 'pawfectly-reservations' ) ) + array_combine( Services::groomers(), Services::groomers() ), 'default' => 'any', 'show_if' => $groomed ) ),
 					self::f(
 						'grooming_frequency',

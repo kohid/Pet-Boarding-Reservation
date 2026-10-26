@@ -58,7 +58,7 @@ $p = Settings::sanitize(
 		'currency'       => ' €<b> ',
 		'boarding_rates' => array( 'small' => '35', 'large' => 'lots', 'other' => '' ),
 		'services'       => array(
-			'basic_bath' => array( 'enabled' => '1', 'name' => '', 'time' => 'About 1 hour', 'small' => '45', 'large' => '-3', 'included' => "Shampoo\n<b>Rinse</b>" ),
+			'basic_bath' => array( 'enabled' => '1', 'name' => '', 'time' => 'About 1 hour', 'small' => '45', 'large' => '-3', 'cat' => '30', 'included' => "Shampoo\n<b>Rinse</b>" ),
 			'nail_trim'  => array( 'enabled' => '', 'name' => 'Nails', 'small' => '16', 'large' => '21' ),
 			'teeth'      => array( 'name' => 'Teeth', 'small' => '10' ),
 		),
@@ -71,6 +71,7 @@ t( 'a blank rate means on request', '' === $p['boarding_rates']['other'] );
 t( 'service price saved; a bad one keeps the old value', '45.00' === $p['services']['basic_bath']['small'] && '' === $p['services']['basic_bath']['large'] );
 t( 'blank name falls back to the default', 'Basic Bath' === $p['services']['basic_bath']['name'] && 'About 1 hour' === $p['services']['basic_bath']['time'] );
 t( 'included text stripped of tags', "Shampoo\nRinse" === $p['services']['basic_bath']['included'] );
+t( 'cat price saved; older settings without one read blank', '30.00' === $p['services']['basic_bath']['cat'] && '' === $p['services']['nail_trim']['cat'] );
 t( 'turning a service off', false === $p['services']['nail_trim']['enabled'] && 'Nails' === $p['services']['nail_trim']['name'] && '16.00' === $p['services']['nail_trim']['small'] );
 t( 'unknown services dropped', ! isset( $p['services']['teeth'] ) );
 t( 'services not sent stay as they were', '59.00' === $p['services']['bath_membership']['small'] );

@@ -125,13 +125,14 @@ async function mock(page, log) {
     await page.waitForSelector('[data-paw-setting="services.basic_bath.small"].is-invalid');
     ok('settings: a bad price is marked on its field', (await page.textContent('[data-paw-setting="services.basic_bath.small"]')).includes('Enter an amount'));
     await page.fill('[name="services[basic_bath][small]"]', '45');
+    await page.fill('[name="services[basic_bath][cat]"]', '35');
     await page.uncheck('[name="services[deluxe_bath][enabled]"]');
     await page.fill('[name="boarding_rates[large]"]', '40');
     await page.fill('[name=groomers]', 'Ana\nBen');
     await page.click('[data-paw-settings] button[type=submit]');
     await page.waitForSelector('[data-paw-settings-msg]:not([hidden]).is-ok');
     ok('settings: saved message', (await page.textContent('[data-paw-settings-msg]')).trim() === 'Settings saved.');
-    ok('settings: sent as nested JSON', saved && saved.services.basic_bath.small === '45' && saved.services.deluxe_bath.enabled === false && saved.services.nail_trim.enabled === true && saved.boarding_rates.large === '40' && Array.isArray(saved.roles) && !saved.roles.includes('administrator'));
+    ok('settings: sent as nested JSON', saved && saved.services.basic_bath.small === '45' && saved.services.basic_bath.cat === '35' && saved.services.deluxe_bath.enabled === false && saved.services.nail_trim.enabled === true && saved.boarding_rates.large === '40' && Array.isArray(saved.roles) && !saved.roles.includes('administrator'));
     ok('settings: the groomer list is sent one per line', saved && saved.groomers === 'Ana\nBen');
     ok('settings: the error clears after a good save', await page.locator('.paw-dash__field.is-invalid').count() === 0);
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'dash-settings.png'), fullPage: true });

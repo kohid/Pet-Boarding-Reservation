@@ -89,8 +89,8 @@ $saved = StaffRest::save_settings( req( array( 'business_name' => 'Pawfectly Upt
 t( 'settings: saved and normalised', 200 === $saved->get_status() && '45.00' === Settings::get()['services']['basic_bath']['small'] && '30.00' === Settings::get()['boarding_rates']['small'] && 'Pawfectly Uptown' === Settings::get()['business_name'] );
 t( 'settings: what was not sent is kept', '$' === Settings::get()['currency'] && '59.00' === Settings::get()['services']['bath_membership']['small'] );
 t( 'settings: response carries the saved values', '45.00' === $saved->get_data()['settings']['services']['basic_bath']['small'] );
-$bad = StaffRest::save_settings( req( array( 'services' => array( 'basic_bath' => array( 'small' => 'abc' ) ), 'boarding_rates' => array( 'large' => '-5' ) ) ) );
-t( 'settings: a bad price is a field error and nothing is saved', is_wp_error( $bad ) && 400 === $bad->get_error_data()['status'] && isset( $bad->get_error_data()['fields']['services.basic_bath.small'], $bad->get_error_data()['fields']['boarding_rates.large'] ) && '45.00' === Settings::get()['services']['basic_bath']['small'] );
+$bad = StaffRest::save_settings( req( array( 'services' => array( 'basic_bath' => array( 'small' => 'abc', 'cat' => 'x' ) ), 'boarding_rates' => array( 'large' => '-5' ) ) ) );
+t( 'settings: a bad price is a field error and nothing is saved', is_wp_error( $bad ) && 400 === $bad->get_error_data()['status'] && isset( $bad->get_error_data()['fields']['services.basic_bath.small'], $bad->get_error_data()['fields']['services.basic_bath.cat'], $bad->get_error_data()['fields']['boarding_rates.large'] ) && '45.00' === Settings::get()['services']['basic_bath']['small'] );
 t( 'settings: lockout warning when nobody can reach wp-admin', false === StaffRest::lockout_risk() );
 $GLOBALS['paw_options']['admin_email'] = 'nobody@example.com';
 $dev->roles = array( 'administrator' );

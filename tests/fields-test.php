@@ -68,7 +68,7 @@ t( 'preferred day only for a repeat schedule', array( 'grooming_frequency' => ar
 t( 'frequency options', array( 'once', '2', '4', '6', '8' ) === array_map( 'strval', array_keys( $all['grooming_frequency']['options'] ) ) );
 t( 'grooming extras shown only with a real service', array( 'service' => array_keys( \Pawfectly\Services::enabled() ) ) === $all['groomer']['show_if'] );
 t( 'last groom date and notes optional', false === $all['last_groom_date']['required'] && false === $all['grooming_notes']['required'] );
-t( 'service shown for dogs in grooming bookings', array( 'booking_type' => array( 'grooming', 'both' ), 'pet_type' => 'dog' ) === $all['service']['show_if'] );
+t( 'service shown for dogs and cats in grooming bookings', array( 'booking_type' => array( 'grooming', 'both' ), 'pet_type' => array( 'dog', 'cat' ) ) === $all['service']['show_if'] );
 t( 'contact consent is optional', 'agree' === $all['contact_consent']['type'] && false === $all['contact_consent']['required'] && 'waiver' === Fields::steps()[ $all['contact_consent']['step'] - 1 ]['id'] );
 t( 'five pets at most', 5 === Fields::MAX_PETS );
 t( 'pet count is a column', in_array( 'pet_count', Fields::COLUMNS, true ) );
