@@ -27,7 +27,7 @@ if ( $signed_in ) {
 	wp_set_current_user( $jay->ID );
 }
 
-$GLOBALS['paw_options'][ Settings::OPTION ] = array( 'groomers' => array( 'Ana', 'Ben' ) );
+$GLOBALS['paw_options'][ Settings::OPTION ] = array( 'groomers' => array( 'Ana', 'Ben' ), 'services' => array( 'nail_trim' => array( 'cat' => '12' ) + \Pawfectly\Services::defaults()['nail_trim'] ) );
 $config            = Shortcode::config();
 $config['restUrl'] = '/mock/reservations';
 $config['nonceUrl'] = '/mock/nonce';

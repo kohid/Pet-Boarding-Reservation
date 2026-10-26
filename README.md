@@ -76,16 +76,16 @@ Vaccination records are required for grooming too, unless you turn that off in S
 
 ## Grooming services, groomers and prices
 
-Grooming is for dogs. For each dog, the owner picks one service, a preferred groomer ("Any / Flexible" or a name from your **Groomers** list in Settings), how often they'd like grooming, a preferred day and time for repeat visits, the last groom date and notes. In Boarding + grooming, a dog can also choose "No grooming for this pet"; cats and other pets just board. Pick-up details: a grooming day, and for grooming-only bookings, a morning or afternoon drop-off. The services:
+Grooming is for dogs and cats. For each dog or cat, the owner picks one service, a preferred groomer ("Any / Flexible" or a name from your **Groomers** list in Settings), how often they'd like grooming, a preferred day and time for repeat visits, the last groom date and notes. In Boarding + grooming, a dog or cat can also choose "No grooming for this pet"; other pets (rabbits and so on) just board. Pick-up details: a grooming day, and for grooming-only bookings, a morning or afternoon drop-off. The services:
 
 | Service | Starts at |
 |---|---|
-| Nail Trimming | $15 small / $20 large |
+| Nail Trimming | $15 small / $20 large; cats: price on request until you set one |
 | Nail Membership | $15 / $20 a month |
 | Bath Membership | $59 a month |
 | Basic Bath, Deluxe Bath, Basic Haircuts, Premium Haircuts | Price on request until you set a price |
 
-In **Dashboard → Settings → Pricing** you can turn each service on or off and edit its name, time, small and large dog prices, and "What's included" list. You can also set nightly boarding rates (small dog, large dog, cat or other) and the currency symbol. A blank price shows "Price on request".
+In **Dashboard → Settings → Pricing** you can turn each service on or off and edit its name, time, small dog, large dog and cat prices, and "What's included" list. Cats pay the cat price; a blank one shows "Price on request". You can also set nightly boarding rates (small dog, large dog, cat or other) and the currency symbol. A blank price shows "Price on request".
 
 The form shows an estimated total, labelled as an estimate: payment is taken at Pawfectly and staff confirm the final price. Each booking keeps the prices it was made with, so later price changes don't alter it.
 

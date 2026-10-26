@@ -148,6 +148,10 @@ $paw_saved = (array) $settings['services'];
 							<span><?php echo esc_html( in_array( $paw_id, Services::MONTHLY, true ) ? __( 'Large dog, per month', 'pawfectly-reservations' ) : __( 'Large dog', 'pawfectly-reservations' ) ); ?></span>
 							<input type="text" inputmode="decimal" name="<?php echo esc_attr( $paw_n ); ?>[large]" value="<?php echo esc_attr( (string) $paw_s['large'] ); ?>" placeholder="<?php esc_attr_e( 'On request', 'pawfectly-reservations' ); ?>">
 						</label>
+						<label class="paw-dash__field" data-paw-setting="services.<?php echo esc_attr( $paw_id ); ?>.cat">
+							<span><?php echo esc_html( in_array( $paw_id, Services::MONTHLY, true ) ? __( 'Cat, per month', 'pawfectly-reservations' ) : __( 'Cat', 'pawfectly-reservations' ) ); ?></span>
+							<input type="text" inputmode="decimal" name="<?php echo esc_attr( $paw_n ); ?>[cat]" value="<?php echo esc_attr( (string) $paw_s['cat'] ); ?>" placeholder="<?php esc_attr_e( 'On request', 'pawfectly-reservations' ); ?>">
+						</label>
 						<label class="paw-dash__field paw-dash__field--wide" data-paw-setting="services.<?php echo esc_attr( $paw_id ); ?>.included">
 							<span><?php esc_html_e( "What's included (one per line)", 'pawfectly-reservations' ); ?></span>
 							<textarea name="<?php echo esc_attr( $paw_n ); ?>[included]" rows="4"><?php echo esc_textarea( $paw_s['included'] ); ?></textarea>

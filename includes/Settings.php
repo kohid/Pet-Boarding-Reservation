@@ -112,6 +112,7 @@ final class Settings {
 				'time'     => mb_substr( sanitize_text_field( (string) ( $sent['time'] ?? $was['time'] ) ), 0, 60 ),
 				'small'    => Services::clean_price( $sent['small'] ?? $was['small'] ) ?? (string) $was['small'],
 				'large'    => Services::clean_price( $sent['large'] ?? $was['large'] ) ?? (string) $was['large'],
+				'cat'      => Services::clean_price( $sent['cat'] ?? $was['cat'] ) ?? (string) $was['cat'],
 				'included' => sanitize_textarea_field( (string) ( $sent['included'] ?? $was['included'] ) ),
 			);
 		}

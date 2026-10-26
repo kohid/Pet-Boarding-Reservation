@@ -73,7 +73,7 @@ final class StaffRest {
 			}
 		}
 		foreach ( (array) ( $in['services'] ?? array() ) as $id => $svc ) {
-			foreach ( array( 'small', 'large' ) as $size ) {
+			foreach ( Services::PRICES as $size ) {
 				if ( is_array( $svc ) && array_key_exists( $size, $svc ) && null === Services::clean_price( $svc[ $size ] ) ) {
 					$errors[ 'services.' . sanitize_key( (string) $id ) . '.' . $size ] = $bad;
 				}

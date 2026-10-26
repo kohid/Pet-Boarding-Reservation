@@ -20,11 +20,10 @@ $paw_rates = array_filter(
 	'is_float'
 );
 $paw_range = static function ( array $svc ): string {
-	$prices = array_filter( array( $svc['small'], $svc['large'] ), 'is_float' );
-	if ( ! $prices ) {
+	$text = Services::price_range( $svc );
+	if ( '' === $text ) {
 		return __( 'Price on request', 'pawfectly-reservations' );
 	}
-	$text = implode( '–', array_unique( array_map( array( Services::class, 'money' ), $prices ) ) );
 	return $svc['monthly'] ? $text . ' ' . __( '/ month', 'pawfectly-reservations' ) : $text;
 };
 $paw_groups = array(
@@ -70,5 +69,5 @@ $paw_groups = array(
 			<?php endforeach; ?>
 		<?php endif; ?>
 	<?php endforeach; ?>
-	<p class="paw-menu__note"><?php esc_html_e( "Grooming is for dogs. You'll choose a service for each pet later.", 'pawfectly-reservations' ); ?></p>
+	<p class="paw-menu__note"><?php esc_html_e( "Grooming is for dogs and cats. You'll choose a service for each pet later.", 'pawfectly-reservations' ); ?></p>
 </div>

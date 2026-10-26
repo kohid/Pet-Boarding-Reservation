@@ -1,6 +1,6 @@
 <?php
 /**
- * Pawfectly's grooming services and memberships: the catalog, prices by dog size (from Settings),
+ * Pawfectly's grooming services and memberships: the catalog, prices by dog size and for cats (from Settings),
  * boarding rates, and the estimated total the form, emails and staff screens show.
  * The only place that reads prices.
  *
@@ -15,6 +15,10 @@ final class Services {
 
 	public const MONTHLY = array( 'nail_membership', 'bath_membership' );
 	public const SIZES   = array( 'small', 'large' );
+	/** Pets that can be groomed; other pets board only. */
+	public const GROOMED = array( 'dog', 'cat' );
+	/** A service's prices: one per dog size, and one for cats. */
+	public const PRICES  = array( 'small', 'large', 'cat' );
 
 	private const MAX_PRICE = 99999.99;
 
@@ -22,7 +26,7 @@ final class Services {
 	 * The catalog as stored in Settings, in the order the business lists it. Prices are strings
 	 * ('' = price on request); "included" holds one bullet per line.
 	 *
-	 * @return array<string, array{enabled: bool, name: string, time: string, small: string, large: string, included: string}>
+	 * @return array<string, array{enabled: bool, name: string, time: string, small: string, large: string, cat: string, included: string}>
 	 */
 	public static function defaults(): array {
 		$s = static fn( string $name, string $time, string $small, string $large, array $included ): array => array(
@@ -31,6 +35,7 @@ final class Services {
 			'time'     => $time,
 			'small'    => $small,
 			'large'    => $large,
+			'cat'      => '',
 			'included' => implode( "\n", $included ),
 		);
 		return array(
@@ -43,7 +48,7 @@ final class Services {
 					__( 'Nail trimming to proper length', 'pawfectly-reservations' ),
 					__( 'Nail filing for smooth edges', 'pawfectly-reservations' ),
 					__( 'Paw pad inspection', 'pawfectly-reservations' ),
-					__( 'Gentle handling for nervous dogs', 'pawfectly-reservations' ),
+					__( 'Gentle handling for nervous pets', 'pawfectly-reservations' ),
 				)
 			),
 			'nail_membership' => $s(
@@ -66,7 +71,7 @@ final class Services {
 				'59.00',
 				'59.00',
 				array(
-					__( 'Professional bathing for your dog', 'pawfectly-reservations' ),
+					__( 'Professional bathing for your pet', 'pawfectly-reservations' ),
 					__( 'Unlimited visits', 'pawfectly-reservations' ),
 					__( 'No sign-up fee', 'pawfectly-reservations' ),
 					__( 'Cancel anytime', 'pawfectly-reservations' ),
@@ -144,7 +149,7 @@ final class Services {
 	/**
 	 * Every service with the saved settings applied; unknown ids in the settings are ignored.
 	 *
-	 * @return array<string, array{id: string, name: string, time: string, monthly: bool, small: ?float, large: ?float, included: list<string>, enabled: bool}>
+	 * @return array<string, array{id: string, name: string, time: string, monthly: bool, small: ?float, large: ?float, cat: ?float, included: list<string>, enabled: bool}>
 	 */
 	public static function catalog(): array {
 		$saved = (array) ( Settings::get()['services'] ?? array() );
@@ -158,6 +163,7 @@ final class Services {
 				'monthly'  => in_array( $id, self::MONTHLY, true ),
 				'small'    => self::amount( $s['small'] ),
 				'large'    => self::amount( $s['large'] ),
+				'cat'      => self::amount( $s['cat'] ),
 				'included' => array_values( array_filter( array_map( 'trim', explode( "\n", (string) $s['included'] ) ), 'strlen' ) ),
 				'enabled'  => (bool) $s['enabled'],
 			);
@@ -175,10 +181,18 @@ final class Services {
 		return array_filter( self::catalog(), static fn( array $s ): bool => $s['enabled'] );
 	}
 
-	/** Price for one dog size; null when unknown, turned off, or on request. */
-	public static function price( string $id, string $size ): ?float {
+	/** Price for one price key (a dog size, or 'cat'); null when unknown, turned off, or on request. */
+	public static function price( string $id, string $key ): ?float {
 		$s = self::enabled()[ $id ] ?? null;
-		return $s && in_array( $size, self::SIZES, true ) ? $s[ $size ] : null;
+		return $s && in_array( $key, self::PRICES, true ) ? $s[ $key ] : null;
+	}
+
+	/** Which of a service's prices a pet pays: its dog size, 'cat', or '' (none known). */
+	public static function price_key( string $pet_type, string $size ): string {
+		if ( 'cat' === $pet_type ) {
+			return 'cat';
+		}
+		return 'dog' === $pet_type && in_array( $size, self::SIZES, true ) ? $size : '';
 	}
 
 	/** Nightly boarding rate: dogs by size, cats and other pets share one. */
@@ -186,6 +200,15 @@ final class Services {
 		$rates = (array) ( Settings::get()['boarding_rates'] ?? array() );
 		$key   = 'dog' === $pet_type ? ( in_array( $size, self::SIZES, true ) ? $size : '' ) : 'other';
 		return '' !== $key ? self::amount( $rates[ $key ] ?? '' ) : null;
+	}
+
+	/** A service's prices from lowest to highest ("$12–$20", "$59"), or '' when all are on request. */
+	public static function price_range( array $svc ): string {
+		$prices = array_filter( array_map( static fn( string $key ) => $svc[ $key ] ?? null, self::PRICES ), 'is_float' );
+		if ( ! $prices ) {
+			return '';
+		}
+		return implode( '–', array_unique( array( self::money( min( $prices ) ), self::money( max( $prices ) ) ) ) );
 	}
 
 	public static function money( float $amount, ?string $currency = null ): string {
@@ -289,7 +312,7 @@ final class Services {
 		if ( $service && in_array( $type, array( 'grooming', 'both' ), true ) ) {
 			$lines[] = array(
 				'label'   => $prefix . $service['name'],
-				'amount'  => self::price( $service['id'], $size ),
+				'amount'  => self::price( $service['id'], self::price_key( (string) ( $pet['pet_type'] ?? '' ), $size ) ),
 				'monthly' => $service['monthly'],
 			);
 		}

@@ -100,7 +100,7 @@ t( 'groomer: Any / Flexible first', (bool) preg_match( '/name="pets\[0\]\[groome
 $welcome = $cut( $html, 'data-step="0"', 'data-step="1"' );
 t( 'booking type on the welcome screen, boarding preselected', (bool) preg_match( '/name="booking_type" value="boarding"[^>]*checked/', $welcome ) );
 t( 'service menu on the welcome screen: boarding plus seven services', str_contains( $welcome, 'data-paw-menu' ) && 8 === substr_count( $welcome, 'class="paw-menu__item' ) && str_contains( $welcome, 'Monthly memberships' ) );
-t( 'welcome menu notes grooming is for dogs', str_contains( $welcome, 'Grooming is for dogs. You&#039;ll choose a service for each pet later.' ) );
+t( 'welcome menu notes grooming is for dogs and cats', str_contains( $welcome, 'Grooming is for dogs and cats. You&#039;ll choose a service for each pet later.' ) );
 
 // Pets.
 t( 'pet 1 card with an add button and a template for more', str_contains( $html, 'data-paw-pet="0"' ) && str_contains( $html, 'data-paw-add-pet' ) && str_contains( $html, '<template data-paw-pet-template="pet">' ) && str_contains( $html, 'name="pets[__N__][pet_name]"' ) );

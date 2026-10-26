@@ -112,7 +112,7 @@ final class Validator {
 		return $error;
 	}
 
-	/** Rules across pets: current vaccinations, grooming for dogs only, at least one groomed pet. */
+	/** Rules across pets: current vaccinations, grooming for dogs and cats only, at least one groomed pet. */
 	private static function pet_rules( array $booking, array $pets, array $errors ): array {
 		$out  = array();
 		$type = $booking['booking_type'] ?? '';
@@ -124,15 +124,15 @@ final class Validator {
 		if ( isset( $errors['booking_type'] ) || isset( $errors['pets'] ) || 'boarding' === $type ) {
 			return $out;
 		}
-		if ( 'grooming' === $type && array_filter( $pets, static fn( array $p ): bool => 'dog' !== ( $p['pet_type'] ?? '' ) ) ) {
-			$out['booking_type'] = __( 'Grooming is for dogs only. Choose Boarding + grooming to board your other pets.', 'pawfectly-reservations' );
+		if ( 'grooming' === $type && array_filter( $pets, static fn( array $p ): bool => ! in_array( $p['pet_type'] ?? '', Services::GROOMED, true ) ) ) {
+			$out['booking_type'] = __( 'Grooming is for dogs and cats. Choose Boarding + grooming to board your other pets.', 'pawfectly-reservations' );
 		} elseif ( 'both' === $type && ! array_filter( $pets, static fn( array $p ): bool => '' !== ( $p['service'] ?? '' ) && 'none' !== $p['service'] ) && ! preg_grep( '/^pets\.\d+\.service$/', array_keys( $errors ) ) ) {
 			$out['booking_type'] = __( 'Choose a service for at least one pet, or book Boarding only.', 'pawfectly-reservations' );
 		}
 		return $out;
 	}
 
-	/** Rules across fields: dates per booking type, grooming for dogs only. */
+	/** Rules across fields: dates per booking type. */
 	private static function booking_rules( array $clean, array $errors, string $today ): array {
 		$out  = array();
 		$type = $clean['booking_type'] ?? '';

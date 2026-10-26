@@ -95,8 +95,8 @@ defined( 'ABSPATH' ) || exit;
 			<div class="paw-svc-list">
 				<?php foreach ( Services::enabled() as $paw_svc ) : ?>
 					<?php
-					$paw_prices = array_filter( array( $paw_svc['small'], $paw_svc['large'] ), 'is_float' );
-					$paw_range  = $paw_prices ? implode( '–', array_unique( array_map( array( Services::class, 'money' ), $paw_prices ) ) ) : __( 'Price on request', 'pawfectly-reservations' );
+					$paw_prices = Services::price_range( $paw_svc );
+					$paw_range  = '' !== $paw_prices ? $paw_prices : __( 'Price on request', 'pawfectly-reservations' );
 					?>
 					<div class="paw-svc" data-paw-svc="<?php echo esc_attr( $paw_svc['id'] ); ?>">
 						<label class="paw-svc__pick">
@@ -111,7 +111,7 @@ defined( 'ABSPATH' ) || exit;
 									<span class="paw-svc__time"><?php echo esc_html( $paw_svc['time'] ); ?></span>
 								<?php endif; ?>
 							</span>
-							<span class="paw-svc__price<?php echo $paw_prices ? '' : ' is-request'; ?>" data-paw-price="<?php echo esc_attr( $paw_svc['id'] ); ?>"><?php echo esc_html( $paw_range ); ?><?php echo $paw_svc['monthly'] && $paw_prices ? '<small>' . esc_html__( '/ month', 'pawfectly-reservations' ) . '</small>' : ''; ?></span>
+							<span class="paw-svc__price<?php echo '' !== $paw_prices ? '' : ' is-request'; ?>" data-paw-price="<?php echo esc_attr( $paw_svc['id'] ); ?>"><?php echo esc_html( $paw_range ); ?><?php echo $paw_svc['monthly'] && '' !== $paw_prices ? '<small>' . esc_html__( '/ month', 'pawfectly-reservations' ) . '</small>' : ''; ?></span>
 						</label>
 						<?php if ( $paw_svc['included'] ) : ?>
 							<details class="paw-svc__more">
