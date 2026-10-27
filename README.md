@@ -123,7 +123,7 @@ Health details and files are never emailed; staff read them in the dashboard. Se
 
 ## Private files
 
-Vaccination records and signatures are stored in `wp-content/uploads/pawfectly-private/`. Files are renamed so their original names never reach the disk, and they are only served to signed-in staff through wp-admin.
+Vaccination records and signatures are stored in `wp-content/uploads/pawfectly-private/`. Files are renamed so their original names never reach the disk, and they are only served to signed-in staff through wp-admin. In the dashboard's side panel, JPG and PNG records show as thumbnails (grouped by pet) that open in a lightbox; PDFs open in a new tab.
 
 - **Apache:** the plugin writes an `.htaccess` that denies direct access.
 - **Nginx** ignores `.htaccess`. Add this to your site's server block, then reload Nginx:

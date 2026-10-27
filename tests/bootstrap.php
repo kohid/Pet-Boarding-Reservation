@@ -112,7 +112,7 @@ function selected( $a, $b, $echo = true ) { $r = (string) $a === (string) $b ? '
 function checked( $a, $b = true, $echo = true ) { $r = (string) $a === (string) $b ? ' checked="checked"' : ''; if ( $echo ) { echo $r; } return $r; }
 function rest_url( $p = '' ) { return 'https://example.test/wp-json/' . ltrim( $p, '/' ); }
 function admin_url( $p = '' ) { return 'https://example.test/wp-admin/' . ltrim( $p, '/' ); }
-function wp_nonce_url( $url, $action = -1 ) { return $url . ( str_contains( $url, '?' ) ? '&' : '?' ) . '_wpnonce=nonce-' . $action; }
+function wp_nonce_url( $url, $action = -1 ) { return esc_html( $url . ( str_contains( $url, '?' ) ? '&' : '?' ) . '_wpnonce=nonce-' . $action ); } // Escaped for HTML, like WordPress's.
 $GLOBALS['paw_valid_nonce'] = 'good-nonce';
 function wp_verify_nonce( $nonce, $action = -1 ) { return 'wp_rest' === $action && $nonce === $GLOBALS['paw_valid_nonce'] ? 1 : false; }
 function wp_create_nonce( $action = -1 ) { return $GLOBALS['paw_valid_nonce']; }

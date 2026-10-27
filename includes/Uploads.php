@@ -180,9 +180,18 @@ final class Uploads {
 		return $month . '/' . $reference . ( '' !== $tag ? '-' . $tag : '' ) . '-' . bin2hex( random_bytes( 8 ) ) . '.' . $ext;
 	}
 
-	/** Signed link to a reservation's file (`$n` is the file index, or `sig` for the signature). */
+	/**
+	 * Signed link to a reservation's file (`$n` is the file index, or `sig` for the signature).
+	 * A plain URL: escape it where it is printed (wp_nonce_url() would return it HTML-escaped,
+	 * which breaks it as a src or href set from JavaScript).
+	 */
 	public static function url( int $id, string $n ): string {
-		return wp_nonce_url( admin_url( 'admin-post.php?action=paw_file&id=' . $id . '&n=' . rawurlencode( $n ) ), 'paw_file_' . $id );
+		return admin_url( 'admin-post.php?action=paw_file&id=' . $id . '&n=' . rawurlencode( $n ) . '&_wpnonce=' . wp_create_nonce( 'paw_file_' . $id ) );
+	}
+
+	/** True for a stored file that browsers show as a picture (JPG, PNG). */
+	public static function is_image( array $file ): bool {
+		return in_array( $file['mime'] ?? '', array( 'image/jpeg', 'image/png' ), true );
 	}
 
 	/** admin-post.php?action=paw_file: streams one file of one reservation to staff. */
@@ -207,7 +216,7 @@ final class Uploads {
 			$path   = $file ? self::resolve( $file['path'] ) : null;
 			$mime   = $file['mime'] ?? '';
 			$name   = $file['name'] ?? '';
-			$inline = false;
+			$inline = $file && self::is_image( $file ); // Pictures open in the browser; PDFs download.
 		}
 		if ( ! $path || ! in_array( $mime, self::MIMES, true ) ) {
 			wp_die( esc_html__( 'File not found.', 'pawfectly-reservations' ), '', array( 'response' => 404 ) );

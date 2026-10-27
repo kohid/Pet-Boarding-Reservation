@@ -22,12 +22,30 @@ const ROWS = [
 const DETAIL = {
   id: 7, reference: 'PAW-7K3QX9', pet_name: 'Biscuit', owner: "Zoë O'Brien", stay: '10/28/2026 → 10/30/2026', nights: 2, status: 'pending', status_label: 'Pending', staff_notes: '',
   answers_html: '<section class="paw-card"><h2>Pet Information</h2><dl class="paw-answers"><dt>Breed</dt><dd>Beagle</dd></dl></section>',
-  files: [{ name: 'rabies.pdf', size: 2048, url: '/wp-admin/admin-post.php?action=paw_file&id=7&n=0' }],
+  files: [
+    { name: 'rabies.pdf', size: 2048, url: '/wp-admin/admin-post.php?action=paw_file&id=7&n=0', image: false, pet: 'Mingming' },
+    { name: 'card-front.jpg', size: 4096, url: '/wp-admin/admin-post.php?action=paw_file&id=7&n=1', image: true, pet: 'Mingming' },
+    { name: 'brax-shots.png', size: 4096, url: '/wp-admin/admin-post.php?action=paw_file&id=7&n=2', image: true, pet: 'Brax' },
+  ],
   signature_url: '/wp-admin/admin-post.php?action=paw_file&id=7&n=sig',
   history: [{ status: 'pending', label: 'Pending', at: '10/25/2026 9:00 am', by: 'Submitted by the owner' }], admin_url: '/wp-admin/admin.php?page=paw-reservations&view=7',
 };
 
-async function mock(page, log) {
+// Pictures for the staff file handler: a "record" and a "signature", drawn by Chromium itself.
+async function picture(browser, html, w, h) {
+  const p = await browser.newPage({ viewport: { width: w, height: h } });
+  await p.setContent(`<body style="margin:0">${html}</body>`);
+  const png = await p.screenshot();
+  await p.close();
+  return png;
+}
+
+async function mock(page, log, pngs) {
+  await page.route('**/wp-admin/admin-post.php?*', r => {
+    const n = (/[?&]n=([^&]+)/.exec(r.request().url()) || [])[1];
+    log.files.push(n);
+    return n === '0' ? r.fulfill({ contentType: 'application/pdf', body: '%PDF-1.4' }) : r.fulfill({ contentType: 'image/png', body: n === 'sig' ? pngs.sig : pngs.record });
+  });
   await page.route('**/mock/staff/stats', r => r.fulfill({ json: STATS }));
   await page.route(/\/mock\/staff\/reservations(\?.*)?$/, r => { log.list.push(r.request().url()); return r.fulfill({ json: { rows: ROWS, total: 2, pages: 1, counts: { pending: 1, confirmed: 1, declined: 0, checked_in: 0, completed: 0, cancelled: 0 } } }); });
   await page.route('**/mock/staff/reservations/7', r => { log.headers.push(r.request().headers()); return r.fulfill({ json: DETAIL }); });
@@ -43,8 +61,12 @@ async function mock(page, log) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 860 } });
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
-    const log = { list: [], headers: [], status: [], notes: [] };
-    await mock(page, log);
+    const log = { list: [], headers: [], status: [], notes: [], files: [] };
+    const pngs = {
+      record: await picture(browser, '<div style="width:640px;height:440px;background:#eaf4fb;font:28px sans-serif;padding:40px;box-sizing:border-box;color:#2c3947">Rabies vaccination<br><br>Valid until 2027</div>', 640, 440),
+      sig: await picture(browser, '<div style="width:320px;height:120px;background:#fff;font:italic 42px serif;padding:30px;box-sizing:border-box">Zoe O</div>', 320, 120),
+    };
+    await mock(page, log, pngs);
     await page.goto(URL);
 
     await page.waitForSelector('[data-paw-tile="pending"] .paw-dash__tile-num');
@@ -78,7 +100,25 @@ async function mock(page, log) {
     await page.click('.paw-dash__table tbody tr >> nth=0');
     await page.waitForSelector('[data-paw-panel]:not([hidden]) [data-paw-answers] .paw-answers');
     ok('side panel opens with the answers', (await page.textContent('[data-paw-answers]')).includes('Beagle'));
-    ok('side panel lists files and the signature', (await page.getAttribute('[data-paw-files] a', 'href')).includes('action=paw_file') && (await page.getAttribute('[data-paw-signature]', 'src')).includes('n=sig'));
+    await page.waitForFunction(() => { const i = document.querySelector('[data-paw-signature]'); return i.complete && i.naturalWidth > 0; });
+    ok('the signature image loads', (await page.getAttribute('[data-paw-signature]', 'src')).includes('n=sig') && log.files.includes('sig'));
+    ok('records grouped by pet', (await page.locator('[data-paw-files] .paw-dash__files-pet').allTextContents()).join('|') === 'Mingming|Brax');
+    await page.waitForFunction(() => Array.from(document.querySelectorAll('[data-paw-thumb] img')).every(i => i.complete && i.naturalWidth > 0));
+    ok('pictures show as thumbnails, the PDF as a tile that opens in a new tab', (await page.locator('[data-paw-thumb] img').count()) === 2 && (await page.getAttribute('.paw-dash__thumb-btn--pdf', 'target')) === '_blank' && (await page.getAttribute('.paw-dash__thumb-btn--pdf', 'href')).includes('n=0'));
+    if (SHOTS) await page.locator('[data-paw-files]').screenshot({ path: path.join(SHOTS, 'dash-records.png') });
+    await page.click('[data-paw-thumb="0"]');
+    ok('a thumbnail opens the lightbox on that picture', await page.isVisible('[data-paw-lightbox]') && (await page.textContent('[data-paw-lightbox-name]')) === 'Mingming: card-front.jpg' && (await page.textContent('[data-paw-lightbox-count]')) === '1 of 2');
+    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'dash-lightbox.png') });
+    await page.keyboard.press('ArrowRight');
+    ok('arrow keys move to the next picture', (await page.textContent('[data-paw-lightbox-name]')) === 'Brax: brax-shots.png' && (await page.getAttribute('[data-paw-lightbox-img]', 'src')).includes('n=2'));
+    await page.click('[data-paw-lightbox-next]');
+    ok('next wraps around to the first', (await page.textContent('[data-paw-lightbox-count]')) === '1 of 2');
+    ok('the lightbox offers a download', (await page.getAttribute('[data-paw-lightbox-download]', 'href')).includes('n=1'));
+    await page.keyboard.press('Escape');
+    ok('Escape closes the lightbox, not the panel, and focus returns to the thumbnail', await page.isHidden('[data-paw-lightbox]') && await page.isVisible('[data-paw-panel]') && (await page.evaluate(() => document.activeElement.getAttribute('data-paw-thumb'))) === '0');
+    await page.click('[data-paw-thumb="1"]');
+    await page.mouse.click(20, 400);
+    ok('a click outside the picture closes the lightbox', await page.isHidden('[data-paw-lightbox]'));
     ok('staff requests send the REST nonce', log.headers[0]['x-wp-nonce'] === (await page.evaluate(() => window.PAW_DASH.nonce)));
     await page.selectOption('[data-paw-status-select]', 'confirmed');
     await page.click('[data-paw-status-save]');

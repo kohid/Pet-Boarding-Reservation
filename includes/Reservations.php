@@ -196,6 +196,13 @@ final class Reservations {
 		return array( $pet + array( 'files' => $files ) );
 	}
 
+	/** Every pet's type in the same order as the names ("Cat + Dog" for "Mingming + Brax"). */
+	public static function pet_types( array $r ): string {
+		$labels = Fields::all()['pet_type']['options'];
+		$types  = array_map( static fn( array $p ): string => (string) ( $labels[ $p['pet_type'] ?? '' ] ?? ( $p['pet_type'] ?? '' ) ), self::pets( $r ) );
+		return implode( ' + ', array_filter( $types, 'strlen' ) );
+	}
+
 	/** When it happens, as a person reads it: "10/28/2026 → 10/30/2026", or a grooming day and time. */
 	public static function when( array $r ): string {
 		if ( 'grooming' === ( $r['booking_type'] ?? '' ) ) {

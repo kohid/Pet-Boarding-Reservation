@@ -671,13 +671,210 @@ body.admin-bar .paw-dash--full {
 }
 
 .paw-dash .paw-dash__files {
-	margin-bottom: 1rem;
+	margin-bottom: 1.25rem;
+}
+
+.paw-dash .paw-dash__files-pet {
+	margin: 0.75rem 0 0.5rem;
+	color: var(--paw-ink);
+	font-weight: 600;
+	font-size: 0.875rem;
+}
+
+.paw-dash .paw-dash__files-pet:first-child {
+	margin-top: 0;
+}
+
+.paw-dash .paw-dash__files-empty {
+	color: var(--paw-soft);
+	font-size: 0.875rem;
+}
+
+.paw-dash .paw-dash__thumbs {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+	gap: 0.75rem;
+	margin: 0;
+	padding: 0;
 	list-style: none;
 }
 
-.paw-dash .paw-dash__files a {
+.paw-dash .paw-dash__thumb {
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+	min-width: 0;
+}
+
+/* The record itself is the target: a picture you can open, or a PDF tile that opens in a new tab. */
+.paw-dash .paw-dash__thumb-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	aspect-ratio: 4 / 3;
+	width: 100%;
+	padding: 0;
+	overflow: hidden;
+	border: 1px solid var(--paw-line);
+	border-radius: 0.5rem;
+	background: var(--paw-page);
+	cursor: zoom-in;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.paw-dash .paw-dash__thumb-btn img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.paw-dash .paw-dash__thumb-btn--pdf {
 	color: var(--paw-primary-dark);
+	background: var(--paw-tint);
+	font-weight: 700;
+	font-size: 0.875rem;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.paw-dash .paw-dash__thumb-btn:hover {
+	border-color: var(--paw-primary);
+}
+
+.paw-dash .paw-dash__thumb-btn:focus-visible {
+	outline: none;
+	border-color: var(--paw-primary);
+	box-shadow: var(--paw-ring);
+}
+
+.paw-dash .paw-dash__thumb-name {
+	overflow: hidden;
+	color: var(--paw-soft);
+	font-size: 0.75rem;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+/* Lightbox: above the side panel, the picture as large as the screen allows. */
+.paw-dash .paw-dash__lightbox {
+	position: fixed;
+	inset: 0;
+	z-index: 99995;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 3.5rem 4rem;
+	background: rgba(36, 48, 57, 0.92);
+}
+
+.paw-dash .paw-dash__lightbox[hidden] {
+	display: none;
+}
+
+.paw-dash .paw-dash__lightbox-figure {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.75rem;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+}
+
+.paw-dash .paw-dash__lightbox-img {
+	display: block;
+	max-width: 100%;
+	max-height: calc(100% - 2.5rem);
+	border-radius: 0.375rem;
+	background: #fff;
+	object-fit: contain;
+}
+
+.paw-dash .paw-dash__lightbox-caption {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: center;
+	gap: 0.5rem 1rem;
+	color: #fff;
+	font-size: 0.875rem;
+}
+
+.paw-dash .paw-dash__lightbox-count {
+	color: rgba(255, 255, 255, 0.7);
+}
+
+.paw-dash .paw-dash__lightbox-download {
+	color: var(--paw-primary);
 	font-weight: 600;
+}
+
+.paw-dash .paw-dash__lightbox-btn {
+	position: absolute;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.75rem;
+	height: 2.75rem;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	color: #fff;
+	background: rgba(255, 255, 255, 0.12);
+	font-size: 1.75rem;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.paw-dash .paw-dash__lightbox-btn:hover {
+	background: var(--paw-primary);
+}
+
+.paw-dash .paw-dash__lightbox-btn:focus-visible {
+	outline: none;
+	box-shadow: var(--paw-ring);
+}
+
+.paw-dash .paw-dash__lightbox-btn[hidden] {
+	display: none;
+}
+
+.paw-dash .paw-dash__lightbox-btn--close {
+	top: 0.75rem;
+	right: 0.75rem;
+}
+
+.paw-dash .paw-dash__lightbox-btn--prev {
+	top: 50%;
+	left: 0.75rem;
+	transform: translateY(-50%);
+}
+
+.paw-dash .paw-dash__lightbox-btn--next {
+	top: 50%;
+	right: 0.75rem;
+	transform: translateY(-50%);
+}
+
+@media (max-width: 600px) {
+	.paw-dash .paw-dash__lightbox {
+		padding: 3.5rem 0.75rem 4.5rem;
+	}
+
+	.paw-dash .paw-dash__lightbox-btn--prev,
+	.paw-dash .paw-dash__lightbox-btn--next {
+		top: auto;
+		bottom: 0.75rem;
+		transform: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.paw-dash .paw-dash__thumb-btn {
+		transition: none;
+	}
 }
 
 .paw-dash .paw-dash__signature {

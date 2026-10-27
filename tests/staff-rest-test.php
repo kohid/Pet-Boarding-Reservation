@@ -22,7 +22,7 @@ $row = Reservations::build_row(
 		'details' => array( 'behavior_notes' => '<script>x</script>', 'pet_breed' => 'Beagle' ),
 	),
 	'PAW-7K3QX9',
-	array( array( 'name' => 'rabies.pdf', 'path' => '2030/01/x.pdf', 'mime' => 'application/pdf', 'size' => 2048 ) ),
+	array( array( 'name' => 'rabies.pdf', 'path' => '2030/01/x.pdf', 'mime' => 'application/pdf', 'size' => 2048 ), array( 'name' => 'card.png', 'path' => '2030/01/y.png', 'mime' => 'image/png', 'size' => 4096 ) ),
 	'2030/01/x-sig.png', '203.0.113.9', '2026-10-25 10:00:00'
 );
 $id = Reservations::insert( $row );
@@ -56,6 +56,8 @@ $d      = $detail->get_data();
 t( 'detail has the answers html', str_contains( $d['answers_html'], 'Beagle' ) && str_contains( $d['answers_html'], 'Pet Information' ) );
 t( 'answers html escapes owner text', ! str_contains( $d['answers_html'], '<script>x</script>' ) && str_contains( $d['answers_html'], '&lt;script&gt;' ) );
 t( 'files and signature through the staff-only handler', str_contains( $d['files'][0]['url'], 'action=paw_file' ) && str_contains( $d['signature_url'], 'n=sig' ) );
+t( 'file and signature links are plain URLs, not HTML-escaped (the dashboard sets them as src and href)', ! str_contains( $d['signature_url'], '&amp;' ) && str_contains( $d['signature_url'], '&n=sig&_wpnonce=' ) && ! str_contains( $d['files'][0]['url'], '&amp;' ) );
+t( 'files say which are images', false === $d['files'][0]['image'] && true === $d['files'][1]['image'] && 'card.png' === $d['files'][1]['name'] );
 t( 'history with labels', 'Pending' === $d['history'][0]['label'] );
 t( 'the admin-email account gets the wp-admin (print) link', str_contains( $d['admin_url'], 'page=paw-reservations' ) );
 $GLOBALS['paw_options']['admin_email'] = 'boss@example.com';
