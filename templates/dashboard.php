@@ -151,7 +151,7 @@ $paw_tiles = array(
 			</section>
 			<section class="paw-dash__card paw-dash__card--flat">
 				<h3 class="paw-dash__card-title"><?php esc_html_e( 'Vaccination records', 'pawfectly-reservations' ); ?></h3>
-				<ul class="paw-dash__files" data-paw-files></ul>
+				<div class="paw-dash__files" data-paw-files></div>
 				<h3 class="paw-dash__card-title"><?php esc_html_e( 'Signature', 'pawfectly-reservations' ); ?></h3>
 				<img class="paw-dash__signature" data-paw-signature alt="<?php esc_attr_e( "Owner's signature", 'pawfectly-reservations' ); ?>">
 			</section>
@@ -171,4 +171,17 @@ $paw_tiles = array(
 			</div>
 		</div>
 	</aside>
+	<div class="paw-dash__lightbox" data-paw-lightbox role="dialog" aria-modal="true" aria-label="<?php esc_attr_e( 'Vaccination record', 'pawfectly-reservations' ); ?>" hidden>
+		<figure class="paw-dash__lightbox-figure">
+			<img class="paw-dash__lightbox-img" data-paw-lightbox-img alt="">
+			<figcaption class="paw-dash__lightbox-caption">
+				<span data-paw-lightbox-name></span>
+				<span class="paw-dash__lightbox-count" data-paw-lightbox-count></span>
+				<a class="paw-dash__lightbox-download" data-paw-lightbox-download href="#" download><?php esc_html_e( 'Download', 'pawfectly-reservations' ); ?></a>
+			</figcaption>
+		</figure>
+		<button type="button" class="paw-dash__lightbox-btn paw-dash__lightbox-btn--close" data-paw-lightbox-close aria-label="<?php esc_attr_e( 'Close', 'pawfectly-reservations' ); ?>">&times;</button>
+		<button type="button" class="paw-dash__lightbox-btn paw-dash__lightbox-btn--prev" data-paw-lightbox-prev aria-label="<?php esc_attr_e( 'Previous image', 'pawfectly-reservations' ); ?>">&lsaquo;</button>
+		<button type="button" class="paw-dash__lightbox-btn paw-dash__lightbox-btn--next" data-paw-lightbox-next aria-label="<?php esc_attr_e( 'Next image', 'pawfectly-reservations' ); ?>">&rsaquo;</button>
+	</div>
 </div>

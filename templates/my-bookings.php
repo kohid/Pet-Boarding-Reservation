@@ -11,14 +11,12 @@
  * @var string   $book_url The reservation form page, or ''.
  */
 
-use Pawfectly\Fields;
 use Pawfectly\MyBookings;
 use Pawfectly\Profile;
 use Pawfectly\Reservations;
 
 defined( 'ABSPATH' ) || exit;
 
-$paw_types = Fields::all()['pet_type']['options'];
 ?>
 <div class="paw-acct paw-acct--bookings" data-paw-acct>
 	<?php echo Profile::notices( (int) $user->ID ); // phpcs:ignore WordPress.Security.EscapeOutput -- built from escaped parts. ?>
@@ -44,7 +42,7 @@ $paw_types = Fields::all()['pet_type']['options'];
 					<?php foreach ( $rows as $paw_r ) : ?>
 						<tr data-paw-row="<?php echo esc_attr( (string) $paw_r['id'] ); ?>">
 							<td><strong><?php echo esc_html( $paw_r['reference'] ); ?></strong></td>
-							<td><?php echo esc_html( $paw_r['pet_name'] ); ?> <span class="paw-acct__muted"><?php echo esc_html( $paw_types[ $paw_r['pet_type'] ] ?? $paw_r['pet_type'] ); ?></span></td>
+							<td><?php echo esc_html( $paw_r['pet_name'] ); ?> <span class="paw-acct__muted"><?php echo esc_html( Reservations::pet_types( $paw_r ) ); ?></span></td>
 							<td>
 								<?php echo esc_html( Reservations::when( $paw_r ) ); ?>
 								<?php if ( '' !== Reservations::service_names( $paw_r ) ) : ?>

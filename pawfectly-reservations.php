@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Pawfectly Pet Boarding Reservation
  * Description:       A multi-step pet boarding reservation form with vaccination uploads, a signed waiver and a reservations list in wp-admin.
- * Version:           0.4.2
+ * Version:           0.4.3
  * Requires at least: 6.0
  * Requires PHP:      8.0
  * License:           GPL v2 or later
@@ -14,7 +14,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'PAW_VERSION', '0.4.2' );
+define( 'PAW_VERSION', '0.4.3' );
 define( 'PAW_DB_VERSION', '4' );
 define( 'PAW_FILE', __FILE__ );
 define( 'PAW_DIR', plugin_dir_path( __FILE__ ) );

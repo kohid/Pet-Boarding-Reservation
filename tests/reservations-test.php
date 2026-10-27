@@ -85,6 +85,8 @@ $op  = Reservations::pets( $old );
 t( 'older row: one pet with its answers and files', 1 === count( $op ) && 'Biscuit' === $op[0]['pet_name'] && 'Beagle' === $op[0]['pet_breed'] && ! isset( $op[0]['vet_name'] ) && 'a.pdf' === $op[0]['files'][0]['name'] );
 $new = array( 'pet_name' => 'Rex + Tom', 'details' => array( 'pets' => array( array( 'pet_name' => 'Rex' ), array( 'pet_name' => 'Tom' ) ) ), 'files' => array( array( 'name' => 'r.pdf', 'pet' => 0 ), array( 'name' => 't.pdf', 'pet' => 1 ), array( 'name' => 't2.pdf', 'pet' => 1 ) ) );
 $np  = Reservations::pets( $new );
+t( 'pet types of an older row', 'Dog' === Reservations::pet_types( $old ) );
+t( 'pet types of every pet, in name order', 'Cat + Dog' === Reservations::pet_types( array( 'pet_type' => 'cat', 'details' => array( 'pets' => array( array( 'pet_name' => 'Mingming', 'pet_type' => 'cat' ), array( 'pet_name' => 'Brax', 'pet_type' => 'dog' ) ) ) ) ) );
 t( 'newer row: each pet gets only its own files', 2 === count( $np ) && array( 'r.pdf' ) === array_column( $np[0]['files'], 'name' ) && array( 't.pdf', 't2.pdf' ) === array_column( $np[1]['files'], 'name' ) );
 
 done();

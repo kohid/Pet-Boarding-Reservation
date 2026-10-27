@@ -105,7 +105,6 @@ final class StaffRest {
 		$args['page']     = max( 1, absint( $req->get_param( 'page' ) ?? 1 ) );
 		$args['per_page'] = 20;
 		$result           = Reservations::query( $args );
-		$types            = Fields::all()['pet_type']['options'];
 
 		return new \WP_REST_Response(
 			array(
@@ -114,7 +113,7 @@ final class StaffRest {
 						'id'           => (int) $r['id'],
 						'reference'    => $r['reference'],
 						'pet_name'     => $r['pet_name'],
-						'pet_type'     => $types[ $r['pet_type'] ] ?? $r['pet_type'],
+						'pet_type'     => Reservations::pet_types( $r ),
 						'owner'        => trim( $r['owner_first_name'] . ' ' . $r['owner_last_name'] ),
 						'email'        => $r['owner_email'],
 						'phone'        => $r['owner_phone'],
@@ -150,6 +149,8 @@ final class StaffRest {
 		include PAW_DIR . 'templates/partials/answers.php';
 		$answers = (string) ob_get_clean();
 
+		$pet_names = array_map( static fn( array $p ): string => (string) ( $p['pet_name'] ?? '' ), Reservations::pets( $r ) );
+
 		return new \WP_REST_Response(
 			array(
 				'id'            => (int) $r['id'],
@@ -163,7 +164,13 @@ final class StaffRest {
 				'staff_notes'   => (string) ( $r['staff_notes'] ?? '' ),
 				'answers_html'  => $answers,
 				'files'         => array_map(
-					static fn( array $f, int $n ): array => array( 'name' => $f['name'], 'size' => (int) $f['size'], 'url' => Uploads::url( (int) $r['id'], (string) $n ) ),
+					static fn( array $f, int $n ): array => array(
+						'name'  => $f['name'],
+						'size'  => (int) $f['size'],
+						'url'   => Uploads::url( (int) $r['id'], (string) $n ),
+						'image' => Uploads::is_image( $f ),
+						'pet'   => count( $pet_names ) > 1 ? ( $pet_names[ (int) ( $f['pet'] ?? 0 ) ] ?? '' ) : '', // Grouped by pet when there are several.
+					),
 					(array) $r['files'],
 					array_keys( (array) $r['files'] )
 				),

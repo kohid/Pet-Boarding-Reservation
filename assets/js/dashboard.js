@@ -280,15 +280,7 @@
 			$('[data-paw-panel-title]').textContent = d.pet_name + ' · ' + d.reference;
 			$('[data-paw-panel-sub]').textContent = d.owner + ' · ' + d.stay;
 			setBadge(d.status, d.status_label);
-			var files = $('[data-paw-files]');
-			files.textContent = '';
-			d.files.forEach(function (f) {
-				var li = el('li');
-				var a = el('a', '', f.name);
-				a.href = f.url;
-				li.appendChild(a);
-				files.appendChild(li);
-			});
+			renderFiles(d.files);
 			$('[data-paw-signature]').src = d.signature_url;
 			$('[data-paw-answers]').innerHTML = d.answers_html; // Rendered and escaped by the server.
 			$('[data-paw-notes]').value = d.staff_notes;
@@ -310,9 +302,126 @@
 		}
 	}
 
+	/* ---------- Vaccination records: thumbnails for pictures, links for PDFs, a lightbox ---------- */
+
+	var lightbox = $('[data-paw-lightbox]');
+	var images = [];
+	var shown = 0;
+	var opener = null;
+
+	/** One group per pet when the booking has several (files carry the pet's name then). */
+	function renderFiles(list) {
+		var box = $('[data-paw-files]');
+		box.textContent = '';
+		images = list.filter(function (f) { return f.image; });
+		if (!list.length) {
+			box.appendChild(el('p', 'paw-dash__files-empty', I18N.noFiles));
+			return;
+		}
+		var groups = [];
+		list.forEach(function (f) {
+			var g = groups.filter(function (x) { return x.pet === f.pet; })[0];
+			if (!g) {
+				g = { pet: f.pet, files: [] };
+				groups.push(g);
+			}
+			g.files.push(f);
+		});
+		groups.forEach(function (g) {
+			if (g.pet) {
+				box.appendChild(el('p', 'paw-dash__files-pet', g.pet));
+			}
+			var ul = el('ul', 'paw-dash__thumbs');
+			g.files.forEach(function (f) {
+				var li = el('li', 'paw-dash__thumb');
+				if (f.image) {
+					var btn = el('button', 'paw-dash__thumb-btn');
+					btn.type = 'button';
+					btn.setAttribute('data-paw-thumb', String(images.indexOf(f)));
+					var img = el('img');
+					img.src = f.url;
+					img.alt = f.name;
+					img.loading = 'lazy';
+					btn.appendChild(img);
+					li.appendChild(btn);
+				} else {
+					var a = el('a', 'paw-dash__thumb-btn paw-dash__thumb-btn--pdf', I18N.pdf);
+					a.href = f.url;
+					a.target = '_blank';
+					a.rel = 'noopener';
+					a.setAttribute('aria-label', f.name);
+					li.appendChild(a);
+				}
+				li.appendChild(el('span', 'paw-dash__thumb-name', f.name));
+				ul.appendChild(li);
+			});
+			box.appendChild(ul);
+		});
+	}
+
+	function showImage(i) {
+		shown = (i + images.length) % images.length;
+		var f = images[shown];
+		$('[data-paw-lightbox-img]').src = f.url;
+		$('[data-paw-lightbox-img]').alt = f.name;
+		$('[data-paw-lightbox-name]').textContent = (f.pet ? f.pet + ': ' : '') + f.name;
+		$('[data-paw-lightbox-count]').textContent = images.length > 1 ? format(I18N.imageOf, shown + 1, images.length) : '';
+		$('[data-paw-lightbox-download]').href = f.url;
+		$('[data-paw-lightbox-download]').setAttribute('download', f.name);
+		$('[data-paw-lightbox-prev]').hidden = images.length < 2;
+		$('[data-paw-lightbox-next]').hidden = images.length < 2;
+	}
+
+	function openLightbox(i, from) {
+		opener = from || null;
+		showImage(i);
+		lightbox.hidden = false;
+		$('[data-paw-lightbox-close]').focus();
+	}
+
+	function closeLightbox() {
+		lightbox.hidden = true;
+		$('[data-paw-lightbox-img]').removeAttribute('src');
+		if (opener) {
+			opener.focus();
+		}
+	}
+
+	$('[data-paw-files]').addEventListener('click', function (e) {
+		var btn = e.target.closest('[data-paw-thumb]');
+		if (btn) {
+			openLightbox(+btn.getAttribute('data-paw-thumb'), btn);
+		}
+	});
+	$('[data-paw-lightbox-close]').addEventListener('click', closeLightbox);
+	$('[data-paw-lightbox-prev]').addEventListener('click', function () { showImage(shown - 1); });
+	$('[data-paw-lightbox-next]').addEventListener('click', function () { showImage(shown + 1); });
+	lightbox.addEventListener('click', function (e) {
+		if (e.target === lightbox || e.target.classList.contains('paw-dash__lightbox-figure')) {
+			closeLightbox(); // A click on the dark area outside the picture.
+		}
+	});
+
 	$('[data-paw-close]').addEventListener('click', close);
 	overlay.addEventListener('click', close);
 	document.addEventListener('keydown', function (e) {
+		if (!lightbox.hidden) {
+			if (e.key === 'Escape') {
+				closeLightbox();
+			} else if (e.key === 'ArrowLeft' && images.length > 1) {
+				showImage(shown - 1);
+			} else if (e.key === 'ArrowRight' && images.length > 1) {
+				showImage(shown + 1);
+			} else if (e.key === 'Tab') {
+				// Keep focus on the lightbox's own buttons while it is open.
+				var stops = Array.prototype.filter.call(lightbox.querySelectorAll('a, button'), function (b) { return !b.hidden; });
+				var at = stops.indexOf(document.activeElement);
+				var to = e.shiftKey ? (at <= 0 ? stops.length - 1 : at - 1) : (at + 1) % stops.length;
+				stops[to].focus();
+				e.preventDefault();
+			}
+			return;
+		}
 		if (e.key === 'Escape' && !panel.hidden) {
 			close();
 		}

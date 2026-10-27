@@ -78,7 +78,8 @@ final class Dashboard {
 				'reservations' => add_query_arg( array( 'paw_view' => 'reservations' ), $here ),
 				'settings'     => Access::can_manage_settings( wp_get_current_user() ) ? add_query_arg( array( 'paw_view' => 'settings' ), $here ) : '',
 				// admin-post.php is open to staff (Access lets it through); the export checks the capability and nonce.
-				'export'       => wp_nonce_url( add_query_arg( array( 'action' => 'paw_export' ), admin_url( 'admin-post.php' ) ), 'paw_export' ),
+				// A plain URL (wp_nonce_url() would HTML-escape it, which breaks it as an href set from JavaScript).
+				'export'       => add_query_arg( array( 'action' => 'paw_export', '_wpnonce' => wp_create_nonce( 'paw_export' ) ), admin_url( 'admin-post.php' ) ),
 			),
 			'i18n'     => array(
 				'overview'      => __( 'Overview', 'pawfectly-reservations' ),
@@ -88,6 +89,10 @@ final class Dashboard {
 				'chooseLogo'    => __( 'Choose logo', 'pawfectly-reservations' ),
 				'all'           => __( 'All', 'pawfectly-reservations' ),
 				'loading'       => __( 'Loading…', 'pawfectly-reservations' ),
+				'noFiles'       => __( 'No files.', 'pawfectly-reservations' ),
+				'pdf'           => __( 'PDF', 'pawfectly-reservations' ),
+				/* translators: 1: image number, 2: number of images */
+				'imageOf'       => __( '%1$d of %2$d', 'pawfectly-reservations' ),
 				'failed'        => __( 'Something went wrong. Please try again.', 'pawfectly-reservations' ),
 				'empty'         => __( 'No reservations match.', 'pawfectly-reservations' ),
 				'nights'        => __( 'nights', 'pawfectly-reservations' ),
