@@ -997,6 +997,10 @@
 	font-weight: 800;
 }
 
+.paw-event a[href^="tel:"] {
+	white-space: nowrap;
+}
+
 .paw-event .paw-event__addcal summary {
 	color: var(--paw-steel);
 	font-size: 0.9375rem;

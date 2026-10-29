@@ -113,4 +113,11 @@ update_term_meta( get_term_by( 'slug', 'holiday', 'paw_event_cat' )->term_id, '_
 t( 'categories: slug, name and colour', array( array( 'slug' => 'holiday', 'name' => 'Holiday party', 'color' => '#0f42c0' ) ) === Events::categories() && '#0f42c0' === Events::get( $id )['color'] );
 t( 'palette starts with coral', 8 === count( Events::PALETTE ) && '#ff7f50' === Events::PALETTE[0] );
 
+// /event/ links work after an update: rewrite rules are refreshed once per plugin version.
+$GLOBALS['paw_flushes'] = 0;
+function flush_rewrite_rules( $hard = true ) { $GLOBALS['paw_flushes']++; }
+Events::maybe_flush();
+Events::maybe_flush();
+t( 'rewrite rules flushed once per version', 1 === $GLOBALS['paw_flushes'] && PAW_VERSION === get_option( 'paw_rewrite_version' ) );
+
 done();

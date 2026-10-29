@@ -46,6 +46,15 @@ final class Events {
 
 	public static function init(): void {
 		add_action( 'init', array( self::class, 'register' ) );
+		add_action( 'init', array( self::class, 'maybe_flush' ), 99 );
+	}
+
+	/** Refreshes the rewrite rules once per plugin version, so /event/<slug>/ works after an update. */
+	public static function maybe_flush(): void {
+		if ( get_option( 'paw_rewrite_version' ) !== PAW_VERSION ) {
+			flush_rewrite_rules( false );
+			update_option( 'paw_rewrite_version', PAW_VERSION );
+		}
 	}
 
 	public static function register(): void {

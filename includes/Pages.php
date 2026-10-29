@@ -19,7 +19,9 @@ final class Pages {
 		'pawfectly_login'            => array( 'Login', 'Sign in and create account for everyone: owners, staff and admins. WordPress logins go here.' ),
 		'pawfectly_my_profile'       => array( 'My Profile', 'Name, email, phone and password once signed in.' ),
 		'pawfectly_my_bookings'      => array( 'My Bookings', "An owner's own reservations, with Cancel while allowed." ),
-		'pawfectly_dashboard'        => array( 'Dashboard', 'The staff dashboard: Overview, Reservations, and Settings for admins. Fills the browser; add fullscreen="no" to keep it in the page column.' ),
+		'pawfectly_dashboard'        => array( 'Dashboard', 'The staff dashboard: Overview, Reservations, Events, and Settings for admins. Fills the browser; add fullscreen="no" to keep it in the page column.' ),
+		'pawfectly_calendar'         => array( 'Event Calendar', 'The event calendar: month, list and day views with search and categories. Add category="slug" or view="list" if you like.' ),
+		'pawfectly_events'           => array( 'Events', 'Event cards with Upcoming, Happening now and Past tabs. Add show="past" or category="slug" if you like.' ),
 	);
 
 	private const TRANSIENT = 'paw_pg_';
