@@ -66,9 +66,11 @@ function get_post_meta( $id, $k = '', $single = false ) {
 }
 function update_post_meta( $id, $k, $v ) { $GLOBALS['paw_post_meta'][ (int) $id ][ $k ] = $v; return true; }
 function delete_post_meta( $id, $k ) { unset( $GLOBALS['paw_post_meta'][ (int) $id ][ $k ] ); return true; }
-function get_permalink( $p = 0 ) {
-	$p = is_object( $p ) ? $p : get_post( $p );
-	return $p ? 'https://example.test/event/' . $p->post_name . '/' : '';
+if ( ! function_exists( 'get_permalink' ) ) { // Page tests define their own.
+	function get_permalink( $p = 0 ) {
+		$p = is_object( $p ) ? $p : get_post( $p );
+		return $p ? 'https://example.test/event/' . $p->post_name . '/' : '';
+	}
 }
 function get_post_thumbnail_id( $id ) { return $GLOBALS['paw_thumbs'][ (int) $id ] ?? 0; }
 function set_post_thumbnail( $id, $att ) { $GLOBALS['paw_thumbs'][ (int) $id ] = (int) $att; return true; }

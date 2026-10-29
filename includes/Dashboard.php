@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 final class Dashboard {
 
 	public const TAG   = 'pawfectly_dashboard';
-	public const VIEWS = array( 'overview', 'reservations', 'settings' );
+	public const VIEWS = array( 'overview', 'reservations', 'events', 'settings' );
 
 	public static function init(): void {
 		add_shortcode( self::TAG, array( self::class, 'render' ) );
@@ -39,14 +39,17 @@ final class Dashboard {
 		if ( 'settings' === $view && ! $can_settings ) {
 			$view = 'overview';
 		}
-		if ( $can_settings && current_user_can( 'upload_files' ) ) {
-			wp_enqueue_media(); // The logo picker.
+		if ( current_user_can( 'upload_files' ) ) {
+			wp_enqueue_media(); // The logo picker and event cover photos.
 		}
 		$lockout = $can_settings && StaffRest::lockout_risk();
 
 		$config = self::config( $view );
 		wp_enqueue_style( 'paw-dashboard', PAW_URL . 'assets/css/dashboard.css', array(), PAW_VERSION );
 		wp_enqueue_script( 'paw-dashboard', PAW_URL . 'assets/js/dashboard.js', array(), PAW_VERSION, true );
+		wp_enqueue_style( 'paw-emoji', PAW_URL . 'assets/css/emoji-picker.css', array(), PAW_VERSION );
+		wp_enqueue_script( 'paw-emoji', PAW_URL . 'assets/js/emoji-picker.js', array(), PAW_VERSION, true );
+		wp_enqueue_script( 'paw-events-admin', PAW_URL . 'assets/js/events-admin.js', array( 'paw-dashboard', 'paw-emoji' ), PAW_VERSION, true );
 		wp_add_inline_script( 'paw-dashboard', 'window.PAW_DASH = ' . wp_json_encode( $config ) . ';', 'before' );
 
 		$full       = 'no' !== $a['fullscreen'];
@@ -76,14 +79,39 @@ final class Dashboard {
 			'urls'     => array(
 				'overview'     => add_query_arg( array( 'paw_view' => 'overview' ), $here ),
 				'reservations' => add_query_arg( array( 'paw_view' => 'reservations' ), $here ),
+				'events'       => add_query_arg( array( 'paw_view' => 'events' ), $here ),
 				'settings'     => Access::can_manage_settings( wp_get_current_user() ) ? add_query_arg( array( 'paw_view' => 'settings' ), $here ) : '',
 				// admin-post.php is open to staff (Access lets it through); the export checks the capability and nonce.
 				// A plain URL (wp_nonce_url() would HTML-escape it, which breaks it as an href set from JavaScript).
 				'export'       => add_query_arg( array( 'action' => 'paw_export', '_wpnonce' => wp_create_nonce( 'paw_export' ) ), admin_url( 'admin-post.php' ) ),
 			),
+			'events'   => array(
+				'limits'     => Events::LIMITS,
+				'palette'    => Events::PALETTE,
+				'defaults'   => Events::defaults()['sections'],
+				'categories' => Events::categories(),
+				'i18n'       => array(
+					'addEvent'      => __( 'Add Event', 'pawfectly-reservations' ),
+					'editEvent'     => __( 'Edit event', 'pawfectly-reservations' ),
+					'empty'         => __( 'No events here yet. Add one to get started.', 'pawfectly-reservations' ),
+					'draft'         => __( 'Draft', 'pawfectly-reservations' ),
+					'published'     => __( 'Published', 'pawfectly-reservations' ),
+					'publish'       => __( 'Publish', 'pawfectly-reservations' ),
+					'update'        => __( 'Update', 'pawfectly-reservations' ),
+					'saved'         => __( 'Saved.', 'pawfectly-reservations' ),
+					'view'          => __( 'View', 'pawfectly-reservations' ),
+					'duplicate'     => __( 'Duplicate', 'pawfectly-reservations' ),
+					'confirmDelete' => __( 'Delete this event? It goes to the WordPress trash.', 'pawfectly-reservations' ),
+					'unsaved'       => __( 'You have unsaved changes. Leave anyway?', 'pawfectly-reservations' ),
+					'choosePhoto'   => __( 'Choose cover photo', 'pawfectly-reservations' ),
+					'noCategory'    => __( 'No category', 'pawfectly-reservations' ),
+					'categoriesSaved' => __( 'Categories saved.', 'pawfectly-reservations' ),
+				),
+			),
 			'i18n'     => array(
 				'overview'      => __( 'Overview', 'pawfectly-reservations' ),
 				'reservations'  => __( 'Reservations', 'pawfectly-reservations' ),
+				'events'        => __( 'Events', 'pawfectly-reservations' ),
 				'settings'      => __( 'Settings', 'pawfectly-reservations' ),
 				'settingsSaved' => __( 'Settings saved.', 'pawfectly-reservations' ),
 				'chooseLogo'    => __( 'Choose logo', 'pawfectly-reservations' ),

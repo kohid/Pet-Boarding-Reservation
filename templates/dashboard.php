@@ -20,6 +20,7 @@ defined( 'ABSPATH' ) || exit;
 $paw_icon = array(
 	'overview'     => '<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>',
 	'reservations' => '<path d="M4 6h2v2H4zm4 0h12v2H8zM4 11h2v2H4zm4 0h12v2H8zM4 16h2v2H4zm4 0h12v2H8z"/>',
+	'events'       => '<path d="M7 2h2v2h6V2h2v2h3v16H4V4h3zm-1 7v9h12V9zm2 2h3v3H8z"/>',
 	'settings'     => '<path d="M4 7h10v2H4zm12 0h4v2h-4zm-2-2h2v6h-2zM4 15h4v2H4zm6 0h10v2H10zm-2-2h2v6H8z"/>',
 );
 $paw_tiles = array(
@@ -37,7 +38,7 @@ $paw_tiles = array(
 			<span><?php echo esc_html( $settings['business_name'] ); ?></span>
 		</div>
 		<nav class="paw-dash__nav" aria-label="<?php esc_attr_e( 'Dashboard', 'pawfectly-reservations' ); ?>">
-			<?php foreach ( array( 'overview', 'reservations' ) as $paw_v ) : ?>
+			<?php foreach ( array( 'overview', 'reservations', 'events' ) as $paw_v ) : ?>
 				<a href="<?php echo esc_url( $config['urls'][ $paw_v ] ); ?>" class="paw-dash__nav-item" data-paw-nav="<?php echo esc_attr( $paw_v ); ?>"<?php echo $view === $paw_v ? ' aria-current="page"' : ''; ?>>
 					<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><?php echo $paw_icon[ $paw_v ]; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed SVG. ?></svg>
 					<span><?php echo esc_html( $config['i18n'][ $paw_v ] ); ?></span>
@@ -116,6 +117,11 @@ $paw_tiles = array(
 					<button type="button" class="paw-dash__btn paw-dash__btn--light" data-paw-next-page aria-label="<?php esc_attr_e( 'Next page', 'pawfectly-reservations' ); ?>">›</button>
 				</div>
 			</div>
+		</section>
+
+		<section data-paw-view="events" aria-labelledby="paw-dash-events"<?php echo 'events' === $view ? '' : ' hidden'; ?>>
+			<h2 class="screen-reader-text" id="paw-dash-events"><?php esc_html_e( 'Events', 'pawfectly-reservations' ); ?></h2>
+			<?php include PAW_DIR . 'templates/partials/dashboard-events.php'; ?>
 		</section>
 
 		<?php if ( '' !== $config['urls']['settings'] ) : ?>

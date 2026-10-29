@@ -1268,3 +1268,418 @@ body.admin-bar .paw-dash--full {
 	justify-content: flex-end;
 	margin: 0 0 0.75rem;
 }
+
+/* ---------- Events ---------- */
+
+.paw-dash .paw-dash__fields--4 {
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	margin-bottom: 1rem;
+}
+
+.paw-dash .paw-dash__field input:is([type="date"], [type="time"], [type="url"]):not(#paw-0) {
+	width: 100%;
+	min-height: 2.5rem;
+	margin: 0;
+	padding: 0.5rem 0.875rem;
+	border: 1px solid #e1e4ea;
+	border-radius: 0.475rem;
+	background: #f9fafb;
+	box-shadow: none;
+	color: var(--paw-ink);
+	font: inherit;
+}
+
+.paw-dash .paw-dash__field input:is([type="date"], [type="time"], [type="url"]):not(#paw-0):focus {
+	border-color: var(--paw-primary);
+	background: #fff;
+	box-shadow: var(--paw-ring);
+	outline: none;
+}
+
+.paw-dash .paw-dash__field.is-invalid :is(input, select, textarea):not(#paw-0) {
+	border-color: var(--paw-danger);
+}
+
+.paw-dash .paw-dash__hint {
+	margin: 0 0 0.75rem;
+	color: var(--paw-soft);
+	font-size: 0.8125rem;
+}
+
+/* The list. */
+.paw-dash .paw-dash__ev-rows {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.paw-dash .paw-dash__ev-item {
+	display: grid;
+	grid-template-columns: 3rem minmax(0, 1fr) auto auto;
+	gap: 1rem;
+	align-items: center;
+	padding: 0.75rem 1rem;
+	border-left: 4px solid var(--paw-ev, var(--paw-primary));
+	border-radius: 0.475rem;
+	background: var(--paw-page);
+}
+
+.paw-dash .paw-dash__ev-item-emoji {
+	display: grid;
+	place-items: center;
+	width: 3rem;
+	height: 3rem;
+	border-radius: 0.75rem;
+	background: #fff;
+	font-size: 1.625rem;
+}
+
+.paw-dash .paw-dash__ev-item-main {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.paw-dash .paw-dash__ev-item-title {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--paw-ink);
+	font-size: 1rem;
+	font-weight: 700;
+	text-align: left;
+	cursor: pointer;
+}
+
+.paw-dash .paw-dash__ev-item-title:hover {
+	color: var(--paw-primary-dark);
+}
+
+.paw-dash .paw-dash__ev-item-when,
+.paw-dash .paw-dash__ev-item-meta {
+	color: var(--paw-soft);
+	font-size: 0.8125rem;
+}
+
+.paw-dash .paw-dash__ev-item-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem 0.75rem;
+	align-items: center;
+}
+
+.paw-dash .paw-dash__ev-chip {
+	padding: 0 0.5rem;
+	border-radius: 2rem;
+	background: color-mix(in srgb, var(--paw-ev, var(--paw-primary)) 16%, #fff);
+	color: var(--paw-ink);
+	font-weight: 600;
+}
+
+.paw-dash .paw-dash__ev-item-actions {
+	display: flex;
+	gap: 0.75rem;
+}
+
+.paw-dash .paw-dash__ev-item-actions button {
+	padding: 0;
+	border: 0;
+	background: none;
+	cursor: pointer;
+}
+
+/* The editor. */
+.paw-dash .paw-dash__ev-head {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 1rem;
+	align-items: center;
+	margin-bottom: 1rem;
+}
+
+.paw-dash .paw-dash__ev-back {
+	padding: 0;
+	border: 0;
+	background: none;
+	cursor: pointer;
+}
+
+.paw-dash .paw-dash__ev-title {
+	flex: 1 1 100%;
+	order: 2;
+	font-size: 1.375rem;
+	font-weight: 700;
+}
+
+.paw-dash .paw-dash__ev-head .paw-dash__badge {
+	order: 1;
+}
+
+.paw-dash .paw-dash__ev-emoji {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+}
+
+.paw-dash .paw-dash__ev-emoji input[type="text"].paw-dash__ev-emoji-input:not(#paw-0) {
+	width: 4rem;
+	min-width: 4rem;
+	height: 2.5rem;
+	padding: 0;
+	font-size: 1.25rem;
+	line-height: 1;
+	text-align: center;
+}
+
+.paw-dash .paw-dash__ev-emoji-btn {
+	min-height: 2.5rem;
+	padding: 0 0.75rem;
+	font-size: 1.125rem;
+}
+
+.paw-dash .paw-dash__ev-photo {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	align-items: center;
+}
+
+.paw-dash .paw-dash__ev-photo img {
+	width: 7.5rem;
+	height: 4.5rem;
+	border-radius: 0.475rem;
+	object-fit: cover;
+}
+
+.paw-dash .paw-dash__ev-photo .paw-dash__link {
+	padding: 0;
+	border: 0;
+	background: none;
+	cursor: pointer;
+}
+
+.paw-dash .paw-dash__ev-free {
+	align-self: end;
+	min-height: 2.5rem;
+}
+
+.paw-dash .paw-dash__ev-section .paw-dash__fields {
+	margin-bottom: 1rem;
+}
+
+.paw-dash .paw-dash__ev-rowlist {
+	display: flex;
+	flex-direction: column;
+	gap: 0.625rem;
+	margin: 0 0 0.75rem;
+	padding: 0;
+	list-style: none;
+}
+
+.paw-dash .paw-dash__ev-row {
+	display: flex;
+	gap: 0.75rem;
+	align-items: flex-end;
+	padding: 0.75rem;
+	border: 1px solid #eef0f4;
+	border-radius: 0.625rem;
+	background: #fcfcfd;
+}
+
+.paw-dash .paw-dash__ev-row.is-dragging {
+	border-style: dashed;
+	border-color: var(--paw-primary);
+	opacity: 0.6;
+}
+
+.paw-dash .paw-dash__ev-row-tools {
+	display: flex;
+	flex: 0 0 auto;
+	gap: 0.25rem;
+	align-items: center;
+	padding-bottom: 0.375rem;
+}
+
+.paw-dash .paw-dash__ev-drag {
+	color: var(--paw-soft);
+	letter-spacing: -0.2em;
+	cursor: grab;
+	user-select: none;
+}
+
+.paw-dash .paw-dash__ev-tool {
+	width: 1.75rem;
+	height: 1.75rem;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: var(--paw-page);
+	color: var(--paw-text);
+	font-size: 0.8125rem;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.paw-dash .paw-dash__ev-tool:hover:not([disabled]) {
+	background: var(--paw-tint);
+	color: var(--paw-primary-dark);
+}
+
+.paw-dash .paw-dash__ev-tool[disabled] {
+	opacity: 0.35;
+	cursor: default;
+}
+
+.paw-dash .paw-dash__ev-tool--remove:hover:not([disabled]) {
+	background: #fbe6e6;
+	color: var(--paw-danger);
+}
+
+.paw-dash .paw-dash__ev-tool:focus-visible {
+	outline: none;
+	box-shadow: var(--paw-ring);
+}
+
+.paw-dash .paw-dash__ev-row-fields {
+	display: grid;
+	flex: 1;
+	gap: 0.75rem;
+	min-width: 0;
+}
+
+.paw-dash .paw-dash__ev-row-fields--sessions {
+	grid-template-columns: 8rem 8rem minmax(0, 1fr) minmax(0, 1.5fr);
+}
+
+.paw-dash .paw-dash__ev-row-fields--includes,
+.paw-dash .paw-dash__ev-row-fields--good_to_know {
+	grid-template-columns: auto minmax(0, 1fr);
+}
+
+.paw-dash .paw-dash__ev-row-fields--goodies {
+	grid-template-columns: auto minmax(0, 1fr) minmax(0, 2fr);
+}
+
+.paw-dash .paw-dash__ev-actions {
+	position: sticky;
+	bottom: 0;
+	z-index: 5;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	align-items: center;
+	margin: 0 -0.5rem;
+	padding: 0.875rem 0.5rem;
+	border-top: 1px solid #eef0f4;
+	background: rgba(245, 246, 248, 0.94);
+	backdrop-filter: blur(6px);
+}
+
+.paw-dash .paw-dash__ev-saved {
+	color: #048a68;
+	font-weight: 600;
+}
+
+.paw-dash .paw-dash__ev-delete {
+	margin-left: auto;
+}
+
+/* Settings → Event categories. */
+.paw-dash .paw-dash__ev-catlist {
+	display: flex;
+	flex-direction: column;
+	gap: 0.625rem;
+	margin: 0 0 1rem;
+	padding: 0;
+	list-style: none;
+}
+
+.paw-dash .paw-dash__ev-cat {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem 1rem;
+	align-items: flex-end;
+}
+
+.paw-dash .paw-dash__ev-cat .paw-dash__field {
+	flex: 1 1 14rem;
+}
+
+.paw-dash .paw-dash__ev-swatches {
+	display: flex;
+	gap: 0.375rem;
+	min-height: 2.5rem;
+	align-items: center;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.paw-dash .paw-dash__ev-swatch {
+	position: relative;
+	width: 1.625rem;
+	height: 1.625rem;
+	border-radius: 50%;
+	background: var(--sw);
+	cursor: pointer;
+}
+
+.paw-dash .paw-dash__ev-swatch input {
+	position: absolute;
+	inset: 0;
+	margin: 0;
+	opacity: 0;
+	cursor: pointer;
+}
+
+.paw-dash .paw-dash__ev-swatch:has(input:checked) {
+	box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--sw);
+}
+
+.paw-dash .paw-dash__ev-swatch:has(input:focus-visible) {
+	outline: 2px solid var(--paw-ink);
+	outline-offset: 3px;
+}
+
+.paw-dash .paw-dash__ev-cat-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	align-items: center;
+}
+
+@media (max-width: 760px) {
+	.paw-dash .paw-dash__fields--4 {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.paw-dash .paw-dash__ev-item {
+		grid-template-columns: 2.5rem minmax(0, 1fr);
+	}
+
+	.paw-dash .paw-dash__ev-item-emoji {
+		width: 2.5rem;
+		height: 2.5rem;
+	}
+
+	.paw-dash .paw-dash__ev-item > .paw-dash__badge,
+	.paw-dash .paw-dash__ev-item-actions {
+		grid-column: 2;
+		justify-self: start;
+	}
+
+	.paw-dash .paw-dash__ev-row {
+		flex-direction: column-reverse;
+		align-items: stretch;
+	}
+
+	.paw-dash .paw-dash__ev-row-fields--sessions,
+	.paw-dash .paw-dash__ev-row-fields--goodies {
+		grid-template-columns: 1fr 1fr;
+	}
+
+	.paw-dash .paw-dash__ev-row-fields--goodies .paw-dash__ev-row-text,
+	.paw-dash .paw-dash__ev-row-fields--sessions > :nth-child(n + 3) {
+		grid-column: 1 / -1;
+	}
+}
