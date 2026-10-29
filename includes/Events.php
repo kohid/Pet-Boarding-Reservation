@@ -29,6 +29,8 @@ final class Events {
 	private const KEYS      = array( 'start', 'end', 'tagline', 'emoji', 'venue', 'address', 'price', 'free', 'note', 'ticket_url', 'sections', 'spots', 'coupon' );
 	/** Most dogs a session (or a session-less event) can take. */
 	public const MAX_SPOTS  = 500;
+	/** Event pages live at /event/<slug>/. */
+	public const SLUG       = 'event';
 	private const TEXT_MAX  = array(
 		'title'   => 120,
 		'tagline' => 160,
@@ -51,12 +53,35 @@ final class Events {
 		add_action( 'init', array( self::class, 'maybe_flush' ), 99 );
 	}
 
-	/** Refreshes the rewrite rules once per plugin version, so /event/<slug>/ works after an update. */
+	/**
+	 * Keeps /event/<slug>/ working: refreshes the rewrite rules once per plugin version, and again
+	 * whenever the saved rules have lost the event pages (another plugin or a migration rebuilt
+	 * them without ours), at most once an hour so a rule that won't stay can't slow every page.
+	 */
 	public static function maybe_flush(): void {
 		if ( get_option( 'paw_rewrite_version' ) !== PAW_VERSION ) {
 			flush_rewrite_rules( false );
 			update_option( 'paw_rewrite_version', PAW_VERSION );
+			return;
 		}
+		if ( self::rule_missing() && ! get_transient( 'paw_rewrite_repair' ) ) {
+			set_transient( 'paw_rewrite_repair', 1, HOUR_IN_SECONDS );
+			flush_rewrite_rules( false );
+		}
+	}
+
+	/** True when pretty links are on and the saved rules have none for the event pages. */
+	private static function rule_missing(): bool {
+		$rules = get_option( 'rewrite_rules' );
+		if ( '' === (string) get_option( 'permalink_structure' ) || ! is_array( $rules ) || ! $rules ) {
+			return false; // Plain links need no rules; with none saved, WordPress builds them itself.
+		}
+		foreach ( array_keys( $rules ) as $pattern ) {
+			if ( str_starts_with( (string) $pattern, self::SLUG . '/' ) ) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public static function register(): void {
@@ -72,7 +97,7 @@ final class Events {
 				'show_in_rest' => false,
 				'has_archive'  => false,
 				// Singular, so a site page at /events/ keeps working.
-				'rewrite'      => array( 'slug' => 'event', 'with_front' => false ),
+				'rewrite'      => array( 'slug' => self::SLUG, 'with_front' => false ),
 				'supports'     => array( 'title', 'editor', 'thumbnail' ),
 			)
 		);

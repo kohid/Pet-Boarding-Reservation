@@ -115,10 +115,37 @@ t( 'palette starts with coral', 8 === count( Events::PALETTE ) && '#ff7f50' === 
 
 // /event/ links work after an update: rewrite rules are refreshed once per plugin version.
 $GLOBALS['paw_flushes'] = 0;
-function flush_rewrite_rules( $hard = true ) { $GLOBALS['paw_flushes']++; }
+$GLOBALS['paw_options']['permalink_structure'] = '/%postname%/';
+/** Like core: writes the rules for what is registered, the event pages among them. */
+function flush_rewrite_rules( $hard = true ) {
+	$GLOBALS['paw_flushes']++;
+	update_option( 'rewrite_rules', array( 'event/([^/]+)(?:/([0-9]+))?/?$' => 'index.php?paw_event=$matches[1]', '(.?.+?)(?:/([0-9]+))?/?$' => 'index.php?pagename=$matches[1]' ) );
+}
 Events::maybe_flush();
 Events::maybe_flush();
 t( 'rewrite rules flushed once per version', 1 === $GLOBALS['paw_flushes'] && PAW_VERSION === get_option( 'paw_rewrite_version' ) );
+
+// Something else rebuilt the rules without the event pages: /event/<name>/ would be a 404.
+update_option( 'rewrite_rules', array( '(.?.+?)(?:/([0-9]+))?/?$' => 'index.php?pagename=$matches[1]' ) );
+Events::maybe_flush();
+t( 'rules missing the event pages are rebuilt', 2 === $GLOBALS['paw_flushes'] && isset( get_option( 'rewrite_rules' )['event/([^/]+)(?:/([0-9]+))?/?$'] ) );
+Events::maybe_flush();
+t( 'and left alone once they are back', 2 === $GLOBALS['paw_flushes'] );
+update_option( 'rewrite_rules', array() );
+Events::maybe_flush();
+t( 'no saved rules yet: WordPress builds them itself', 2 === $GLOBALS['paw_flushes'] );
+$GLOBALS['paw_options']['permalink_structure'] = '';
+update_option( 'rewrite_rules', array( 'x' => 'y' ) );
+Events::maybe_flush();
+t( 'plain permalinks need no rules', 2 === $GLOBALS['paw_flushes'] );
+$GLOBALS['paw_options']['permalink_structure'] = '/%postname%/';
+// Something keeps stripping the rule: at most one repair an hour.
+update_option( 'rewrite_rules', array( 'x' => 'y' ) );
+unset( $GLOBALS['paw_transients']['paw_rewrite_repair'] );
+Events::maybe_flush();
+update_option( 'rewrite_rules', array( 'x' => 'y' ) );
+Events::maybe_flush();
+t( 'a rule that will not stay is not rebuilt on every page load', 3 === $GLOBALS['paw_flushes'] );
 
 // Review fixes.
 t( 'emoji: no Unicode property PCRE2 < 10.40 cannot compile (PHP 8.0/8.1 hosts)', ! str_contains( file_get_contents( PAW_DIR . 'includes/Events.php' ), 'Extended_Pictographic' ) );
