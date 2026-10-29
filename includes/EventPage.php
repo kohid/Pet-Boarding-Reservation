@@ -32,9 +32,13 @@ final class EventPage {
 	 * to a visitor (WordPress treats a REST call without one as logged out), so they get their own.
 	 */
 	public static function enqueue(): void {
-		if ( ! is_singular( Events::TYPE ) ) {
-			return;
+		if ( is_singular( Events::TYPE ) ) {
+			self::assets();
 		}
+	}
+
+	/** The event CSS and the sign-up script, with a signed-in person's own nonce. */
+	public static function assets(): void {
 		wp_enqueue_style( 'paw-calendar', PAW_URL . 'assets/css/calendar.css', array(), PAW_VERSION );
 		wp_enqueue_script( 'paw-signup', PAW_URL . 'assets/js/signup.js', array(), PAW_VERSION, true );
 		if ( is_user_logged_in() ) {

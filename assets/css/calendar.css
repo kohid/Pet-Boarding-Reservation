@@ -1164,6 +1164,27 @@
 	font-weight: 700;
 }
 
+/* ---------- [pawfectly_event] parts (page builders) ----------
+ * Lists are plain: fonts and colours come from the theme or the builder. Style them with the
+ * paw-ev-* classes. The sign-up form and Add to calendar keep their look, in the page's font. */
+
+.paw-ev-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.paw-ev-row__emoji {
+	margin-right: 0.5em;
+}
+
+.paw-event.paw-event--part {
+	max-width: none;
+	margin: 0;
+	padding: 0;
+	font-family: inherit;
+}
+
 /* ---------- Sign-up form (in the closing block) ---------- */
 
 .paw-event .paw-event__signup,
