@@ -1796,3 +1796,77 @@ body.admin-bar .paw-dash--full {
 	color: var(--paw-ink);
 	font: inherit;
 }
+
+/* ---------- Settings → Starter events ---------- */
+
+.paw-dash .paw-dash__starter-row {
+	display: flex;
+	gap: 1.5rem;
+	align-items: flex-start;
+	justify-content: space-between;
+}
+
+.paw-dash .paw-dash__starter-row .paw-dash__hint {
+	max-width: 42rem;
+	margin: 0;
+}
+
+.paw-dash .paw-dash__toggle {
+	position: relative;
+	flex: none;
+	width: 3rem;
+	height: 1.75rem;
+	cursor: pointer;
+}
+
+.paw-dash .paw-dash__toggle input {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	opacity: 0;
+	cursor: pointer;
+}
+
+.paw-dash .paw-dash__toggle-track {
+	position: absolute;
+	inset: 0;
+	border-radius: 1rem;
+	background: var(--paw-line);
+	transition: background-color 0.15s ease;
+	pointer-events: none;
+}
+
+.paw-dash .paw-dash__toggle-track::after {
+	position: absolute;
+	top: 0.1875rem;
+	left: 0.1875rem;
+	width: 1.375rem;
+	height: 1.375rem;
+	border-radius: 50%;
+	background: #fff;
+	box-shadow: 0 1px 3px rgba(44, 57, 71, 0.25);
+	transition: transform 0.15s ease;
+	content: "";
+}
+
+.paw-dash .paw-dash__toggle input:checked + .paw-dash__toggle-track {
+	background: var(--paw-primary);
+}
+
+.paw-dash .paw-dash__toggle input:checked + .paw-dash__toggle-track::after {
+	transform: translateX(1.25rem);
+}
+
+.paw-dash .paw-dash__toggle input:focus-visible + .paw-dash__toggle-track {
+	box-shadow: var(--paw-ring);
+}
+
+.paw-dash .paw-dash__toggle input:disabled + .paw-dash__toggle-track {
+	opacity: 0.6;
+}
+
+.paw-dash .paw-dash__starter .paw-dash__savemsg {
+	margin: 0.75rem 0 0;
+}

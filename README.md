@@ -182,6 +182,10 @@ The general settings (not the prices) are also on **Pawfectly → Settings** in 
 - **Default country** for the address (United States).
 - **Who can manage reservations.** Tick any role, for example a front-desk role. Administrators always can.
 - **Private files.** Shows whether vaccination records and signatures are protected from direct web access (see below).
+- **Starter events.** A switch that fills the calendar with 30 ready-made events, September 2026 to January 2027.
+  - **The events:** Pawfectly parties, puppy socials, training classes, adoption days, grooming pop-ups, a fundraiser and more. They are ordinary published events with sessions, prices, spots and member codes, and nothing on them says "demo". They use the Holiday party, Training, Social, Adoption, Grooming and Fundraiser categories, added beside yours.
+  - **Turning it off** moves them to the trash, except any that people signed up for. Events you made yourself are never touched.
+  - **Turning it on again** adds them back. Any kept for sign-ups are not added twice.
 
 ## Reservations (Pawfectly → Reservations)
 

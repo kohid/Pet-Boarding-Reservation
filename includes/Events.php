@@ -382,6 +382,22 @@ final class Events {
 	 * @param array $list [{slug?, name, color}]
 	 * @return list<array>|\WP_Error The saved categories, or paw_invalid with fields keyed "categories.N.name".
 	 */
+	/**
+	 * Adds one category beside the others (never deletes any, unlike save_categories()). A
+	 * category with this name already there is kept as it is. @return string Its slug, or ''.
+	 */
+	public static function add_category( string $name, string $color ): string {
+		$made = wp_insert_term( $name, self::TAX, array( 'slug' => self::new_slug( $name ) ) );
+		if ( is_wp_error( $made ) ) {
+			$id = 'term_exists' === $made->get_error_code() ? (int) $made->get_error_data() : 0;
+		} else {
+			$id = (int) $made['term_id'];
+			update_term_meta( $id, '_paw_color', in_array( $color, self::PALETTE, true ) ? $color : self::PALETTE[0] );
+		}
+		$term = $id ? get_term( $id, self::TAX ) : null;
+		return $term && ! is_wp_error( $term ) ? (string) $term->slug : '';
+	}
+
 	public static function save_categories( array $list ) {
 		$clean  = array();
 		$errors = array();
