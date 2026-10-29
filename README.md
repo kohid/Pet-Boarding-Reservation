@@ -87,6 +87,7 @@ Put `[pawfectly_dashboard]` on a page, for example `/dashboard/`.
 - **Owners:** **My Bookings** lists their event sign-ups. They can cancel until the event starts; staff get an email.
 - **Spam protection:** the same as the booking form (a fresh security token, 5 tries per 10 minutes, a hidden trap field, and double-click protection).
 - **Caching:** the page never holds a security token, so it is safe to cache. Spots left update when the cache is purged.
+- **If an event page says "page can't be found":** the plugin rebuilds WordPress's link rules by itself when the `/event/` ones go missing (at most once an hour). To fix it right away, open **Settings → Permalinks** in wp-admin and click **Save Changes**, then purge your page cache.
 - **Categories:** **Settings → Event categories** sets each one's name and colour. The calendar uses the colours.
 - **Calendar page:** put `[pawfectly_calendar]` on a page such as `/event-calendar/`.
 - **Events list:** put `[pawfectly_events]` on `/events/`. The event pages use `/event/`, so the two don't clash.
