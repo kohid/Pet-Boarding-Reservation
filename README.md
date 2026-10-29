@@ -75,6 +75,48 @@ Put `[pawfectly_dashboard]` on a page, for example `/dashboard/`.
 - **Event page:** every event has its own page at `/event/<name>/`, laid out top to bottom: date line, emoji, title, tagline, facts, description, tickets, then the sections. It includes search-engine event data and an Add to calendar menu (Google, Outlook, .ics).
 - **Ticket buttons:** "Get Tickets" and "Reserve Your Spot" go to the sign-up form at the bottom of the event page. If you sell tickets somewhere else, add a ticket link and both buttons go there instead (the form is then hidden).
 
+## Designing event pages in Elementor
+
+With **Elementor Pro**, build the event page yourself in **Templates → Theme Builder → Single** with the condition **Include → Events → All**. In the template's **Preview Settings**, pick an event so the editor shows real data.
+
+**Dynamic Tags:** click the Dynamic Tags icon on any text, link, image or colour setting and open the **Pawfectly Event** group. Every Add Event field is there except the member coupon code, which never appears anywhere public.
+
+- **Text:**
+  - Event title, Tagline, Emoji, Category
+  - Start date, Start time, End date, End time. Each has a **Format** setting, like `F j, Y` or `g:i A`.
+  - Date line, Day, Time range, Summary line
+  - Venue, Address, Venue + address
+  - Price (number), Price text, Free badge, Ticket button text
+  - Highlight note, Description (text)
+  - Spots per session, Spots left (pick the session)
+  - Section heading and Section intro (pick the section: Sessions, Ticket includes, Extra goodies, Good to know, Closing call to action). `{price}` is filled in.
+- **Links:** Tickets / sign-up link (your ticket link, or the sign-up form on the page), Ticket link, Event page link, Google Calendar, Outlook, Apple / iCal (.ics), Map.
+- **Image:** Cover photo.
+- **Colour:** Category colour.
+
+**Shortcode:** add a **Shortcode** widget for the parts Elementor can't build from single values:
+
+| Shortcode | Shows |
+|---|---|
+| `[pawfectly_event part="description"]` | the description, with its paragraphs, bold, lists and links |
+| `[pawfectly_event part="sessions"]` | the session rows |
+| `[pawfectly_event part="includes"]` | the "ticket includes" rows |
+| `[pawfectly_event part="goodies"]` | the goodies |
+| `[pawfectly_event part="good_to_know"]` | the good-to-know rows |
+| `[pawfectly_event part="signup"]` | the sign-up form. It says "This event has ended" once the event is over, and shows nothing when the event has a ticket link. |
+| `[pawfectly_event part="addcal"]` | the Add to calendar menu |
+
+- **Lists:** they are plain and take your page's fonts and colours. Style them with these classes:
+  - `.paw-ev-list` (each list; `.paw-ev-list--sessions` etc. for one section)
+  - `.paw-ev-row` (each row)
+  - `.paw-ev-row__time`, `__name`, `__who` (sessions)
+  - `.paw-ev-row__emoji`, `__title`, `__text` (the other sections)
+- **Empty parts:** a part with nothing in it shows nothing, so hide its heading with Elementor's display conditions or leave the section out.
+- **Linking to the form:** the sign-up form sits in `#paw-event-reserve`, so give your "Get Tickets" button the **Tickets / sign-up link** tag and it jumps to the form.
+- **Other events:** add `id="123"` to show a different event's part.
+
+The plugin's own event page still shows wherever the theme prints the content, for example in Elementor's **Post Content** widget. Use either that or your own design, not both.
+
 ## Event sign-ups
 
 - **No account needed.** People pick a session, give their name, email and phone, and add 1–5 dogs (name required; breed and weight optional), then tick that their dogs are vaccinated and friendly. Signed-in owners get their name, email and phone filled in.
@@ -204,7 +246,7 @@ php tests/e2e/build.php && php tests/e2e/build.php signed-in && node tests/e2e/f
 php tests/e2e/build-account.php && node tests/e2e/account-e2e.js                          # menu, login, profile, bookings
 php tests/e2e/build-dashboard.php && node tests/e2e/dashboard-e2e.js                      # staff dashboard and settings
 php tests/e2e/build-dashboard.php && node tests/e2e/dashboard-events-e2e.js               # dashboard Events editor
-php tests/e2e/build-events.php && node tests/e2e/events-e2e.js                            # calendar, events list, event page, sign-up form
+php tests/e2e/build-events.php && node tests/e2e/events-e2e.js                            # calendar, events list, event page, sign-up form, Elementor parts
 bin/build-release.sh                                      # dist/pawfectly-reservations.zip
 ```
 
