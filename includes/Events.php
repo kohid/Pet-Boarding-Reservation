@@ -35,7 +35,7 @@ final class Events {
 		'note'    => 200,
 	);
 	private const ROW_MAX   = 300;
-	private const EMOJI_MAX = 32;
+	private const EMOJI_MAX = 64; // Bytes: room for the longest single emoji (joined, toned sequences).
 	/** Row fields per section, and which of them a row must have. */
 	private const ROWS = array(
 		'sessions'     => array( array( 'from', 'to', 'name', 'who' ), array( 'from', 'to' ) ),
@@ -186,7 +186,7 @@ final class Events {
 		$out['ticket_url']  = esc_url_raw( (string) ( $in['ticket_url'] ?? '' ) );
 		$out['description'] = trim( wp_kses( (string) ( $in['description'] ?? '' ), Settings::WAIVER_TAGS + array( 'a' => array( 'href' => true ) ) ) );
 		$out['status']      = 'publish' === ( $in['status'] ?? '' ) ? 'publish' : 'draft';
-		$out['category']    = sanitize_key( (string) ( $in['category'] ?? '' ) );
+		$out['category']    = self::category_slug( (string) ( $in['category'] ?? '' ) );
 		$out['photo_id']    = absint( $in['photo_id'] ?? 0 );
 
 		$sections = is_array( $in['sections'] ?? null ) ? $in['sections'] : array();
@@ -249,8 +249,8 @@ final class Events {
 		foreach ( array_keys( self::ROWS ) as $name ) {
 			$ev['sections'][ $name ]['rows'] = array_values( (array) ( ( (array) get_post_meta( $id, self::META . 'sections', true ) )[ $name ]['rows'] ?? array() ) );
 		}
-		$terms             = wp_get_object_terms( $id, self::TAX );
-		$term              = $terms[0] ?? null;
+		$terms             = get_the_terms( $id, self::TAX ); // Cached, unlike wp_get_object_terms().
+		$term              = is_array( $terms ) ? ( $terms[0] ?? null ) : null;
 		$ev['free']        = (bool) $ev['free'];
 		$ev['title']       = (string) $post->post_title;
 		$ev['description'] = (string) $post->post_content;
@@ -284,7 +284,6 @@ final class Events {
 				array( 'key' => self::META . 'start', 'value' => $to . ' 23:59:59', 'compare' => '<=' ),
 				array( 'key' => self::META . 'end', 'value' => $from . ' 00:00:00', 'compare' => '>=' ),
 			),
-			'fields'         => 'ids',
 		);
 		if ( '' !== $q ) {
 			$args['s'] = $q; // WP_Query escapes LIKE wildcards in searches.
@@ -292,7 +291,8 @@ final class Events {
 		if ( '' !== $cat ) {
 			$args['tax_query'] = array( array( 'taxonomy' => self::TAX, 'field' => 'slug', 'terms' => array( $cat ) ) ); // phpcs:ignore WordPress.DB.SlowDBQuery
 		}
-		return array_values( array_filter( array_map( array( self::class, 'get' ), array_map( 'intval', get_posts( $args ) ) ) ) );
+		// Whole posts, so WordPress primes their meta and term caches in one go.
+		return array_values( array_filter( array_map( static fn( $p ): ?array => self::get( (int) $p->ID ), get_posts( $args ) ) ) );
 	}
 
 	/** upcoming (not started), current (in progress) or past (ended), in the site's timezone. */
@@ -343,7 +343,7 @@ final class Events {
 				$errors[ "categories.$n.name" ] = __( 'This field is required.', 'pawfectly-reservations' );
 			}
 			$clean[] = array(
-				'slug'  => sanitize_key( (string) ( $c['slug'] ?? '' ) ),
+				'slug'  => self::category_slug( (string) ( $c['slug'] ?? '' ) ),
 				'name'  => $name,
 				'color' => in_array( $c['color'] ?? '', self::PALETTE, true ) ? $c['color'] : self::PALETTE[0],
 			);
@@ -358,11 +358,16 @@ final class Events {
 				wp_update_term( (int) $term->term_id, self::TAX, array( 'name' => $c['name'] ) );
 				$id = (int) $term->term_id;
 			} else {
-				$made = wp_insert_term( $c['name'], self::TAX );
+				$made = wp_insert_term( $c['name'], self::TAX, array( 'slug' => self::new_slug( $c['name'] ) ) );
 				if ( is_wp_error( $made ) ) {
-					continue;
+					// A category with this name already exists: keep it rather than delete it below.
+					if ( 'term_exists' !== $made->get_error_code() ) {
+						continue;
+					}
+					$id = (int) $made->get_error_data();
+				} else {
+					$id = (int) $made['term_id'];
 				}
-				$id = (int) $made['term_id'];
 			}
 			update_term_meta( $id, '_paw_color', $c['color'] );
 			$keep[] = $id;
@@ -386,10 +391,40 @@ final class Events {
 		return $d && $d->format( 'Y-m-d H:i' ) === trim( $date ) . ' ' . trim( $time ) ? $d->format( 'Y-m-d H:i:s' ) : null;
 	}
 
-	/** Emoji only (joined sequences, skin tones and flags included); anything else becomes ''. */
+	/**
+	 * Emoji only (joined sequences, skin tones, flags, keycaps); anything else becomes ''.
+	 * Explicit code point ranges, not the Unicode emoji property: PCRE2 before 10.40 (PHP 8.0, 8.1)
+	 * cannot compile that property, and the emoji would be dropped without a word.
+	 */
 	private static function emoji( string $v ): string {
 		$v = trim( $v );
-		return preg_match( '/^[\p{Extended_Pictographic}\x{1F3FB}-\x{1F3FF}\x{200D}\x{FE0F}\x{20E3}\x{1F1E6}-\x{1F1FF}]+$/u', $v ) ? $v : '';
+		$ok = preg_match(
+			'/^(?:[#*0-9]\x{FE0F}?\x{20E3}|[\x{1F000}-\x{1FAFF}\x{2600}-\x{27BF}\x{2300}-\x{23FF}\x{2B00}-\x{2BFF}\x{2190}-\x{21FF}\x{2934}\x{2935}\x{3030}\x{303D}\x{3297}\x{3299}\x{00A9}\x{00AE}\x{2122}\x{2139}\x{203C}\x{2049}\x{200D}\x{FE0F}\x{20E3}\x{E0020}-\x{E007F}])+$/u',
+			$v
+		);
+		return 1 === $ok ? $v : '';
+	}
+
+	/** An existing category's slug, or '' (never creates one). */
+	private static function category_slug( string $raw ): string {
+		$raw = trim( $raw );
+		if ( '' === $raw ) {
+			return '';
+		}
+		$term = get_term_by( 'slug', $raw, self::TAX );
+		return $term ? (string) $term->slug : '';
+	}
+
+	/** A plain ASCII slug for a new category ("🎄 Holiday" → "holiday"), unique in the taxonomy. */
+	private static function new_slug( string $name ): string {
+		$base = function_exists( 'remove_accents' ) ? remove_accents( $name ) : $name;
+		$base = trim( (string) preg_replace( '/[^a-z0-9]+/', '-', strtolower( $base ) ), '-' );
+		$base = '' !== $base ? substr( $base, 0, 40 ) : 'category';
+		$slug = $base;
+		for ( $n = 2; get_term_by( 'slug', $slug, self::TAX ); $n++ ) {
+			$slug = $base . '-' . $n;
+		}
+		return $slug;
 	}
 
 	/** The section's rows: blank rows dropped, each field checked; errors keyed by row. */

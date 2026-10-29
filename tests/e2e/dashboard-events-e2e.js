@@ -22,7 +22,7 @@ const SECTIONS = {
 };
 const EVENT = { id: 101, title: 'X-Mas Party', tagline: 'Jingle-bark', emoji: '🎄', category: 'holiday', start_date: '2026-12-19', start_time: '10:00', end_date: '2026-12-19', end_time: '14:00', venue: 'Paw-radise', address: 'Estero, FL', price: '15.00', free: false, note: '', description: '', ticket_url: '', status: 'publish', photo_id: 0, photo_url: '', sections: SECTIONS, url: '/event/x-mas-party/', preview_url: '/?post_type=paw_event&p=101&paw_preview=1' };
 const ROW = { id: 101, title: 'X-Mas Party', emoji: '🎄', when: 'Saturday, December 19th, 2026 · 10:00 AM – 2:00 PM', category_name: 'Holiday party', color: '#0f42c0', venue: 'Paw-radise', price_text: '$15 per dog', status: 'publish', url: '/event/x-mas-party/' };
-const MANIFEST = { categories: { people: [{ name: 'grinning-face', unicode: '😀' }], nature: [{ name: 'dog-face', unicode: '🐶' }], activities: [{ name: 'christmas-tree', unicode: '🎄' }] } };
+const MANIFEST = { categories: { people: [{ name: 'grinning-face', unicode: '😀' }, { name: 'waving-hand', unicode: '👋', tones: ['waving-hand-light', 'waving-hand-medium-light', 'waving-hand-medium', 'waving-hand-medium-dark', 'waving-hand-dark'] }, { name: 'bad"><img src=x onerror="window.__pwned=1">', unicode: '<img src=x onerror="window.__pwned=2">' }], nature: [{ name: 'dog-face', unicode: '🐶' }], activities: [{ name: 'christmas-tree', unicode: '🎄' }] } };
 
 async function mock(page, log) {
   await page.route('**/mock/staff/stats', r => r.fulfill({ json: { check_ins: 0, check_outs: 0, boarding: 0, grooming: 0, pending: 0, nights: [], today: '2026-10-29' } }));
@@ -40,7 +40,7 @@ async function mock(page, log) {
   });
   await page.route('**/mock/staff/events/*/duplicate', r => { log.dup.push(r.request().url()); return r.fulfill({ json: { id: 102 } }); });
   await page.route('**/mock/staff/event-categories', r => { log.cats.push(r.request().postDataJSON()); return r.fulfill({ json: { categories: r.request().postDataJSON().categories.map((c, i) => ({ slug: c.slug || 'new-' + i, name: c.name, color: c.color })) } }); });
-  await page.route('https://cdn.jsdelivr.net/**', r => r.request().url().endsWith('manifest.json')
+  await page.route('https://cdn.jsdelivr.net/**', r => (log.cdn.push(r.request().url()), r.request().url().endsWith('manifest.json'))
     ? r.fulfill({ json: MANIFEST })
     : r.fulfill({ contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#ff7f50"/></svg>' }));
 }
@@ -55,7 +55,7 @@ const rowTexts = (page, name) => page.$$eval(`[data-paw-ev-rows-for="${name}"] [
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
-    const log = { list: [], saves: [], dup: [], deleted: [], cats: [] };
+    const log = { list: [], saves: [], dup: [], deleted: [], cats: [], cdn: [] };
     await mock(page, log);
     await page.goto(URL + '?paw_view=events');
 
@@ -87,6 +87,16 @@ const rowTexts = (page, name) => page.$$eval(`[data-paw-ev-rows-for="${name}"] [
     await page.fill('.paw-emoji-picker .paw-emoji-search input', 'christmas');
     await page.click('.paw-emoji-picker .paw-emoji-item[data-name="christmas-tree"]');
     ok('emoji: the picker replaces the field with its pick', (await page.inputValue('[data-paw-ev-field="emoji"]')) === '🎄');
+    ok('emoji: the picker loads a pinned copy of the emoji list', log.cdn.some(u => /kohid\/icons@[0-9a-f]{40}\//.test(u)) && !log.cdn.some(u => u.includes('@main')));
+    await page.click('[data-emoji-target="#paw-ev-emoji"]');
+    await page.waitForSelector('.paw-emoji-picker .paw-emoji-search input');
+    ok('emoji: names from the emoji list are shown as text, never run as HTML', (await page.evaluate(() => window.__pwned)) === undefined && (await page.locator('.paw-emoji-picker img[src="x"]').count()) === 0);
+    await page.click('.paw-emoji-picker .paw-emoji-tone-btn');
+    await page.click('.paw-emoji-picker [data-tone="medium"]');
+    await page.fill('.paw-emoji-picker .paw-emoji-search input', 'waving');
+    await page.click('.paw-emoji-picker .paw-emoji-item[data-name="waving-hand-medium"]');
+    ok('emoji: a skin tone pick keeps its tone', (await page.inputValue('[data-paw-ev-field="emoji"]')) === '👋🏽');
+    await page.fill('[data-paw-ev-field="emoji"]', '🎄');
 
     // Rows: add, remove, move, drag.
     for (const t of ['A', 'B', 'C']) {
@@ -116,6 +126,7 @@ const rowTexts = (page, name) => page.$$eval(`[data-paw-ev-rows-for="${name}"] [
     const sent = log.saves[log.saves.length - 1].body;
     ok('publish: sends the event with its sections in order', sent.status === 'publish' && sent.title === 'X-Mas Party' && sent.emoji === '🎄' && sent.sections.includes.rows.map(r => r.text).join('') === 'AC' && sent.sections.sessions.rows[0].to === '14:00' && sent.start_date === '2026-12-19');
     ok('publish: the editor shows Published, Update, Preview and Delete', (await page.textContent('[data-paw-ev-status]')) === 'Published' && (await page.textContent('[data-paw-ev-save="publish"]')) === 'Update' && await page.isVisible('[data-paw-ev-preview]') && await page.isVisible('[data-paw-ev-delete]') && page.url().includes('event=101'));
+    ok('published: the draft button says it takes the event offline', (await page.textContent('[data-paw-ev-save="draft"]')) === 'Switch to draft');
     ok('publish: the error is cleared', (await page.locator('[data-paw-ev-form] .is-invalid').count()) === 0);
     await page.click('[data-paw-ev-save="publish"]');
     await page.waitForTimeout(150);
@@ -141,7 +152,7 @@ const rowTexts = (page, name) => page.$$eval(`[data-paw-ev-rows-for="${name}"] [
     await page.waitForSelector('[data-paw-ev-duplicate]');
     await page.click('[data-paw-ev-duplicate]');
     await page.waitForFunction(() => document.querySelector('[data-paw-ev-heading]').textContent === 'X-Mas Party (copy)');
-    ok('duplicate: opens the copy', log.dup.length === 1 && log.dup[0].includes('/events/101/duplicate') && (await page.textContent('[data-paw-ev-status]')) === 'Draft' && (await page.textContent('[data-paw-ev-save="publish"]')) === 'Publish');
+    ok('duplicate: opens the copy', log.dup.length === 1 && log.dup[0].includes('/events/101/duplicate') && (await page.textContent('[data-paw-ev-status]')) === 'Draft' && (await page.textContent('[data-paw-ev-save="publish"]')) === 'Publish' && (await page.textContent('[data-paw-ev-save="draft"]')) === 'Save draft');
     page.once('dialog', d => d.accept());
     await page.click('[data-paw-ev-delete]');
     await page.waitForSelector('[data-paw-ev-list]:not([hidden])');

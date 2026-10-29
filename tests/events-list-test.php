@@ -8,6 +8,10 @@ require __DIR__ . '/post-stubs.php';
 require __DIR__ . '/wp-db-stubs.php';
 function wp_enqueue_style( ...$a ) {}
 function wp_enqueue_script( ...$a ) {}
+function add_query_arg( $key, $value, $url = null ) { // WordPress's (key, value) form, against the current address.
+	$url = $url ?? ( $_SERVER['REQUEST_URI'] ?? '/' );
+	return $url . ( str_contains( $url, '?' ) ? '&' : '?' ) . $key . '=' . $value;
+}
 
 use Pawfectly\Events;
 use Pawfectly\EventsList;
@@ -58,5 +62,10 @@ t( 'shortcode: show="past" picks the first tab', str_contains( EventsList::rende
 $req      = new WP_REST_Request();
 $req->url = array( 'tab' => 'upcoming', 'cat' => '', 'offset' => '9' );
 t( 'route returns cards', 3 === count( titles( EventsList::route( $req )->get_data()['html'] ) ) );
+
+$_SERVER['REQUEST_URI'] = '/?page_id=5';
+t( 'tab links keep the page they are on (plain permalinks)', str_contains( EventsList::render( array() ), 'href="/?page_id=5&amp;paw_events=past"' ) );
+unset( $_SERVER['REQUEST_URI'] );
+t( 'upcoming only asks for events ending today or later', gmdate( 'Y-m-d' ) . ' 00:00:00' === $GLOBALS['paw_last_get_posts']['meta_query'][1]['value'] );
 
 done();

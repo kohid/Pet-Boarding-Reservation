@@ -80,14 +80,17 @@ final class EventDates {
 		$where = self::where( $ev );
 		$about = (string) ( $ev['tagline'] ?? '' );
 
+		$utc    = self::offset_zone();
 		$google = array(
 			'action'   => 'TEMPLATE',
 			'text'     => $ev['title'],
-			'dates'    => $a->format( 'Ymd\THis' ) . '/' . $b->format( 'Ymd\THis' ),
+			'dates'    => self::stamp( $a, $utc ) . '/' . self::stamp( $b, $utc ),
 			'details'  => trim( $about . "\n" . ( $ev['url'] ?? '' ) ),
 			'location' => $where,
-			'ctz'      => wp_timezone()->getName(),
 		);
+		if ( ! $utc ) {
+			$google['ctz'] = wp_timezone()->getName();
+		}
 		$outlook = array(
 			'path'     => '/calendar/action/compose',
 			'rru'      => 'addevent',
@@ -100,13 +103,12 @@ final class EventDates {
 		return array(
 			'google'  => 'https://calendar.google.com/calendar/render?' . http_build_query( $google ),
 			'outlook' => 'https://outlook.live.com/calendar/0/deeplink/compose?' . http_build_query( $outlook ),
-			'ics'     => ( $ev['url'] ?? '' ) . '?paw_ics=1',
+			'ics'     => ( $ev['url'] ?? '' ) . ( str_contains( (string) ( $ev['url'] ?? '' ), '?' ) ? '&' : '?' ) . 'paw_ics=1',
 		);
 	}
 
 	/** The event as an .ics file (one VEVENT, times in the site's timezone). */
 	public static function ics( array $ev ): string {
-		$tz   = wp_timezone()->getName();
 		$host = (string) parse_url( (string) ( $ev['url'] ?? '' ), PHP_URL_HOST );
 		$esc  = static fn( string $s ): string => str_replace( array( '\\', ',', ';', "\r\n", "\n" ), array( '\\\\', '\\,', '\\;', '\\n', '\\n' ), $s );
 		$lines = array(
@@ -117,8 +119,8 @@ final class EventDates {
 			'BEGIN:VEVENT',
 			'UID:paw-event-' . (int) ( $ev['id'] ?? 0 ) . '@' . $host,
 			'DTSTAMP:' . gmdate( 'Ymd\THis\Z' ),
-			'DTSTART;TZID=' . $tz . ':' . self::at( $ev['start'] )->format( 'Ymd\THis' ),
-			'DTEND;TZID=' . $tz . ':' . self::at( $ev['end'] )->format( 'Ymd\THis' ),
+			self::ics_time( 'DTSTART', self::at( $ev['start'] ) ),
+			self::ics_time( 'DTEND', self::at( $ev['end'] ) ),
 			'SUMMARY:' . $esc( (string) $ev['title'] ),
 			'LOCATION:' . $esc( self::where( $ev ) ),
 			'DESCRIPTION:' . $esc( (string) ( $ev['tagline'] ?? '' ) ),
@@ -136,6 +138,24 @@ final class EventDates {
 			static fn( array $m ): string => '<a href="tel:' . $m[1] . $m[2] . $m[3] . '">' . $m[0] . '</a>',
 			$escaped_html
 		);
+	}
+
+	/**
+	 * True when the site uses a UTC offset ("UTC-5", or the default "UTC+0") instead of a city.
+	 * "-05:00" is not a timezone calendar apps know, so those sites send times in UTC.
+	 */
+	private static function offset_zone(): bool {
+		$name = wp_timezone()->getName();
+		return '' !== $name && ( '+' === $name[0] || '-' === $name[0] );
+	}
+
+	/** Local wall time ("20261219T100000"), or UTC with a Z for offset-only sites. */
+	private static function stamp( \DateTimeImmutable $at, bool $utc ): string {
+		return $utc ? $at->setTimezone( new \DateTimeZone( 'UTC' ) )->format( 'Ymd\THis\Z' ) : $at->format( 'Ymd\THis' );
+	}
+
+	private static function ics_time( string $prop, \DateTimeImmutable $at ): string {
+		return self::offset_zone() ? $prop . ':' . self::stamp( $at, true ) : $prop . ';TZID=' . wp_timezone()->getName() . ':' . self::stamp( $at, false );
 	}
 
 	/** "Venue, Address", whichever are set. */

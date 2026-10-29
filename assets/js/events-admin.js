@@ -321,6 +321,7 @@
 		badge.className = 'paw-dash__badge paw-dash__badge--' + (published ? 'confirmed' : 'pending');
 		badge.textContent = published ? T.published : T.draft;
 		$('[data-paw-ev-save="publish"]', form).textContent = published ? T.update : T.publish;
+		$('[data-paw-ev-save="draft"]', form).textContent = published ? T.toDraft : T.saveDraft; // On a live event, drafting takes it offline.
 		$('[data-paw-ev-preview]', form).hidden = !ev.id;
 		$('[data-paw-ev-preview]', form).href = ev.preview_url || '#';
 		$('[data-paw-ev-delete]', form).hidden = !ev.id;

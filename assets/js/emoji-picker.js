@@ -15,7 +15,31 @@
 (function (window, document) {
     'use strict';
 
-    const CDN = 'https://cdn.jsdelivr.net/gh/kohid/icons@main/fluent-emoji';
+    // Pinned to one commit, so the list the dashboard loads cannot change underneath it.
+    const CDN = 'https://cdn.jsdelivr.net/gh/kohid/icons@fb1b9ae254182d7dc7573114ac1231c78103e66d/fluent-emoji';
+    // Skin-tone modifiers, longest names first so "medium-dark" is not read as "dark".
+    const TONE_CODES = [
+        ['medium-light', '\u{1F3FC}'],
+        ['medium-dark', '\u{1F3FE}'],
+        ['medium', '\u{1F3FD}'],
+        ['light', '\u{1F3FB}'],
+        ['dark', '\u{1F3FF}'],
+    ];
+
+    /** Text from the emoji list goes into HTML only through this. */
+    function esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
+    }
+
+    /** The base emoji with a skin-tone modifier after its first character ("👋" + medium → "👋🏽"). */
+    function withTone(glyph, toneName) {
+        const tone = TONE_CODES.find(t => toneName.endsWith('-' + t[0]));
+        if (!tone || !glyph) return glyph;
+        const chars = Array.from(glyph);
+        const rest = chars.slice(1);
+        if (rest[0] === '\uFE0F') rest.shift(); // The text/emoji selector is not kept before a modifier.
+        return chars[0] + tone[1] + rest.join('');
+    }
     const STORAGE_RECENT = 'paw-emoji-recents';
     const STORAGE_TONE = 'paw-emoji-tone';
     const RECENT_LIMIT = 24;
@@ -54,7 +78,7 @@
         return manifestPromise;
     }
 
-    function svgUrl(name) { return CDN + '/svg/' + name + '.svg'; }
+    function svgUrl(name) { return CDN + '/svg/' + encodeURIComponent(name) + '.svg'; }
     function nameToLabel(name) { return name.replace(/-/g, ' '); }
 
     function findGlyph(name) {
@@ -64,7 +88,7 @@
             for (const e of list) {
                 if (e.name === name && e.unicode) return e.unicode;
                 if (e.tones && e.tones.length) {
-                    if (e.tones.indexOf(name) !== -1 && e.unicode) return e.unicode;
+                    if (e.tones.indexOf(name) !== -1 && e.unicode) return withTone(e.unicode, name);
                 }
             }
         }
@@ -260,11 +284,11 @@
                 const name = skipTone ? e.name : applyTone(e, this.tone);
                 const lbl = nameToLabel(name);
                 const inner = (isDefaultTone && e.unicode)
-                    ? `<span class="paw-emoji-glyph">${e.unicode}</span>`
-                    : `<img src="${svgUrl(name)}" alt="${lbl}" loading="lazy">`;
-                return `<button type="button" class="paw-emoji-item" data-name="${name}" title="${lbl}">${inner}</button>`;
+                    ? `<span class="paw-emoji-glyph">${esc(e.unicode)}</span>`
+                    : `<img src="${esc(svgUrl(name))}" alt="${esc(lbl)}" loading="lazy">`;
+                return `<button type="button" class="paw-emoji-item" data-name="${esc(name)}" title="${esc(lbl)}">${inner}</button>`;
             });
-            return `<h4 class="paw-emoji-section">${label}</h4>
+            return `<h4 class="paw-emoji-section">${esc(label)}</h4>
                     <div class="paw-emoji-grid">${parts.join('')}</div>`;
         }
 
@@ -320,7 +344,7 @@
                 if (glyph) {
                     document.execCommand('insertText', false, glyph);
                 } else {
-                    const html = `<img class="paw-emoji" alt=":${name}:" data-emoji="${name}" src="${url}">`;
+                    const html = `<img class="paw-emoji" alt=":${esc(name)}:" data-emoji="${esc(name)}" src="${esc(url)}">`;
                     document.execCommand('insertHTML', false, html);
                 }
             }

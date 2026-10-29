@@ -77,6 +77,7 @@ function set_post_thumbnail( $id, $att ) { $GLOBALS['paw_thumbs'][ (int) $id ] =
 function delete_post_thumbnail( $id ) { unset( $GLOBALS['paw_thumbs'][ (int) $id ] ); return true; }
 
 function get_posts( $a = array() ) {
+	$GLOBALS['paw_last_get_posts'] = $a;
 	$types    = (array) ( $a['post_type'] ?? 'post' );
 	$statuses = (array) ( $a['post_status'] ?? 'publish' );
 	$out      = array_filter(
@@ -123,6 +124,11 @@ function get_posts( $a = array() ) {
 
 function paw_term( array $t ) { return (object) $t; }
 function wp_insert_term( $name, $tax, $args = array() ) {
+	foreach ( get_terms( array( 'taxonomy' => $tax ) ) as $t ) {
+		if ( $t->name === $name ) { // Like WordPress: a name already in use is refused.
+			return new WP_Error( 'term_exists', 'A term with the name provided already exists.', $t->term_id );
+		}
+	}
 	$id   = ++$GLOBALS['paw_next_id'];
 	$slug = $args['slug'] ?? sanitize_title( $name );
 	$GLOBALS['paw_terms'][ $id ] = paw_term( array( 'term_id' => $id, 'name' => $name, 'slug' => $slug, 'taxonomy' => $tax ) );
@@ -170,3 +176,5 @@ function wp_get_object_terms( $id, $tax ) {
 function get_term_meta( $id, $k, $single = false ) { return $GLOBALS['paw_term_meta'][ $id ][ $k ] ?? ''; }
 function update_term_meta( $id, $k, $v ) { $GLOBALS['paw_term_meta'][ $id ][ $k ] = $v; return true; }
 function wp_strip_all_tags( $s ) { return trim( strip_tags( (string) $s ) ); }
+
+function get_the_terms( $id, $tax ) { $t = wp_get_object_terms( $id, $tax ); return $t ? $t : false; }

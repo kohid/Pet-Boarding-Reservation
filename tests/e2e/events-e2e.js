@@ -132,7 +132,7 @@ async function nextTitle(page, before) {
     ok('events: Load more adds the rest, then hides', (await cards()) === 18 && await page.isHidden('[data-paw-events-more]'));
     await shot(page, 'events-list');
     await page.goto(BASE + 'events.html?paw_events=past');
-    ok('events: the tabs are links that keep the page', (await page.getAttribute('.paw-events__tab >> nth=2', 'href')) === '?paw_events=past');
+    ok('events: the tabs are links that keep the page', (await page.getAttribute('.paw-events__tab >> nth=2', 'href')) === '/tests/e2e/out/events.html?paw_events=past' && (await page.getAttribute('.paw-events__tab[aria-current="page"]', 'href')).endsWith('paw_events=upcoming'));
     await page.setViewportSize({ width: 390, height: 800 });
     await page.goto(BASE + 'events.html');
     await noScroll(page, 'events list');

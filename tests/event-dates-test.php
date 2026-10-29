@@ -46,4 +46,15 @@ t( 'ics: text escaped, uid and url', str_contains( $ics, "LOCATION:Paw-radise In
 $html = EventDates::phone_links( esc_html( 'Call or text 239-420-7418 or (239) 420-7418 — since 2026.' ) );
 t( 'phone links', 2 === substr_count( $html, 'href="tel:2394207418"' ) && str_contains( $html, 'since 2026' ) && ! str_contains( $html, 'tel:2026' ) );
 
+// Sites set to a UTC offset ("UTC-5") instead of a city: calendar apps get UTC times.
+$GLOBALS['paw_tz'] = '-05:00';
+$off   = EventDates::links( $ev );
+$offic = EventDates::ics( $ev );
+t( 'offset timezone: Google gets UTC times and no ctz', str_contains( $off['google'], 'dates=20261219T150000Z%2F20261219T190000Z' ) && ! str_contains( $off['google'], 'ctz=' ) );
+t( 'offset timezone: the .ics uses UTC, not TZID=-05:00', str_contains( $offic, "DTSTART:20261219T150000Z\r\n" ) && ! str_contains( $offic, 'TZID' ) );
+$GLOBALS['paw_tz'] = 'America/New_York';
+t( 'named timezone: kept as is', str_contains( EventDates::links( $ev )['google'], 'ctz=America%2FNew_York' ) && str_contains( EventDates::ics( $ev ), 'DTSTART;TZID=America/New_York:20261219T100000' ) );
+unset( $GLOBALS['paw_tz'] );
+t( 'ics link with plain permalinks', 'https://example.test/?paw_event=x-mas&paw_ics=1' === EventDates::links( array_merge( $ev, array( 'url' => 'https://example.test/?paw_event=x-mas' ) ) )['ics'] );
+
 done();

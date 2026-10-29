@@ -33,13 +33,23 @@ final class EventPage {
 		);
 	}
 
-	/** the_content: an event's own page gets the event body. */
+	/**
+	 * the_content: an event's own page gets the event body. Matched on the queried post, not
+	 * in_the_loop(): block themes before WordPress 6.4 render the content outside the loop.
+	 */
 	public static function content( $content ) {
-		if ( ! is_singular( Events::TYPE ) || ! in_the_loop() || ! is_main_query() ) {
+		static $busy = false;
+		if ( $busy || ! is_singular( Events::TYPE ) || ! is_main_query() || (int) get_the_ID() !== (int) get_queried_object_id() ) {
 			return $content;
 		}
 		$ev = Events::get( (int) get_the_ID() );
-		return $ev ? self::body( $ev ) : $content;
+		if ( ! $ev ) {
+			return $content;
+		}
+		$busy = true; // The body never runs the_content again, but a theme hook might.
+		$out  = self::body( $ev );
+		$busy = false;
+		return $out;
 	}
 
 	/** The page body, in the spec's order. */

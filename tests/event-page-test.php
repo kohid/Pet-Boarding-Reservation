@@ -103,4 +103,15 @@ t( 'and renders for staff with paw_preview', array( 'publish', 'draft' ) === $q-
 unset( $_GET['paw_preview'] );
 t( 'preview link', 'https://example.test/?post_type=paw_event&p=5&paw_preview=1' === EventPage::preview_url( 5 ) );
 
+// the_content: block themes before WordPress 6.4 render the content outside the loop.
+function is_singular( $t = '' ) { return true; }
+function is_main_query() { return true; }
+function get_the_ID() { return $GLOBALS['paw_the_id']; }
+function get_queried_object_id() { return $GLOBALS['paw_queried']; }
+$GLOBALS['paw_the_id'] = $ev['id'];
+$GLOBALS['paw_queried'] = $ev['id'];
+t( 'the_content: the event body, even outside the loop', str_contains( EventPage::content( '<p>raw</p>' ), 'paw-event__dateline' ) );
+$GLOBALS['paw_the_id'] = 999;
+t( 'the_content: another post on the page keeps its own content', '<p>raw</p>' === EventPage::content( '<p>raw</p>' ) );
+
 done();

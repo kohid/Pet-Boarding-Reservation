@@ -67,7 +67,7 @@ foreach ( array( '👨‍👩‍👧‍👦', '🐕‍🦺', '👋🏽', '🎄' 
 	t( "sanitize: emoji $e kept intact", $e === Events::sanitize( xmas( array( 'emoji' => $e ) ) )['emoji'] );
 }
 t( 'sanitize: text is not an emoji', '' === Events::sanitize( xmas( array( 'emoji' => 'abc' ) ) )['emoji'] );
-t( 'sanitize: more than 32 bytes of emoji is refused', array( 'emoji' ) === fields( Events::sanitize( xmas( array( 'emoji' => str_repeat( '🎄', 9 ) ) ) ) ) );
+t( 'sanitize: more than 64 bytes of emoji is refused', array( 'emoji' ) === fields( Events::sanitize( xmas( array( 'emoji' => str_repeat( '🎄', 17 ) ) ) ) ) );
 $odd = Events::sanitize( xmas( array( 'nonsense' => 'x', 'sections' => array( 'bogus' => array( 'rows' => array() ) ), 'ticket_url' => 'javascript:alert(1)' ) ) );
 t( 'sanitize: unknown keys and sections dropped; unsafe links emptied', ! isset( $odd['nonsense'] ) && ! isset( $odd['sections']['bogus'] ) && '' === $odd['ticket_url'] );
 t( 'sanitize: the description keeps the allowed tags only', '<p>Deck the paws!</p>x' === $ok['description'] );
@@ -119,5 +119,28 @@ function flush_rewrite_rules( $hard = true ) { $GLOBALS['paw_flushes']++; }
 Events::maybe_flush();
 Events::maybe_flush();
 t( 'rewrite rules flushed once per version', 1 === $GLOBALS['paw_flushes'] && PAW_VERSION === get_option( 'paw_rewrite_version' ) );
+
+// Review fixes.
+t( 'emoji: no Unicode property PCRE2 < 10.40 cannot compile (PHP 8.0/8.1 hosts)', ! str_contains( file_get_contents( PAW_DIR . 'includes/Events.php' ), 'Extended_Pictographic' ) );
+foreach ( array( '1️⃣', '🏴󠁧󠁢󠁥󠁮󠁧󠁿', '🧑🏻‍❤️‍💋‍🧑🏼', '❤️', '☀️', '©️' ) as $e ) {
+	t( "emoji: $e kept", $e === Events::sanitize( xmas( array( 'emoji' => $e ) ) )['emoji'] );
+}
+t( 'emoji: plain digits are not emoji', '' === Events::sanitize( xmas( array( 'emoji' => '12' ) ) )['emoji'] );
+
+$GLOBALS['paw_terms'] = array();
+$cats = Events::save_categories( array( array( 'name' => '🎄 Holiday', 'color' => '#0f42c0' ), array( 'name' => '🐾', 'color' => '#06d6a0' ) ) );
+t( 'categories: emoji names get plain ASCII slugs', 1 === preg_match( '/^[a-z0-9-]+$/', $cats[0]['slug'] ) && 1 === preg_match( '/^[a-z0-9-]+$/', $cats[1]['slug'] ) && $cats[0]['slug'] !== $cats[1]['slug'] );
+$first = get_term_by( 'slug', $cats[0]['slug'], 'paw_event_cat' )->term_id;
+$again = Events::save_categories( array( array( 'slug' => $cats[0]['slug'], 'name' => '🎄 Holidays', 'color' => '#0f42c0' ), $cats[1] ) );
+t( 'categories: saving again renames the same category', 2 === count( $again ) && '🎄 Holidays' === $again[0]['name'] && $first === get_term_by( 'slug', $cats[0]['slug'], 'paw_event_cat' )->term_id );
+$hol = Events::save( Events::sanitize( xmas( array( 'category' => $cats[0]['slug'] ) ) ) );
+t( 'categories: an event keeps an emoji-named category', '🎄 Holidays' === Events::get( $hol )['category_name'] );
+t( 'categories: an unknown category on an event is dropped, not created', '' === Events::sanitize( xmas( array( 'category' => 'no-such-thing' ) ) )['category'] );
+wp_insert_term( 'Training', 'paw_event_cat', array( 'slug' => 'training' ) );
+$kept = Events::save_categories( array_merge( $again, array( array( 'name' => 'Training', 'color' => '#3b7597' ) ) ) );
+t( 'categories: a name already in use keeps that category instead of deleting it', in_array( 'training', array_column( $kept, 'slug' ), true ) && 3 === count( $kept ) );
+
+Events::between( '2026-01-01', '2026-12-31' );
+t( 'between: loads posts with their caches primed, not ids one by one', ! isset( $GLOBALS['paw_last_get_posts']['fields'] ) );
 
 done();

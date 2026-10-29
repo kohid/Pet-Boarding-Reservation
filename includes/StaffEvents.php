@@ -47,8 +47,13 @@ final class StaffEvents {
 		$page = max( 1, absint( $req->get_param( 'page' ) ?? 1 ) );
 
 		$statuses = array( 'drafts' => array( 'draft' ), 'all' => array( 'publish', 'draft' ) )[ $tab ] ?? array( 'publish' );
-		$events   = Events::between( '1970-01-01', '9999-12-31', $q, '', $statuses );
 		$now      = new \DateTimeImmutable( 'now', wp_timezone() );
+		$today    = $now->format( 'Y-m-d' );
+		$range    = array(
+			'upcoming' => array( $today, '9999-12-31' ),
+			'past'     => array( '1970-01-01', $today ),
+		)[ $tab ] ?? array( '1970-01-01', '9999-12-31' );
+		$events   = Events::between( $range[0], $range[1], $q, '', $statuses );
 		if ( 'upcoming' === $tab ) {
 			$events = array_filter( $events, static fn( array $ev ): bool => 'past' !== Events::status( $ev, $now ) );
 		} elseif ( 'past' === $tab ) {

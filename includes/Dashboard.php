@@ -97,6 +97,8 @@ final class Dashboard {
 					'draft'         => __( 'Draft', 'pawfectly-reservations' ),
 					'published'     => __( 'Published', 'pawfectly-reservations' ),
 					'publish'       => __( 'Publish', 'pawfectly-reservations' ),
+					'saveDraft'     => __( 'Save draft', 'pawfectly-reservations' ),
+					'toDraft'       => __( 'Switch to draft', 'pawfectly-reservations' ),
 					'update'        => __( 'Update', 'pawfectly-reservations' ),
 					'saved'         => __( 'Saved.', 'pawfectly-reservations' ),
 					'view'          => __( 'View', 'pawfectly-reservations' ),

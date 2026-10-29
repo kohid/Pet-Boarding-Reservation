@@ -53,7 +53,7 @@ final class EventsList {
 <div class="paw-events" data-tab="<?php echo esc_attr( $tab ); ?>" data-cat="<?php echo esc_attr( $cat ); ?>" data-limit="<?php echo esc_attr( (string) $limit ); ?>" data-rest="<?php echo esc_url( rest_url( Rest::NS . '/events/list' ) ); ?>">
 	<nav class="paw-events__tabs" aria-label="<?php esc_attr_e( 'Events', 'pawfectly-reservations' ); ?>">
 		<?php foreach ( $labels as $paw_key => $paw_label ) : ?>
-			<a class="paw-events__tab" href="<?php echo esc_url( '?paw_events=' . $paw_key ); ?>"<?php echo $tab === $paw_key ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $paw_label ); ?></a>
+			<a class="paw-events__tab" href="<?php echo esc_url( add_query_arg( 'paw_events', $paw_key ) ); ?>"<?php echo $tab === $paw_key ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $paw_label ); ?></a>
 		<?php endforeach; ?>
 	</nav>
 	<div class="paw-events__grid" data-paw-events-grid><?php echo $cards['html']; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in the card template. ?></div>
@@ -100,11 +100,18 @@ final class EventsList {
 
 	/** A tab's events: upcoming and current soonest first, past most recent first. */
 	private static function events( string $tab, string $cat ): array {
-		$all = Events::between( '1970-01-01', '9999-12-31', '', $cat );
+		$now   = new \DateTimeImmutable( 'now', wp_timezone() );
+		$today = $now->format( 'Y-m-d' );
+		// Only the dates the tab can show, so the list never loads every event ever held.
+		$range = array(
+			'upcoming' => array( $today, '9999-12-31' ),
+			'current'  => array( $today, $today ),
+			'past'     => array( '1970-01-01', $today ),
+		)[ $tab ] ?? array( '1970-01-01', '9999-12-31' );
+		$all = Events::between( $range[0], $range[1], '', $cat );
 		if ( 'all' === $tab ) {
 			return $all;
 		}
-		$now  = new \DateTimeImmutable( 'now', wp_timezone() );
 		$list = array_values( array_filter( $all, static fn( array $ev ): bool => Events::status( $ev, $now ) === $tab ) );
 		return 'past' === $tab ? array_reverse( $list ) : $list;
 	}

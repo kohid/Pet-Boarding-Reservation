@@ -9,6 +9,10 @@ require dirname( __DIR__ ) . '/post-stubs.php';
 require dirname( __DIR__ ) . '/wp-db-stubs.php';
 function wp_enqueue_style( ...$a ) {}
 function wp_enqueue_script( ...$a ) {}
+function add_query_arg( $key, $value, $url = null ) { // WordPress's (key, value) form, against the current address.
+	$url = $url ?? ( $_SERVER['REQUEST_URI'] ?? '/tests/e2e/out/events.html' );
+	return $url . ( str_contains( $url, '?' ) ? '&' : '?' ) . $key . '=' . $value;
+}
 
 use Pawfectly\Events;
 

@@ -29,7 +29,7 @@
 - Times are local to the site (`wp_timezone()`), stored as `Y-m-d H:i:s`.
 - Limits, from the spec:
   - Title: 120 characters. Tagline: 160. Venue: 120. Address: 200. Note: 200. Row text: 300.
-  - Emoji: 32 bytes.
+  - Emoji: 64 bytes (raised from 32 in the final review: 🧑🏻‍❤️‍💋‍🧑🏼 is 35).
   - Rows: sessions 8, includes 20, goodies 12, good to know 20.
   - Calendar: 3 chips a day. `[pawfectly_events]` pages: 9 events.
 - Version **0.5.0** (`PAW_VERSION` and the plugin header).
