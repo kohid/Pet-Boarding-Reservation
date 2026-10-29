@@ -99,7 +99,91 @@ final class Mailer {
 		);
 	}
 
-	/** Tells the owner their reservation's new status. */
+	/** An event sign-up: a confirmation to the owner and an alert to staff. */
+	public static function signup_received( array $su, array $event ): void {
+		$settings = Settings::get();
+		$summary  = SignupRest::summary( $su, $event );
+		$links    = EventDates::links( $event );
+		$rows     = array_filter(
+			array(
+				__( 'Reference', 'pawfectly-reservations' ) => $su['reference'],
+				__( 'Event', 'pawfectly-reservations' )     => $summary['event'],
+				__( 'When', 'pawfectly-reservations' )      => $summary['when'],
+				__( 'Where', 'pawfectly-reservations' )     => $summary['where'],
+				__( 'Session', 'pawfectly-reservations' )   => $summary['session'],
+				__( 'Dogs', 'pawfectly-reservations' )      => $summary['dogs'],
+				__( 'Total', 'pawfectly-reservations' )     => $summary['total_text'],
+			),
+			'strlen'
+		);
+
+		/* translators: %s: owner's first name */
+		$owner_body = '<p>' . esc_html( sprintf( __( 'Hi %s,', 'pawfectly-reservations' ), $su['first_name'] ) ) . '</p>'
+			/* translators: %s: event title */
+			. '<p>' . esc_html( sprintf( __( "You're signed up for %s. We can't wait to meet your pup!", 'pawfectly-reservations' ), $event['title'] ) ) . '</p>'
+			. EmailTemplate::rows( $rows )
+			. '<p>' . esc_html__( 'Add it to your calendar:', 'pawfectly-reservations' ) . ' <a href="' . esc_url( $links['google'] ) . '">Google</a> · <a href="' . esc_url( $links['outlook'] ) . '">Outlook</a> · <a href="' . esc_url( $links['ics'] ) . '">Apple / iCal</a></p>'
+			. '<p>' . esc_html__( 'Need to change something? Just reply to this email.', 'pawfectly-reservations' ) . '</p>';
+		$staff = Settings::staff_emails( $settings );
+		self::send(
+			$su['email'],
+			/* translators: 1: event title, 2: reference */
+			sprintf( __( "You're signed up: %1\$s — %2\$s", 'pawfectly-reservations' ), $event['title'], $su['reference'] ),
+			EmailTemplate::render( __( "You're signed up!", 'pawfectly-reservations' ), $owner_body, $settings ),
+			$staff[0] ?? ''
+		);
+
+		if ( ! $staff ) {
+			return;
+		}
+		$dashboard  = Pages::url( Dashboard::TAG );
+		$link       = '' !== $dashboard ? add_query_arg( array( 'paw_view' => 'events', 'event' => (int) $event['id'] ), $dashboard ) : '';
+		$staff_body = EmailTemplate::rows(
+			$rows + array(
+				__( 'Name', 'pawfectly-reservations' )  => trim( $su['first_name'] . ' ' . $su['last_name'] ),
+				__( 'Email', 'pawfectly-reservations' ) => $su['email'],
+				__( 'Phone', 'pawfectly-reservations' ) => $su['phone'],
+				__( 'Notes', 'pawfectly-reservations' ) => $su['notes'],
+			)
+		) . ( '' !== $link ? '<p><a href="' . esc_url( $link ) . '" style="display:inline-block;padding:10px 20px;border-radius:24px;background:#ff7f50;color:#ffffff;text-decoration:none;font-weight:600;">' . esc_html__( 'See sign-ups', 'pawfectly-reservations' ) . '</a></p>' : '' );
+		self::send(
+			$staff,
+			/* translators: 1: event title, 2: owner's name, 3: number of dogs */
+			sprintf( _n( 'New sign-up for %1$s: %2$s (%3$d dog)', 'New sign-up for %1$s: %2$s (%3$d dogs)', $su['dog_count'], 'pawfectly-reservations' ), $event['title'], trim( $su['first_name'] . ' ' . $su['last_name'] ), $su['dog_count'] ),
+			EmailTemplate::render( __( 'New event sign-up', 'pawfectly-reservations' ), $staff_body, $settings ),
+			$su['email']
+		);
+	}
+
+	/** Tells staff an owner cancelled their event sign-up. */
+	public static function signup_cancelled( array $su, array $event ): void {
+		$settings = Settings::get();
+		$staff    = Settings::staff_emails( $settings );
+		if ( ! $staff ) {
+			return;
+		}
+		$body = EmailTemplate::rows(
+			array_filter(
+				array(
+					__( 'Reference', 'pawfectly-reservations' ) => $su['reference'],
+					__( 'Event', 'pawfectly-reservations' )     => $event['title'],
+					__( 'Session', 'pawfectly-reservations' )   => $su['session_label'],
+					__( 'Name', 'pawfectly-reservations' )      => trim( $su['first_name'] . ' ' . $su['last_name'] ),
+					__( 'Dogs', 'pawfectly-reservations' )      => implode( ', ', array_column( $su['dogs'], 'name' ) ),
+				),
+				'strlen'
+			)
+		);
+		self::send(
+			$staff,
+			/* translators: 1: event title, 2: owner's name, 3: reference */
+			sprintf( __( 'Sign-up cancelled for %1$s: %2$s (%3$s)', 'pawfectly-reservations' ), $event['title'], trim( $su['first_name'] . ' ' . $su['last_name'] ), $su['reference'] ),
+			EmailTemplate::render( __( 'Sign-up cancelled by the owner', 'pawfectly-reservations' ), $body, $settings ),
+			$su['email']
+		);
+	}
+
+		/** Tells the owner their reservation's new status. */
 	public static function status_changed( array $r ): void {
 		$settings = Settings::get();
 		$label    = Reservations::label( (string) $r['status'] );

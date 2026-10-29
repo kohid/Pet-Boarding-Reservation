@@ -1,5 +1,6 @@
 /* Dashboard → Events in Chromium: the list, the editor and its repeatable rows, the emoji
- * picker, errors on a row field, publish, duplicate, delete, unsaved changes, categories.
+ * picker, errors on a row field, publish, duplicate, delete, unsaved changes, an event's
+ * sign-ups (meters, rows, status, CSV), categories.
  * Run: php tests/e2e/build-dashboard.php && node tests/e2e/dashboard-events-e2e.js */
 const { chromium } = require('playwright');
 const { spawn } = require('child_process');
@@ -20,8 +21,19 @@ const SECTIONS = {
   good_to_know: { heading: 'Good to Know', rows: [] },
   closing: { heading: 'Reserve Your Spot Today!', intro: 'Register in seconds' },
 };
-const EVENT = { id: 101, title: 'X-Mas Party', tagline: 'Jingle-bark', emoji: '🎄', category: 'holiday', start_date: '2026-12-19', start_time: '10:00', end_date: '2026-12-19', end_time: '14:00', venue: 'Paw-radise', address: 'Estero, FL', price: '15.00', free: false, note: '', description: '', ticket_url: '', status: 'publish', photo_id: 0, photo_url: '', sections: SECTIONS, url: '/event/x-mas-party/', preview_url: '/?post_type=paw_event&p=101&paw_preview=1' };
-const ROW = { id: 101, title: 'X-Mas Party', emoji: '🎄', when: 'Saturday, December 19th, 2026 · 10:00 AM – 2:00 PM', category_name: 'Holiday party', color: '#0f42c0', venue: 'Paw-radise', price_text: '$15 per dog', status: 'publish', url: '/event/x-mas-party/' };
+const EVENT = { id: 101, title: 'X-Mas Party', tagline: 'Jingle-bark', emoji: '🎄', category: 'holiday', start_date: '2026-12-19', start_time: '10:00', end_date: '2026-12-19', end_time: '14:00', venue: 'Paw-radise', address: 'Estero, FL', price: '15.00', free: false, note: '', description: '', ticket_url: '', spots: 3, coupon: 'PawPark', status: 'publish', photo_id: 0, photo_url: '', sections: SECTIONS, url: '/event/x-mas-party/', preview_url: '/?post_type=paw_event&p=101&paw_preview=1' };
+const ROW = { id: 101, title: 'X-Mas Party', emoji: '🎄', when: 'Saturday, December 19th, 2026 · 10:00 AM – 2:00 PM', category_name: 'Holiday party', color: '#0f42c0', venue: 'Paw-radise', price_text: '$15 per dog', status: 'publish', dogs: 3, url: '/event/x-mas-party/' };
+function signups(status) {
+  return {
+    sessions: [{ label: '10:00 AM – 12:00 PM · Session 1: Small dogs', taken: status === 'cancelled' ? 0 : 2, spots: 3 }, { label: '12:00 – 2:00 PM · Session 2', taken: 3, spots: 3 }],
+    counts: { signups: status === 'cancelled' ? 1 : 2, dogs: status === 'cancelled' ? 3 : 5 },
+    rows: [
+      { id: 501, reference: 'EVT-ABC234', status: status, name: 'Zoe Olsen', email: 'zoe@example.com', phone: '239-420-7418', session: '10:00 AM – 12:00 PM · Session 1: Small dogs', dogs: [{ name: 'Rex', breed: 'Beagle', weight: '22 lbs' }, { name: '<img src=x onerror="window.__pwned=3">', breed: '', weight: '' }], dog_count: 2, coupon: false, total_text: '2 × $15 = $30, paid at the event', notes: 'Rex is shy', created: '2026-10-29 10:00:00' },
+      { id: 502, reference: 'EVT-XYZ789', status: 'confirmed', name: 'Bo Lee', email: 'bo@example.com', phone: '', session: '12:00 – 2:00 PM · Session 2', dogs: [{ name: 'Max', breed: '', weight: '' }, { name: 'Duke', breed: '', weight: '' }, { name: 'Bear', breed: '', weight: '' }], dog_count: 3, coupon: true, total_text: 'Free with member code', notes: '', created: '2026-10-28 10:00:00' },
+    ],
+    csv_url: '/wp-admin/admin-post.php?action=paw_signups_csv&event=101&_wpnonce=abc',
+  };
+}
 const MANIFEST = { categories: { people: [{ name: 'grinning-face', unicode: '😀' }, { name: 'waving-hand', unicode: '👋', tones: ['waving-hand-light', 'waving-hand-medium-light', 'waving-hand-medium', 'waving-hand-medium-dark', 'waving-hand-dark'] }, { name: 'bad"><img src=x onerror="window.__pwned=1">', unicode: '<img src=x onerror="window.__pwned=2">' }], nature: [{ name: 'dog-face', unicode: '🐶' }], activities: [{ name: 'christmas-tree', unicode: '🎄' }] } };
 
 async function mock(page, log) {
@@ -38,6 +50,8 @@ async function mock(page, log) {
     if (s && s.to <= s.from) return r.fulfill({ status: 400, json: { code: 'paw_invalid', message: 'Please check the highlighted fields.', data: { status: 400, fields: { 'sections.sessions.0.to': 'The end must be after the start.' } } } });
     return r.fulfill({ json: { ok: true, id: 101, event: Object.assign({}, body, { id: 101, url: '/event/x-mas-party/', preview_url: EVENT.preview_url, photo_url: '' }) } });
   });
+  await page.route(/\/mock\/staff\/events\/\d+\/signups$/, r => { log.su.push(r.request().url()); return r.fulfill({ json: signups(log.status.length ? log.status[log.status.length - 1].status : 'confirmed') }); });
+  await page.route('**/mock/staff/signups/*/status', r => { log.status.push(Object.assign({ url: r.request().url() }, r.request().postDataJSON())); return r.fulfill({ json: { row: {} } }); });
   await page.route('**/mock/staff/events/*/duplicate', r => { log.dup.push(r.request().url()); return r.fulfill({ json: { id: 102 } }); });
   await page.route('**/mock/staff/event-categories', r => { log.cats.push(r.request().postDataJSON()); return r.fulfill({ json: { categories: r.request().postDataJSON().categories.map((c, i) => ({ slug: c.slug || 'new-' + i, name: c.name, color: c.color })) } }); });
   await page.route('https://cdn.jsdelivr.net/**', r => (log.cdn.push(r.request().url()), r.request().url().endsWith('manifest.json'))
@@ -55,13 +69,14 @@ const rowTexts = (page, name) => page.$$eval(`[data-paw-ev-rows-for="${name}"] [
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
-    const log = { list: [], saves: [], dup: [], deleted: [], cats: [], cdn: [] };
+    const log = { list: [], saves: [], dup: [], deleted: [], cats: [], cdn: [], su: [], status: [] };
     await mock(page, log);
     await page.goto(URL + '?paw_view=events');
 
     // List.
     await page.waitForSelector('[data-paw-ev-rows] .paw-dash__ev-item');
     ok('list: loads the upcoming tab', log.list[0].includes('tab=upcoming') && (await page.textContent('.paw-dash__ev-item-title')) === 'X-Mas Party');
+    ok('list: a row says how many dogs are signed up', (await page.textContent('.paw-dash__ev-chip--dogs')) === '3 dogs signed up');
     ok('list: Events is the current menu item', (await page.getAttribute('[data-paw-nav="events"]', 'aria-current')) === 'page');
     await page.click('[data-paw-ev-tab="drafts"]');
     await page.waitForSelector('[data-paw-ev-empty]:not([hidden])');
@@ -71,6 +86,7 @@ const rowTexts = (page, name) => page.$$eval(`[data-paw-ev-rows-for="${name}"] [
     await page.click('[data-paw-ev-new]');
     ok('add: an empty editor with the default headings', await page.isVisible('[data-paw-ev-form]') && await page.isHidden('[data-paw-ev-list]') && (await page.inputValue('[data-paw-ev-section="sessions"] [data-paw-ev-part="heading"]')) === "Pick Your Pup's Session" && (await page.inputValue('[data-paw-ev-field="title"]')) === '');
     ok('add: the address shows the editor', page.url().includes('event=new'));
+    ok('add: no sign-ups card for a new event', await page.isHidden('[data-paw-su]'));
     ok('add: the category list', (await page.$$eval('[data-paw-ev-field="category"] option', o => o.map(x => x.textContent))).join('|') === 'No category|Holiday party');
     await page.fill('[data-paw-ev-field="title"]', 'X-Mas Party');
     await page.fill('[data-paw-ev-field="start_date"]', '2026-12-19');
@@ -79,6 +95,8 @@ const rowTexts = (page, name) => page.$$eval(`[data-paw-ev-rows-for="${name}"] [
     await page.fill('[data-paw-ev-field="end_time"]', '14:00');
     await page.fill('[data-paw-ev-field="venue"]', 'Paw-radise');
     await page.fill('[data-paw-ev-field="price"]', '15');
+    await page.fill('[data-paw-ev-field="spots"]', '3');
+    await page.fill('[data-paw-ev-field="coupon"]', 'PawPark');
 
     // Emoji picker.
     await page.fill('[data-paw-ev-field="emoji"]', '🐶');
@@ -124,7 +142,7 @@ const rowTexts = (page, name) => page.$$eval(`[data-paw-ev-rows-for="${name}"] [
     await page.click('[data-paw-ev-save="publish"]');
     await page.waitForSelector('[data-paw-ev-saved]:text("Saved.")');
     const sent = log.saves[log.saves.length - 1].body;
-    ok('publish: sends the event with its sections in order', sent.status === 'publish' && sent.title === 'X-Mas Party' && sent.emoji === '🎄' && sent.sections.includes.rows.map(r => r.text).join('') === 'AC' && sent.sections.sessions.rows[0].to === '14:00' && sent.start_date === '2026-12-19');
+    ok('publish: sends the event with its sections in order', sent.status === 'publish' && sent.title === 'X-Mas Party' && sent.emoji === '🎄' && sent.sections.includes.rows.map(r => r.text).join('') === 'AC' && sent.sections.sessions.rows[0].to === '14:00' && sent.start_date === '2026-12-19' && sent.spots === '3' && sent.coupon === 'PawPark');
     ok('publish: the editor shows Published, Update, Preview and Delete', (await page.textContent('[data-paw-ev-status]')) === 'Published' && (await page.textContent('[data-paw-ev-save="publish"]')) === 'Update' && await page.isVisible('[data-paw-ev-preview]') && await page.isVisible('[data-paw-ev-delete]') && page.url().includes('event=101'));
     ok('published: the draft button says it takes the event offline', (await page.textContent('[data-paw-ev-save="draft"]')) === 'Switch to draft');
     ok('publish: the error is cleared', (await page.locator('[data-paw-ev-form] .is-invalid').count()) === 0);
@@ -158,9 +176,27 @@ const rowTexts = (page, name) => page.$$eval(`[data-paw-ev-rows-for="${name}"] [
     await page.waitForSelector('[data-paw-ev-list]:not([hidden])');
     ok('delete: after confirming, back to the list', log.deleted[0] === '102');
 
+    // An event's sign-ups.
+    await page.click('[data-paw-ev-open="101"]');
+    await page.waitForSelector('[data-paw-su]:not([hidden])');
+    ok('sign-ups: the editor fills spots and the member code', (await page.inputValue('[data-paw-ev-field="spots"]')) === '3' && (await page.inputValue('[data-paw-ev-field="coupon"]')) === 'PawPark');
+    ok('sign-ups: the counts and a meter per session', (await page.textContent('[data-paw-su-count]')) === '2 sign-ups · 5 dogs' && (await page.locator('.paw-dash__ev-meter').count()) === 2 && (await page.textContent('.paw-dash__ev-meter >> nth=1')).includes('3 of 3 spots taken') && (await page.locator('.paw-dash__ev-meter >> nth=1 >> .is-full').count()) === 1);
+    ok('sign-ups: a row per sign-up with reference, dogs, notes and total', (await page.locator('[data-paw-su-rows] tr').count()) === 2 && (await page.textContent('[data-paw-su-rows] tr >> nth=0')).includes('EVT-ABC234') && (await page.textContent('[data-paw-su-rows] tr >> nth=0')).includes('Rex · Beagle · 22 lbs') && (await page.textContent('[data-paw-su-rows] tr >> nth=0')).includes('Rex is shy') && (await page.textContent('[data-paw-su-rows] tr >> nth=1')).includes('Free with member code'));
+    ok('sign-ups: names are shown as text, never run as HTML', (await page.evaluate(() => window.__pwned)) === undefined);
+    ok('sign-ups: Download CSV is the plain link from the server', (await page.getAttribute('[data-paw-su-csv]', 'href')) === '/wp-admin/admin-post.php?action=paw_signups_csv&event=101&_wpnonce=abc');
+    if (SHOTS) await page.locator('[data-paw-su]').screenshot({ path: path.join(SHOTS, 'dash-signups.png') });
+    await page.selectOption('[data-paw-su-status="501"]', 'cancelled');
+    await page.waitForSelector('[data-paw-su-rows] tr.is-cancelled');
+    ok('sign-ups: a status change is saved and the counts reload', log.status[0].status === 'cancelled' && log.status[0].url.includes('/signups/501/status') && (await page.textContent('[data-paw-su-count]')) === '1 sign-ups · 3 dogs');
+    let leaveAsked = 0;
+    page.once('dialog', d => { leaveAsked++; d.accept(); });
+    await page.click('[data-paw-ev-back]');
+    await page.waitForSelector('[data-paw-ev-list]:not([hidden])');
+    ok('sign-ups: a status change is not an unsaved edit', leaveAsked === 0);
+
     // Phone.
     await page.click('[data-paw-ev-open="101"]');
-    await page.waitForSelector('[data-paw-ev-form]:not([hidden])');
+    await page.waitForSelector('[data-paw-su]:not([hidden])');
     await page.setViewportSize({ width: 390, height: 800 });
     await page.waitForTimeout(100);
     ok('phone: no horizontal scroll in the editor', (await page.evaluate(() => document.documentElement.scrollWidth)) <= 390);

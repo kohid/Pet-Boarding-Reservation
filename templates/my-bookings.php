@@ -9,6 +9,7 @@
  * @var array    $rows     Reservations::for_owner() rows.
  * @var string   $today    Y-m-d, site timezone.
  * @var string   $book_url The reservation form page, or ''.
+ * @var array    $signups  MyBookings::signup_rows().
  */
 
 use Pawfectly\MyBookings;
@@ -65,4 +66,8 @@ defined( 'ABSPATH' ) || exit;
 			<?php endif; ?>
 		<?php endif; ?>
 	</div>
+	<?php
+	$paw_signups = $signups;
+	include PAW_DIR . 'templates/partials/my-signups.php';
+	?>
 </div>

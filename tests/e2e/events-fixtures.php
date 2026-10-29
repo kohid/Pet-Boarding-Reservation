@@ -7,6 +7,10 @@ define( 'PAW_URL', '/' );
 require dirname( __DIR__ ) . '/bootstrap.php';
 require dirname( __DIR__ ) . '/post-stubs.php';
 require dirname( __DIR__ ) . '/wp-db-stubs.php';
+function get_current_user_id() { return 0; } // A visitor: nobody is signed in.
+function is_user_logged_in() { return false; }
+function wp_get_current_user() { return new class() { public function exists() { return false; } }; }
+function home_url( $p = '' ) { return '/' . ltrim( $p, '/' ); }
 function wp_enqueue_style( ...$a ) {}
 function wp_enqueue_script( ...$a ) {}
 function add_query_arg( $key, $value, $url = null ) { // WordPress's (key, value) form, against the current address.
@@ -15,6 +19,7 @@ function add_query_arg( $key, $value, $url = null ) { // WordPress's (key, value
 }
 
 use Pawfectly\Events;
+use Pawfectly\Signups;
 
 function paw_e2e_event( string $title, string $start, string $end, array $more = array() ): int {
 	[ $sd, $st ] = explode( ' ', $start );
@@ -38,6 +43,8 @@ function paw_e2e_seed(): int {
 		'2026-12-19 14:00',
 		array(
 			'category'    => 'holiday',
+			'spots'       => '3',
+			'coupon'      => 'PawPark',
 			'tagline'     => 'A jingle-bark holiday party for dogs of every breed',
 			'emoji'       => '🎄',
 			'note'        => '🐾 FREE for Dog Park Members — call or text 239-420-7418 for your coupon code',
@@ -50,6 +57,10 @@ function paw_e2e_seed(): int {
 			),
 		)
 	);
+	// The large-dog session is full: one sign-up with three dogs.
+	$ev = Events::get( $xmas );
+	Signups::create( $ev, Signups::sanitize( $ev, array( 'first_name' => 'Bo', 'last_name' => 'Lee', 'email' => 'bo@example.com', 'phone' => '239-555-0100', 'session' => '1', 'dogs' => array( array( 'name' => 'Max' ), array( 'name' => 'Duke' ), array( 'name' => 'Bear' ) ), 'agree' => '1' ) ), 0, '' );
+	$GLOBALS['paw_e2e_gala'] = paw_e2e_event( 'Ticketed gala', '2027-02-05 18:00', '2027-02-05 21:00', array( 'emoji' => '🥂', 'ticket_url' => 'https://tickets.example/gala' ) );
 	paw_e2e_event( 'New Year Pawty', '2026-12-31 18:00', '2027-01-02 12:00', array( 'emoji' => '🎉', 'tagline' => 'Ring in the new year with your pup' ) );
 	for ( $i = 1; $i <= 5; $i++ ) {
 		paw_e2e_event( "Puppy class $i", '2026-12-08 0' . ( $i + 3 ) . ':00', '2026-12-08 0' . ( $i + 3 ) . ':45', array( 'category' => 'training', 'emoji' => '🐶' ) );

@@ -62,7 +62,7 @@ Put `[pawfectly_dashboard]` on a page, for example `/dashboard/`.
 
 - **Add Event:** in **Dashboard → Events**. Each event has:
   - an emoji (with a picker), a title and a tagline, a category, and an optional cover photo
-  - start and end, venue and address, price per dog (or Free), an optional ticket link, and a highlight note
+  - start and end, venue and address, price per dog (or Free), spots per session, a member coupon code, an optional ticket link, and a highlight note
   - a description
 - **Sections:** each one is optional, and its heading is yours to edit. Add, remove, drag or move rows; a section with no rows is hidden.
   - **Sessions:** times and who each one is for
@@ -73,7 +73,20 @@ Put `[pawfectly_dashboard]` on a page, for example `/dashboard/`.
 - **Duplicate** copies an event as a draft, which is handy for next year's party.
 - **Drafts:** only staff see them. Use **Preview**.
 - **Event page:** every event has its own page at `/event/<name>/`, laid out top to bottom: date line, emoji, title, tagline, facts, description, tickets, then the sections. It includes search-engine event data and an Add to calendar menu (Google, Outlook, .ics).
-- **Ticket buttons:** "Get Tickets" and "Reserve Your Spot" go to the event's ticket link. Without one, the page says sign-ups open soon. Pawfectly's own sign-up form comes in a later release.
+- **Ticket buttons:** "Get Tickets" and "Reserve Your Spot" go to the sign-up form at the bottom of the event page. If you sell tickets somewhere else, add a ticket link and both buttons go there instead (the form is then hidden).
+
+## Event sign-ups
+
+- **No account needed.** People pick a session, give their name, email and phone, and add 1–5 dogs (name required; breed and weight optional), then tick that their dogs are vaccinated and friendly. Signed-in owners get their name, email and phone filled in.
+- **Paid at the event.** The form shows the total as it changes ("2 × $15 = $30, paid at the event"). Nothing is charged online.
+- **Spots per session:** each dog takes one spot. A full session is greyed out and says "Full"; the others show how many spots are left. Leave Spots blank for no limit.
+- **Member coupon code:** members who enter the event's code (any letter case) attend free. The code is never shown on the page, in emails or in the CSV.
+- **One sign-up per email per event.** A cancelled sign-up frees its spots and its email.
+- **After sending:** a thank-you with the reference (`EVT-XXXXXX`), the details and Add to calendar links, plus a confirmation email. Staff get an email with a "See sign-ups" button.
+- **Staff:** open a saved event in **Dashboard → Events** to see its **Sign-ups** card: how full each session is, every sign-up with its dogs and notes, a status (Confirmed, Attended, Cancelled) and **Download CSV** (one row per dog). The events list shows how many dogs are signed up.
+- **Owners:** **My Bookings** lists their event sign-ups. They can cancel until the event starts; staff get an email.
+- **Spam protection:** the same as the booking form (a fresh security token, 5 tries per 10 minutes, a hidden trap field, and double-click protection).
+- **Caching:** the page never holds a security token, so it is safe to cache. Spots left update when the cache is purged.
 - **Categories:** **Settings → Event categories** sets each one's name and colour. The calendar uses the colours.
 - **Calendar page:** put `[pawfectly_calendar]` on a page such as `/event-calendar/`.
 - **Events list:** put `[pawfectly_events]` on `/events/`. The event pages use `/event/`, so the two don't clash.
@@ -141,6 +154,7 @@ Statuses: Pending (new), Confirmed, Declined, Checked in, Completed, Cancelled.
 - **Owner:** "We've received your reservation request — PAW-XXXXXX", with dates (or the grooming day and time), pet name, service and estimated total.
 - **Staff:** "New reservation request PAW-XXXXXX: Pet (dates)", with a link that opens the reservation in the dashboard.
 - **Status change** (optional): "Your reservation PAW-XXXXXX is now Confirmed".
+- **Event sign-up:** "You're signed up: X-Mas Party — EVT-XXXXXX" to the owner, "New sign-up for X-Mas Party: Name (2 dogs)" to staff, and "Sign-up cancelled for …" to staff when an owner cancels.
 
 Health details and files are never emailed; staff read them in the dashboard. Sending uses `wp_mail`, so use an SMTP plugin if your host's mail is unreliable.
 
@@ -189,7 +203,7 @@ php tests/e2e/build.php && php tests/e2e/build.php signed-in && node tests/e2e/f
 php tests/e2e/build-account.php && node tests/e2e/account-e2e.js                          # menu, login, profile, bookings
 php tests/e2e/build-dashboard.php && node tests/e2e/dashboard-e2e.js                      # staff dashboard and settings
 php tests/e2e/build-dashboard.php && node tests/e2e/dashboard-events-e2e.js               # dashboard Events editor
-php tests/e2e/build-events.php && node tests/e2e/events-e2e.js                            # calendar, events list, event page
+php tests/e2e/build-events.php && node tests/e2e/events-e2e.js                            # calendar, events list, event page, sign-up form
 bin/build-release.sh                                      # dist/pawfectly-reservations.zip
 ```
 

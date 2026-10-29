@@ -72,6 +72,9 @@ class Fake_WPDB {
 
 	public function get_var( $sql ) {
 		$this->queries[] = $sql;
+		if ( preg_match( '/\b(GET|RELEASE)_LOCK\(/', $sql ) ) {
+			return '1'; // MySQL named locks: always granted here.
+		}
 		return array_shift( $this->var_queue );
 	}
 

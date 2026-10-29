@@ -423,6 +423,16 @@
 	vertical-align: middle;
 }
 
+.paw-acct .paw-acct__signups td a {
+	color: var(--paw-ink);
+	text-decoration: none;
+}
+
+.paw-acct .paw-acct__signups td a:hover {
+	color: var(--paw-primary-dark);
+	text-decoration: underline;
+}
+
 @media (max-width: 639px) {
 	.paw-acct .paw-acct__table thead {
 		display: none;
@@ -457,6 +467,7 @@
 .paw-acct .paw-badge--checked_in { background: #e7ecfa; color: #0f42c0; }
 .paw-acct .paw-badge--completed { background: #e8f0f5; color: #3b7597; }
 .paw-acct .paw-badge--cancelled { background: #f1f1f4; color: #6b7280; }
+.paw-acct .paw-badge--attended { background: #e8f0f5; color: #3b7597; }
 
 @media (prefers-reduced-motion: reduce) {
 	.paw-um .paw-um__panel {

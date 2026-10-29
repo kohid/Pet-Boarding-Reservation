@@ -8,6 +8,9 @@ require __DIR__ . '/bootstrap.php';
 require __DIR__ . '/post-stubs.php';
 require __DIR__ . '/user-stubs.php';
 function home_url( $p = '' ) { return 'https://example.test/' . ltrim( $p, '/' ); }
+function wp_enqueue_style( ...$a ) {}
+function wp_enqueue_script( ...$a ) {}
+function wp_add_inline_script( $handle, $js, $pos = 'after' ) { $GLOBALS['paw_inline'][] = array( $handle, $js, $pos ); }
 
 use Pawfectly\Activator;
 use Pawfectly\EventPage;
@@ -57,13 +60,13 @@ t( 'sessions: time on top, then name and who', str_contains( $html, '10:00 AM �
 t( 'five includes, two goodies, three good-to-know items', 5 === substr_count( $html, 'class="paw-event__include"' ) && 2 === substr_count( $html, 'class="paw-event__goodie"' ) && 3 === substr_count( $html, 'class="paw-event__know"' ) );
 t( 'a good-to-know item with no emoji gets the paw', str_contains( $html, '<span class="paw-event__know-emoji" aria-hidden="true">🐾</span><span>Standard park entry' ) );
 t( 'the closing summary', str_contains( $html, 'Saturday, December 19th, 2026, 10:00 AM – 2:00 PM — $15 per dog' ) );
-t( 'no ticket link yet: buttons go to the closing block, which says sign-ups open soon', str_contains( $html, 'href="#paw-event-reserve" data-paw-ticket' ) && str_contains( $html, 'id="paw-event-reserve"' ) && str_contains( $html, 'Sign-ups open soon' ) );
+t( 'no ticket link: the buttons go to the sign-up form in the closing block', str_contains( $html, 'href="#paw-event-reserve" data-paw-ticket' ) && str_contains( $html, 'id="paw-event-reserve"' ) && str_contains( $html, 'data-paw-signup' ) );
 t( 'add to calendar links', str_contains( $html, 'calendar.google.com' ) && str_contains( $html, '?paw_ics=1' ) );
 
 $linked = $ev;
 $linked['ticket_url'] = 'https://tickets.example/xmas';
 $lh = EventPage::body( $linked, $now );
-t( 'with a ticket link: both buttons go there and no sign-ups note', 2 === substr_count( $lh, 'href="https://tickets.example/xmas" data-paw-ticket' ) && ! str_contains( $lh, 'Sign-ups open soon' ) );
+t( 'with a ticket link: both buttons go there and there is no sign-up form', 2 === substr_count( $lh, 'href="https://tickets.example/xmas" data-paw-ticket' ) && ! str_contains( $lh, 'data-paw-signup' ) );
 
 $bare = $ev;
 $bare['sections']['goodies']['rows'] = array();
@@ -113,5 +116,31 @@ $GLOBALS['paw_queried'] = $ev['id'];
 t( 'the_content: the event body, even outside the loop', str_contains( EventPage::content( '<p>raw</p>' ), 'paw-event__dateline' ) );
 $GLOBALS['paw_the_id'] = 999;
 t( 'the_content: another post on the page keeps its own content', '<p>raw</p>' === EventPage::content( '<p>raw</p>' ) );
+
+// The sign-up form.
+$su_ev = $ev;
+$su_ev['spots']  = 2;
+$su_ev['coupon'] = 'PawPark';
+\Pawfectly\Signups::create( $su_ev, array( 'first_name' => 'A', 'last_name' => 'B', 'email' => 'a@example.com', 'phone' => '2394207418', 'session' => 0, 'session_label' => 'S1', 'dogs' => array( array( 'name' => 'X', 'breed' => '', 'weight' => '' ), array( 'name' => 'Y', 'breed' => '', 'weight' => '' ) ), 'dog_count' => 2, 'coupon' => false, 'notes' => '', 'price_each' => '15.00', 'total' => '30.00' ), 0, '' );
+$form = EventPage::body( $su_ev, $now );
+t( 'form: sessions with spots left, a full one disabled', str_contains( $form, 'name="session" value="0" disabled' ) && str_contains( $form, 'Full' ) && str_contains( $form, '2 spots left' ) );
+t( 'form: details, a dog card template, the agreement and the honeypot', str_contains( $form, 'name="first_name"' ) && str_contains( $form, 'data-paw-su-dog-template' ) && str_contains( $form, 'name="agree"' ) && str_contains( $form, 'name="website"' ) );
+t( 'form: a member code field, but never the code itself', str_contains( $form, 'name="coupon"' ) && ! str_contains( $form, 'PawPark' ) && ! str_contains( strtolower( $form ), 'pawpark' ) );
+t( 'form: the route and the fresh-nonce route, never a nonce in the page', str_contains( $form, 'wp-json/pawfectly/v1/events/' . $su_ev['id'] . '/signup' ) && str_contains( $form, 'wp-json/pawfectly/v1/nonce' ) && ! str_contains( $form, 'good-nonce' ) );
+$free_ev = array_merge( $su_ev, array( 'free' => true, 'price' => '' ) );
+t( 'form: no member code field on a free event', ! str_contains( EventPage::body( $free_ev, $now ), 'name="coupon"' ) );
+t( 'form: none on a past event', ! str_contains( EventPage::body( $su_ev, new DateTimeImmutable( '2026-12-20', new DateTimeZone( 'UTC' ) ) ), 'data-paw-signup' ) );
+t( 'form: none on a draft preview', ! str_contains( EventPage::body( array_merge( $su_ev, array( 'status' => 'draft' ) ), $now ), 'data-paw-signup' ) );
+
+// The REST nonce: visitors fetch one (the page may be cached); signed-in people get their own.
+$GLOBALS['paw_inline'] = array();
+wp_set_current_user( 0 );
+EventPage::enqueue();
+t( 'enqueue: no nonce in the page for visitors', array() === $GLOBALS['paw_inline'] );
+$amy = paw_test_user( 'amy@example.com', 'amy pass1', array( 'paw_customer' ) );
+wp_set_current_user( $amy->ID );
+EventPage::enqueue();
+t( 'enqueue: a signed-in person gets their own nonce for the form', 'paw-signup' === ( $GLOBALS['paw_inline'][0][0] ?? '' ) && str_contains( $GLOBALS['paw_inline'][0][1], 'PAW_SIGNUP_NONCE' ) && str_contains( $GLOBALS['paw_inline'][0][1], wp_create_nonce( 'wp_rest' ) ) );
+wp_set_current_user( 0 );
 
 done();

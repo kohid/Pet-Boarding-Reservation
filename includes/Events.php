@@ -26,7 +26,9 @@ final class Events {
 	public const PALETTE = array( '#ff7f50', '#3b7597', '#06d6a0', '#0f42c0', '#bc0202', '#30afff', '#e8a33a', '#8a5cd8' );
 
 	private const META      = '_paw_ev_';
-	private const KEYS      = array( 'start', 'end', 'tagline', 'emoji', 'venue', 'address', 'price', 'free', 'note', 'ticket_url', 'sections' );
+	private const KEYS      = array( 'start', 'end', 'tagline', 'emoji', 'venue', 'address', 'price', 'free', 'note', 'ticket_url', 'sections', 'spots', 'coupon' );
+	/** Most dogs a session (or a session-less event) can take. */
+	public const MAX_SPOTS  = 500;
 	private const TEXT_MAX  = array(
 		'title'   => 120,
 		'tagline' => 160,
@@ -102,6 +104,8 @@ final class Events {
 			'note'        => '',
 			'description' => '',
 			'ticket_url'  => '',
+			'spots'       => 0,  // Dogs per session; 0 = no limit.
+			'coupon'      => '', // The members' code for free entry. Never shown publicly.
 			'status'      => 'draft',
 			'photo_id'    => 0,
 			'sections'    => array(
@@ -183,6 +187,18 @@ final class Events {
 			}
 		}
 
+		$spots = trim( (string) ( $in['spots'] ?? '' ) );
+		if ( '' !== $spots && ( ! ctype_digit( $spots ) || (int) $spots < 1 || (int) $spots > self::MAX_SPOTS ) ) {
+			/* translators: %d: most spots allowed */
+			$errors['spots'] = sprintf( __( 'Enter a number from 1 to %d, or leave it blank for no limit.', 'pawfectly-reservations' ), self::MAX_SPOTS );
+		} else {
+			$out['spots'] = (int) $spots;
+		}
+		$out['coupon'] = sanitize_text_field( (string) ( $in['coupon'] ?? '' ) );
+		if ( '' !== $out['coupon'] && ( mb_strlen( $out['coupon'] ) < 3 || mb_strlen( $out['coupon'] ) > 30 ) ) {
+			$errors['coupon'] = __( 'Use 3 to 30 characters, or leave it blank.', 'pawfectly-reservations' );
+		}
+
 		$out['ticket_url']  = esc_url_raw( (string) ( $in['ticket_url'] ?? '' ) );
 		$out['description'] = trim( wp_kses( (string) ( $in['description'] ?? '' ), Settings::WAIVER_TAGS + array( 'a' => array( 'href' => true ) ) ) );
 		$out['status']      = 'publish' === ( $in['status'] ?? '' ) ? 'publish' : 'draft';
@@ -252,6 +268,8 @@ final class Events {
 		$terms             = get_the_terms( $id, self::TAX ); // Cached, unlike wp_get_object_terms().
 		$term              = is_array( $terms ) ? ( $terms[0] ?? null ) : null;
 		$ev['free']        = (bool) $ev['free'];
+		$ev['spots']       = (int) $ev['spots'];
+		$ev['coupon']      = (string) $ev['coupon'];
 		$ev['title']       = (string) $post->post_title;
 		$ev['description'] = (string) $post->post_content;
 		$ev['status']      = (string) $post->post_status;
@@ -293,6 +311,12 @@ final class Events {
 		}
 		// Whole posts, so WordPress primes their meta and term caches in one go.
 		return array_values( array_filter( array_map( static fn( $p ): ?array => self::get( (int) $p->ID ), get_posts( $args ) ) ) );
+	}
+
+	/** The event without what only staff may see (the members' code), for public pages and routes. */
+	public static function public_view( array $ev ): array {
+		unset( $ev['coupon'] );
+		return $ev;
 	}
 
 	/** upcoming (not started), current (in progress) or past (ended), in the site's timezone. */

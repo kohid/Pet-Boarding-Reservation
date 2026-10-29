@@ -127,6 +127,18 @@ function ok(name, cond) { assert.ok(cond, name); passed++; console.log('ok   - '
     await page.click('#bookings [data-paw-cancel]');
     await page.waitForSelector('#bookings .paw-badge--cancelled');
     ok('cancel updates the badge and removes the button', (await page.locator('#bookings [data-paw-cancel]').count()) === 0);
+
+    // My Bookings: event sign-ups.
+    const su = '#bookings .paw-acct__signups';
+    ok('sign-ups: both listed, the upcoming one first, with its dogs and total', (await page.locator(su + ' tbody tr').count()) === 2 && (await page.textContent(su + ' tbody tr >> nth=0')).includes('X-Mas Party') && (await page.textContent(su + ' tbody tr >> nth=0')).includes('Biscuit, Luna') && (await page.textContent(su + ' tbody tr >> nth=0')).includes('2 × $15 = $30, paid at the event'));
+    ok('sign-ups: only the upcoming one can be cancelled', (await page.locator(su + ' [data-paw-cancel-signup]').count()) === 1);
+    let suCancel = '';
+    await page.route('**/mock/account/signups/*/cancel', route => { suCancel = route.request().url(); return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, status: 'cancelled', label: 'Cancelled' }) }); });
+    let asked = '';
+    page.once('dialog', d => { asked = d.message(); d.accept(); });
+    await page.click(su + ' [data-paw-cancel-signup]');
+    await page.waitForSelector(su + ' .paw-badge--cancelled');
+    ok('sign-ups: Cancel asks, calls the sign-up route, updates the badge and removes the button', asked.includes('event sign-up') && /\/account\/signups\/\d+\/cancel$/.test(suCancel) && (await page.locator(su + ' [data-paw-cancel-signup]').count()) === 0);
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'account-pages.png'), fullPage: true });
     await page.setViewportSize({ width: 375, height: 800 });
     ok('no horizontal scroll at 375px', (await page.evaluate(() => document.documentElement.scrollWidth)) <= 375);

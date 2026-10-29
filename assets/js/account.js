@@ -162,16 +162,18 @@
 			});
 		}
 
-		/* Owner cancels a reservation. */
+		/* Owner cancels a reservation or an event sign-up. */
 		root.addEventListener('click', function (e) {
-			var btn = e.target.closest('[data-paw-cancel]');
-			if (!btn || !window.confirm(I18N.confirmCancel)) {
+			var btn = e.target.closest('[data-paw-cancel], [data-paw-cancel-signup]');
+			var signup = btn && btn.hasAttribute('data-paw-cancel-signup');
+			if (!btn || !window.confirm(signup ? I18N.confirmCancelSignup : I18N.confirmCancel)) {
 				return;
 			}
 			var row = btn.closest('[data-paw-row]');
-			var msg = root.querySelector('[data-paw-msg]');
+			var msg = btn.closest('.paw-acct__card').querySelector('[data-paw-msg]');
 			btn.disabled = true;
-			call('account/reservations/' + btn.getAttribute('data-paw-cancel') + '/cancel').then(function (r) {
+			var path = signup ? 'account/signups/' + btn.getAttribute('data-paw-cancel-signup') : 'account/reservations/' + btn.getAttribute('data-paw-cancel');
+			call(path + '/cancel').then(function (r) {
 				if (r.ok) {
 					var badge = row.querySelector('[data-paw-status]');
 					badge.className = 'paw-badge paw-badge--' + r.data.status;

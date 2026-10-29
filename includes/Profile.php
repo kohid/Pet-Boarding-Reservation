@@ -36,6 +36,7 @@ final class Profile {
 				'saving'        => __( 'Saving…', 'pawfectly-reservations' ),
 				'mismatch'      => __( "The two passwords don't match.", 'pawfectly-reservations' ),
 				'confirmCancel' => __( 'Cancel this reservation? This cannot be undone online.', 'pawfectly-reservations' ),
+				'confirmCancelSignup' => __( 'Cancel this event sign-up? Your spots go to someone else.', 'pawfectly-reservations' ),
 			),
 		);
 	}

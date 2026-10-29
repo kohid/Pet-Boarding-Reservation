@@ -142,8 +142,10 @@ $paw_desc    = wp_kses( (string) $paw_ev['description'], Settings::WAIVER_TAGS +
 			<p class="paw-event__soon"><?php esc_html_e( 'This event has ended', 'pawfectly-reservations' ); ?></p>
 		<?php elseif ( '' !== $paw_ev['ticket_url'] ) : ?>
 			<a class="paw-event__btn" href="<?php echo esc_url( $paw_ev['ticket_url'] ); ?>" data-paw-ticket><?php esc_html_e( 'Reserve Your Spot', 'pawfectly-reservations' ); ?></a>
+		<?php elseif ( 'publish' === $paw_ev['status'] ) : ?>
+			<?php include PAW_DIR . 'templates/partials/event-signup.php'; ?>
 		<?php else : ?>
-			<p class="paw-event__soon"><?php esc_html_e( 'Sign-ups open soon — check back here to reserve your spot.', 'pawfectly-reservations' ); ?></p>
+			<p class="paw-event__soon"><?php esc_html_e( 'The sign-up form appears here once the event is published.', 'pawfectly-reservations' ); ?></p>
 		<?php endif; ?>
 	</section>
 </article>

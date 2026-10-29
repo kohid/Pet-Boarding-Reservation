@@ -4,6 +4,7 @@
  * Run: php tests/my-bookings-test.php
  */
 require __DIR__ . '/bootstrap.php';
+require __DIR__ . '/post-stubs.php';
 require __DIR__ . '/wp-db-stubs.php';
 require __DIR__ . '/user-stubs.php';
 
@@ -14,8 +15,6 @@ use Pawfectly\Profile;
 use Pawfectly\Reservations;
 
 function home_url( $p = '' ) { return 'https://example.test/' . ltrim( $p, '/' ); }
-function get_post( $id ) { return null; }
-function get_post_meta( $id, $k = '', $s = false ) { return ''; }
 function get_permalink( $id = 0 ) { return 'https://example.test/account/'; }
 function shortcode_atts( $pairs, $atts, $tag = '' ) { return array_merge( $pairs, array_intersect_key( (array) $atts, $pairs ) ); }
 function wp_enqueue_style() {}

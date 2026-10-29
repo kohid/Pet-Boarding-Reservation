@@ -23,14 +23,23 @@ final class EventPage {
 		add_action( 'wp_head', array( self::class, 'head' ) );
 		add_action( 'template_redirect', array( self::class, 'ics' ) );
 		add_action( 'pre_get_posts', array( self::class, 'allow_preview' ) );
-		add_action(
-			'wp_enqueue_scripts',
-			static function (): void {
-				if ( is_singular( Events::TYPE ) ) {
-					wp_enqueue_style( 'paw-calendar', PAW_URL . 'assets/css/calendar.css', array(), PAW_VERSION );
-				}
-			}
-		);
+		add_action( 'wp_enqueue_scripts', array( self::class, 'enqueue' ) );
+	}
+
+	/**
+	 * An event's page: its CSS and the sign-up script. Visitors' pages may be cached, so the
+	 * form fetches a fresh nonce; signed-in pages aren't cached, and a fetched nonce would belong
+	 * to a visitor (WordPress treats a REST call without one as logged out), so they get their own.
+	 */
+	public static function enqueue(): void {
+		if ( ! is_singular( Events::TYPE ) ) {
+			return;
+		}
+		wp_enqueue_style( 'paw-calendar', PAW_URL . 'assets/css/calendar.css', array(), PAW_VERSION );
+		wp_enqueue_script( 'paw-signup', PAW_URL . 'assets/js/signup.js', array(), PAW_VERSION, true );
+		if ( is_user_logged_in() ) {
+			wp_add_inline_script( 'paw-signup', 'window.PAW_SIGNUP_NONCE = ' . wp_json_encode( wp_create_nonce( 'wp_rest' ) ) . ';', 'before' );
+		}
 	}
 
 	/**

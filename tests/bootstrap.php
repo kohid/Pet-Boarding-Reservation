@@ -115,8 +115,8 @@ function rest_url( $p = '' ) { return 'https://example.test/wp-json/' . ltrim( $
 function admin_url( $p = '' ) { return 'https://example.test/wp-admin/' . ltrim( $p, '/' ); }
 function wp_nonce_url( $url, $action = -1 ) { return esc_html( $url . ( str_contains( $url, '?' ) ? '&' : '?' ) . '_wpnonce=nonce-' . $action ); } // Escaped for HTML, like WordPress's.
 $GLOBALS['paw_valid_nonce'] = 'good-nonce';
-function wp_verify_nonce( $nonce, $action = -1 ) { return 'wp_rest' === $action && $nonce === $GLOBALS['paw_valid_nonce'] ? 1 : false; }
-function wp_create_nonce( $action = -1 ) { return $GLOBALS['paw_valid_nonce']; }
+function wp_create_nonce( $action = -1 ) { return 'wp_rest' === $action ? $GLOBALS['paw_valid_nonce'] : 'nonce-' . $action; } // Like core: each action has its own nonce.
+function wp_verify_nonce( $nonce, $action = -1 ) { return $nonce === wp_create_nonce( $action ) ? 1 : false; }
 function current_time( $type, $gmt = 0 ) { return gmdate( 'Y-m-d H:i:s' ); }
 function absint( $v ) { return abs( (int) $v ); }
 $GLOBALS['paw_mail']        = array();
