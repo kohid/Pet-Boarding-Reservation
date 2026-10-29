@@ -51,6 +51,9 @@ namespace {
 	require __DIR__ . '/user-stubs.php';
 	function home_url( $p = '' ) { return 'https://example.test/' . ltrim( $p, '/' ); }
 	function get_the_ID() { return $GLOBALS['paw_the_id']; }
+	function is_singular( $t = '' ) { return true; }
+	function wp_enqueue_style( ...$a ) {}
+	function wp_enqueue_script( ...$a ) {}
 
 	class Fake_Tags_Manager {
 		public $groups = array();
@@ -71,7 +74,7 @@ namespace {
 	foreach ( $m->tags as $name => $tag ) {
 		$cats[ $tag->get_categories()[0] ][] = $name;
 	}
-	t( 'a text tag for every text field', count( Pawfectly\EventFields::TEXT ) === count( $cats['text'] ?? array() ) );
+	t( 'a text tag for every text field, plus section rows and the formatted description', count( Pawfectly\EventFields::TEXT ) + 2 === count( $cats['text'] ?? array() ) && isset( $m->tags['paw-event-section-rows'], $m->tags['paw-event-description-html'] ) );
 	t( 'a link tag for every link', count( Pawfectly\EventFields::LINKS ) === count( $cats['url'] ?? array() ) );
 	t( 'the cover photo and the category colour', array( 'paw-event-photo' ) === ( $cats['image'] ?? null ) && array( 'paw-event-color' ) === ( $cats['color'] ?? null ) );
 	$every = array();
@@ -84,8 +87,8 @@ namespace {
 	// Values, on the X-Mas Party.
 	$ev = Pawfectly\Events::save( Pawfectly\Events::sanitize( array(
 		'title' => 'X-Mas Party', 'start_date' => '2026-12-19', 'start_time' => '10:00', 'end_date' => '2026-12-19', 'end_time' => '14:00',
-		'venue' => 'Paw-radise', 'price' => '15', 'photo_id' => '7', 'status' => 'publish', 'coupon' => 'PawPark',
-		'sections' => array( 'includes' => array( 'heading' => 'Everything Your {price} Ticket Includes' ), 'sessions' => array( 'rows' => array( array( 'from' => '10:00', 'to' => '12:00', 'name' => 'S1', 'who' => '' ) ) ) ),
+		'venue' => 'Paw-radise', 'price' => '15', 'photo_id' => '7', 'status' => 'publish', 'coupon' => 'PawPark', 'description' => '<p>Deck the <strong>paws</strong>!</p>',
+		'sections' => array( 'includes' => array( 'heading' => 'Everything Your {price} Ticket Includes', 'rows' => array( array( 'emoji' => '📸', 'text' => 'Photo booth' ) ) ), 'sessions' => array( 'rows' => array( array( 'from' => '10:00', 'to' => '12:00', 'name' => 'S1', 'who' => '' ) ) ) ),
 	) ) );
 	$GLOBALS['paw_the_id'] = $ev;
 	$out = static function ( string $name, array $settings = array() ) use ( $m ): string {
@@ -104,6 +107,12 @@ namespace {
 	t( 'date and time formats: the default, then your own', 'Saturday, December 19th, 2026' === $out( 'paw-event-start-date' ) && 'Dec 19' === $out( 'paw-event-start-date', array( 'format' => 'M j' ) ) && '2:00 PM' === $out( 'paw-event-end-time' ) );
 	t( 'section heading: pick the section', 'Everything Your $15 Ticket Includes' === $out( 'paw-event-section-heading', array( 'section' => 'includes' ) ) );
 	t( 'the section control lists every section', array( 'sessions', 'includes', 'goodies', 'good_to_know', 'closing' ) === array_keys( ( new ( get_class( $m->tags['paw-event-section-heading'] ) )() )->get_controls()['section']['options'] ) );
+	$rows = $out( 'paw-event-section-rows', array( 'section' => 'sessions' ) );
+	t( 'section rows: the repeater as a list, pick the section', str_contains( $rows, '<ul class="paw-ev-list paw-ev-list--sessions">' ) && str_contains( $rows, '<span class="paw-ev-row__name">S1</span>' ) );
+	t( 'section rows: another section', str_contains( $out( 'paw-event-section-rows', array( 'section' => 'includes' ) ), '<span class="paw-ev-row__text">Photo booth</span>' ) );
+	t( 'section rows: the section control lists the four repeaters', array( 'sessions', 'includes', 'goodies', 'good_to_know' ) === array_keys( ( new ( get_class( $m->tags['paw-event-section-rows'] ) )() )->get_controls()['section']['options'] ) );
+	t( 'section rows: an empty section prints nothing on the site', '' === $out( 'paw-event-section-rows', array( 'section' => 'goodies' ) ) );
+	t( 'description (formatted): keeps its HTML', str_contains( $out( 'paw-event-description-html' ), '<strong>paws</strong>' ) );
 	t( 'spots left: pick the session', '' === $out( 'paw-event-spots-left', array( 'session' => '1' ) ) );
 	t( 'a link tag', str_ends_with( $value( 'paw-event-tickets' ), '/event/x-mas-party/#paw-event-reserve' ) && str_contains( $value( 'paw-event-google' ), 'calendar.google.com' ) );
 	t( 'the image tag', array( 'id' => 7, 'url' => 'https://example.test/logo-7.png' ) === $value( 'paw-event-photo' ) );

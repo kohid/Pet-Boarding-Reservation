@@ -87,14 +87,17 @@ With **Elementor Pro**, build the event page yourself in **Templates → Theme B
   - Date line, Day, Time range, Summary line
   - Venue, Address, Venue + address
   - Price (number), Price text, Free badge, Ticket button text
-  - Highlight note, Description (text)
+  - Highlight note, Description (plain text), Description (formatted)
   - Spots per session, Spots left (pick the session)
   - Section heading and Section intro (pick the section: Sessions, Ticket includes, Extra goodies, Good to know, Closing call to action). `{price}` is filled in.
+  - **Section rows (list):** a section's rows as a list (pick Sessions, Ticket includes, Extra goodies or Good to know). Use it in a **Text Editor** widget, under the section's heading.
 - **Links:** Tickets / sign-up link (your ticket link, or the sign-up form on the page), Ticket link, Event page link, Google Calendar, Outlook, Apple / iCal (.ics), Map.
 - **Image:** Cover photo.
 - **Colour:** Category colour.
 
-**Shortcode:** add a **Shortcode** widget for the parts Elementor can't build from single values:
+In the Elementor editor, the tags and the shortcode show the event picked in the template's **Preview Settings** (or your latest event). An empty section says so in the editor, for example "No extra goodies for this event"; visitors see nothing.
+
+**Shortcode:** the same parts are also a shortcode, for a **Shortcode** widget or any page. The sign-up form must go in a Shortcode widget:
 
 | Shortcode | Shows |
 |---|---|

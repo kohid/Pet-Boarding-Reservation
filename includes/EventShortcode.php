@@ -28,6 +28,14 @@ final class EventShortcode {
 		if ( ! $ev ) {
 			return '';
 		}
+		return self::part( $ev, $part );
+	}
+
+	/**
+	 * One part of an event, for the shortcode and the Section rows / Description (formatted)
+	 * Dynamic Tags. Empty parts print nothing, except a hint in the Elementor editor.
+	 */
+	public static function part( array $ev, string $part ): string {
 		if ( ! is_singular( Events::TYPE ) ) {
 			wp_enqueue_style( 'paw-calendar', PAW_URL . 'assets/css/calendar.css', array(), PAW_VERSION ); // The plain-list reset (EventPage::enqueue covers event pages).
 		}
@@ -56,7 +64,32 @@ final class EventShortcode {
 				$paw_section = $part;
 				include PAW_DIR . 'templates/partials/event-rows.php';
 		}
-		return trim( (string) ob_get_clean() );
+		$html = trim( (string) ob_get_clean() );
+		if ( '' === $html && self::in_editor() && isset( self::empty_hints()[ $part ] ) ) {
+			$html = '<p class="paw-ev-empty">' . esc_html( self::empty_hints()[ $part ] ) . '</p>';
+		}
+		return $html;
+	}
+
+	/** What an empty part says in the Elementor editor, so "empty on purpose" isn't mistaken for broken. */
+	private static function empty_hints(): array {
+		return array(
+			'description'  => __( 'No description for this event.', 'pawfectly-reservations' ),
+			'sessions'     => __( 'No sessions for this event.', 'pawfectly-reservations' ),
+			'includes'     => __( 'No ticket includes for this event.', 'pawfectly-reservations' ),
+			'goodies'      => __( 'No extra goodies for this event.', 'pawfectly-reservations' ),
+			'good_to_know' => __( 'No good-to-know items for this event.', 'pawfectly-reservations' ),
+			'signup'       => __( 'No sign-up form here: this event sells tickets elsewhere, or is a draft.', 'pawfectly-reservations' ),
+		);
+	}
+
+	/** True while Elementor draws its editor or preview. */
+	private static function in_editor(): bool {
+		$el = class_exists( '\Elementor\Plugin' ) ? \Elementor\Plugin::$instance : null;
+		if ( ! $el ) {
+			return false;
+		}
+		return ( isset( $el->editor ) && $el->editor->is_edit_mode() ) || ( isset( $el->preview ) && $el->preview->is_preview_mode() );
 	}
 
 	/** Off an event page the form still needs its CSS and script (EventPage::enqueue covers event pages). */

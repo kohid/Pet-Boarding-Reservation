@@ -15,6 +15,7 @@ use Elementor\Core\DynamicTags\Tag;
 use Elementor\Modules\DynamicTags\Module;
 use Pawfectly\ElementorTags;
 use Pawfectly\EventFields;
+use Pawfectly\EventShortcode;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -73,6 +74,16 @@ abstract class Text_Tag extends Tag {
 					'type'    => Controls_Manager::SELECT,
 					'options' => $options,
 					'default' => '1',
+				)
+			);
+		} elseif ( 'section_rows' === $field ) {
+			$this->add_control(
+				'section',
+				array(
+					'label'   => __( 'Section', 'pawfectly-reservations' ),
+					'type'    => Controls_Manager::SELECT,
+					'options' => array_diff_key( ElementorTags::sections(), array( 'closing' => true ) ),
+					'default' => 'sessions',
 				)
 			);
 		} elseif ( 'free' === $field ) {
@@ -184,6 +195,30 @@ final class Color extends Data_Tag {
 		return $ev ? EventFields::color( $ev ) : '';
 	}
 }
+/** A section's rows (the repeater) as a plain list. HTML: use it in a Text Editor widget. */
+final class Section_Rows extends Text_Tag {
+	protected const FIELD = 'section_rows';
+
+	public function render() {
+		$ev = EventFields::current();
+		if ( $ev ) {
+			echo EventShortcode::part( $ev, (string) $this->get_settings( 'section' ) ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in the rows partial.
+		}
+	}
+}
+
+/** The description with its paragraphs, bold, lists and links. */
+final class Description_Html extends Text_Tag {
+	protected const FIELD = 'description_html';
+
+	public function render() {
+		$ev = EventFields::current();
+		if ( $ev ) {
+			echo EventShortcode::part( $ev, 'description' ); // phpcs:ignore WordPress.Security.EscapeOutput -- filtered by wp_kses.
+		}
+	}
+}
+
 final class Title extends Text_Tag { protected const FIELD = 'title'; }
 final class Tagline extends Text_Tag { protected const FIELD = 'tagline'; }
 final class Emoji extends Text_Tag { protected const FIELD = 'emoji'; }
@@ -240,10 +275,12 @@ const TAGS = array(
 	TicketText::class,
 	Note::class,
 	Description::class,
+	Description_Html::class,
 	Spots::class,
 	SpotsLeft::class,
 	SectionHeading::class,
 	SectionIntro::class,
+	Section_Rows::class,
 	Tickets_Link::class,
 	TicketUrl_Link::class,
 	Url_Link::class,
