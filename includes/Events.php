@@ -317,6 +317,55 @@ final class Events {
 		) : array();
 	}
 
+	/**
+	 * Replaces the category list: entries with a slug are renamed and recoloured, entries
+	 * without one are created, and categories left out are deleted.
+	 *
+	 * @param array $list [{slug?, name, color}]
+	 * @return list<array>|\WP_Error The saved categories, or paw_invalid with fields keyed "categories.N.name".
+	 */
+	public static function save_categories( array $list ) {
+		$clean  = array();
+		$errors = array();
+		foreach ( array_values( $list ) as $n => $c ) {
+			$c    = is_array( $c ) ? $c : array();
+			$name = mb_substr( sanitize_text_field( (string) ( $c['name'] ?? '' ) ), 0, 40 );
+			if ( '' === $name ) {
+				$errors[ "categories.$n.name" ] = __( 'This field is required.', 'pawfectly-reservations' );
+			}
+			$clean[] = array(
+				'slug'  => sanitize_key( (string) ( $c['slug'] ?? '' ) ),
+				'name'  => $name,
+				'color' => in_array( $c['color'] ?? '', self::PALETTE, true ) ? $c['color'] : self::PALETTE[0],
+			);
+		}
+		if ( $errors ) {
+			return new \WP_Error( 'paw_invalid', __( 'Please check the highlighted fields.', 'pawfectly-reservations' ), array( 'status' => 400, 'fields' => $errors ) );
+		}
+		$keep = array();
+		foreach ( $clean as $c ) {
+			$term = '' !== $c['slug'] ? get_term_by( 'slug', $c['slug'], self::TAX ) : false;
+			if ( $term ) {
+				wp_update_term( (int) $term->term_id, self::TAX, array( 'name' => $c['name'] ) );
+				$id = (int) $term->term_id;
+			} else {
+				$made = wp_insert_term( $c['name'], self::TAX );
+				if ( is_wp_error( $made ) ) {
+					continue;
+				}
+				$id = (int) $made['term_id'];
+			}
+			update_term_meta( $id, '_paw_color', $c['color'] );
+			$keep[] = $id;
+		}
+		foreach ( get_terms( array( 'taxonomy' => self::TAX, 'hide_empty' => false ) ) as $t ) {
+			if ( ! in_array( (int) $t->term_id, $keep, true ) ) {
+				wp_delete_term( (int) $t->term_id, self::TAX );
+			}
+		}
+		return self::categories();
+	}
+
 	private static function color( int $term_id ): string {
 		$c = (string) get_term_meta( $term_id, '_paw_color', true );
 		return in_array( $c, self::PALETTE, true ) ? $c : self::PALETTE[0];

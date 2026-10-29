@@ -35,6 +35,8 @@ final class StaffRest {
 			)
 		);
 
+		StaffEvents::routes();
+
 		$id     = '/staff/reservations/(?P<id>\d+)';
 		$routes = array(
 			array( '/staff/stats', 'GET', 'stats' ),
