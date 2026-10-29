@@ -1,7 +1,7 @@
 /*
  * Pawfectly — dashboard Events: the list, the Add / Edit editor with its repeatable sections
  * (add, remove, Move up / Move down, drag), the emoji fields, the cover photo, the event's
- * sign-ups (session meters, rows, status, CSV), and Settings → Event categories. Everything goes through the staff routes; staff-typed text is set with
+ * sign-ups (session meters, rows, status, CSV), and Settings → Starter events and Event categories. Everything goes through the staff routes; staff-typed text is set with
  * textContent or .value, never as HTML.
  */
 (function () {
@@ -643,6 +643,36 @@
 	});
 	if (!root.querySelector('[data-paw-view="events"]').hidden) {
 		route();
+	}
+
+	/* ---------- Settings → Starter events ---------- */
+
+	var starter = root.querySelector('[data-paw-starter]');
+	if (starter) {
+		var toggle = $('[data-paw-starter-toggle]', starter);
+		var starterMsg = $('[data-paw-starter-msg]', starter);
+		toggle.addEventListener('change', function () {
+			var on = toggle.checked;
+			if (!on && !window.confirm(T.starterOff)) {
+				toggle.checked = true;
+				return;
+			}
+			toggle.disabled = true;
+			starterMsg.className = 'paw-dash__savemsg';
+			starterMsg.textContent = on ? T.starterAdding : T.starterRemoving;
+			starterMsg.hidden = false;
+			api('staff/starter-events', { method: 'POST', json: { on: on } }).then(function (r) {
+				toggle.checked = r.ok ? !!r.body.on : !on;
+				starterMsg.textContent = r.ok ? r.body.message : ((r.body && r.body.message) || CFG.i18n.failed);
+				starterMsg.className = 'paw-dash__savemsg ' + (r.ok ? 'is-ok' : 'is-error');
+			}).catch(function () {
+				toggle.checked = !on;
+				starterMsg.textContent = CFG.i18n.failed;
+				starterMsg.className = 'paw-dash__savemsg is-error';
+			}).then(function () {
+				toggle.disabled = false;
+			});
+		});
 	}
 
 	/* ---------- Settings → Event categories ---------- */

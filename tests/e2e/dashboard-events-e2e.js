@@ -53,6 +53,7 @@ async function mock(page, log) {
   await page.route(/\/mock\/staff\/events\/\d+\/signups$/, r => { log.su.push(r.request().url()); return r.fulfill({ json: signups(log.status.length ? log.status[log.status.length - 1].status : 'confirmed') }); });
   await page.route('**/mock/staff/signups/*/status', r => { log.status.push(Object.assign({ url: r.request().url() }, r.request().postDataJSON())); return r.fulfill({ json: { row: {} } }); });
   await page.route('**/mock/staff/events/*/duplicate', r => { log.dup.push(r.request().url()); return r.fulfill({ json: { id: 102 } }); });
+  await page.route('**/mock/staff/starter-events', r => { const on = r.request().postDataJSON().on; log.starter.push(on); return r.fulfill({ json: on ? { on: true, count: 30, added: 30, message: '30 events added.' } : { on: false, count: 0, removed: 28, kept: 2, message: '28 events removed. 2 kept because people signed up.' } }); });
   await page.route('**/mock/staff/event-categories', r => { log.cats.push(r.request().postDataJSON()); return r.fulfill({ json: { categories: r.request().postDataJSON().categories.map((c, i) => ({ slug: c.slug || 'new-' + i, name: c.name, color: c.color })) } }); });
   await page.route('https://cdn.jsdelivr.net/**', r => (log.cdn.push(r.request().url()), r.request().url().endsWith('manifest.json'))
     ? r.fulfill({ json: MANIFEST })
@@ -69,7 +70,7 @@ const rowTexts = (page, name) => page.$$eval(`[data-paw-ev-rows-for="${name}"] [
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
-    const log = { list: [], saves: [], dup: [], deleted: [], cats: [], cdn: [], su: [], status: [] };
+    const log = { list: [], saves: [], dup: [], deleted: [], cats: [], cdn: [], su: [], status: [], starter: [] };
     await mock(page, log);
     await page.goto(URL + '?paw_view=events');
 
@@ -189,10 +190,12 @@ const rowTexts = (page, name) => page.$$eval(`[data-paw-ev-rows-for="${name}"] [
     await page.waitForSelector('[data-paw-su-rows] tr.is-cancelled');
     ok('sign-ups: a status change is saved and the counts reload', log.status[0].status === 'cancelled' && log.status[0].url.includes('/signups/501/status') && (await page.textContent('[data-paw-su-count]')) === '1 sign-ups · 3 dogs');
     let leaveAsked = 0;
-    page.once('dialog', d => { leaveAsked++; d.accept(); });
+    const onLeave = d => { leaveAsked++; d.accept(); };
+    page.once('dialog', onLeave);
     await page.click('[data-paw-ev-back]');
     await page.waitForSelector('[data-paw-ev-list]:not([hidden])');
     ok('sign-ups: a status change is not an unsaved edit', leaveAsked === 0);
+    page.off('dialog', onLeave); // It never fired; don't let it catch a later dialog.
 
     // Phone.
     await page.click('[data-paw-ev-open="101"]');
@@ -213,6 +216,22 @@ const rowTexts = (page, name) => page.$$eval(`[data-paw-ev-rows-for="${name}"] [
     await page.click('[data-paw-ev-cat-save]');
     await page.waitForSelector('[data-paw-ev-cat-msg].is-ok');
     ok('categories: saved with names and colours', log.cats[0].categories.length === 2 && log.cats[0].categories[0].slug === 'holiday' && log.cats[0].categories[1].name === 'Training' && log.cats[0].categories[1].color === '#06d6a0');
+
+    // Settings → Starter events.
+    const sw = '[data-paw-starter-toggle]';
+    ok('starter events: the switch starts off', (await page.locator(sw).count()) === 1 && !(await page.isChecked(sw)) && (await page.getAttribute(sw, 'role')) === 'switch');
+    await page.click('.paw-dash__toggle');
+    await page.waitForSelector('[data-paw-starter-msg].is-ok');
+    ok('starter events: on adds them and says so', log.starter[0] === true && await page.isChecked(sw) && (await page.textContent('[data-paw-starter-msg]')) === '30 events added.');
+    let askedOff = '';
+    page.once('dialog', d => { askedOff = d.message(); d.dismiss(); });
+    await page.click('.paw-dash__toggle');
+    ok('starter events: off asks first; saying no keeps them', askedOff.includes('trash') && await page.isChecked(sw) && log.starter.length === 1);
+    page.once('dialog', d => d.accept());
+    await page.click('.paw-dash__toggle');
+    await page.waitForFunction(() => document.querySelector('[data-paw-starter-msg]').textContent.includes('removed'));
+    ok('starter events: off removes them and explains the ones kept', log.starter[1] === false && !(await page.isChecked(sw)) && (await page.textContent('[data-paw-starter-msg]')).includes('2 kept because people signed up'));
+    if (SHOTS) await page.locator('[data-paw-starter]').screenshot({ path: path.join(SHOTS, 'dash-starter.png') });
 
     ok('no script errors', errors.length === 0 || (console.log(errors), false));
     console.log(`\nall ${passed} passed`);

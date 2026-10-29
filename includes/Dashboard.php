@@ -90,6 +90,7 @@ final class Dashboard {
 				'palette'    => Events::PALETTE,
 				'defaults'   => Events::defaults()['sections'],
 				'categories' => Events::categories(),
+				'starter'    => StarterEvents::state(),
 				'i18n'       => array(
 					'addEvent'      => __( 'Add Event', 'pawfectly-reservations' ),
 					'editEvent'     => __( 'Edit event', 'pawfectly-reservations' ),
@@ -108,6 +109,9 @@ final class Dashboard {
 					'choosePhoto'   => __( 'Choose cover photo', 'pawfectly-reservations' ),
 					'noCategory'    => __( 'No category', 'pawfectly-reservations' ),
 					'categoriesSaved' => __( 'Categories saved.', 'pawfectly-reservations' ),
+					'starterOff'    => __( 'Remove the starter events? They go to the WordPress trash, except ones people signed up for.', 'pawfectly-reservations' ),
+					'starterAdding' => __( 'Adding events…', 'pawfectly-reservations' ),
+					'starterRemoving' => __( 'Removing events…', 'pawfectly-reservations' ),
 					/* translators: %d: number of dogs */
 					'dogsSignedUp'  => __( '%d dogs signed up', 'pawfectly-reservations' ),
 					'oneDogSignedUp' => __( '1 dog signed up', 'pawfectly-reservations' ),

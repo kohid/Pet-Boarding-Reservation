@@ -1,12 +1,13 @@
 <?php
 /**
- * The dashboard's Settings view: general settings and pricing. dashboard.js posts it as JSON to
+ * The dashboard's Settings view: general settings, pricing, event categories and starter events. dashboard.js posts it as JSON to
  * the staff settings route; field names mirror the Settings option's keys.
  *
  * @package Pawfectly
  *
  * @var array $settings Settings::get().
  * @var bool  $lockout  StaffRest::lockout_risk().
+ * @var array $config   Dashboard::config() (the Starter events switch reads events.starter).
  */
 
 use Pawfectly\Fields;
@@ -192,4 +193,18 @@ $paw_saved = (array) $settings['services'];
 		<button type="button" class="paw-dash__btn" data-paw-ev-cat-save><?php esc_html_e( 'Save categories', 'pawfectly-reservations' ); ?></button>
 		<span class="paw-dash__savemsg" data-paw-ev-cat-msg role="status" hidden></span>
 	</div>
+</section>
+
+<section class="paw-dash__card paw-dash__starter" data-paw-starter>
+	<div class="paw-dash__starter-row">
+		<div>
+			<h3 class="paw-dash__card-title" id="paw-starter-title"><?php esc_html_e( 'Starter events', 'pawfectly-reservations' ); ?></h3>
+			<p class="paw-dash__hint"><?php esc_html_e( 'Fill your calendar with 30 ready-made events, September 2026 to January 2027: parties, classes, socials, adoption days and more. They are ordinary events you can edit like your own. Turning this off moves them to the trash, except any that people signed up for.', 'pawfectly-reservations' ); ?></p>
+		</div>
+		<label class="paw-dash__toggle">
+			<input type="checkbox" role="switch" data-paw-starter-toggle aria-labelledby="paw-starter-title"<?php echo ! empty( $config['events']['starter']['on'] ) ? ' checked' : ''; ?>>
+			<span class="paw-dash__toggle-track" aria-hidden="true"></span>
+		</label>
+	</div>
+	<p class="paw-dash__savemsg" data-paw-starter-msg role="status" hidden></p>
 </section>
