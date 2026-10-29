@@ -167,3 +167,4 @@ function wp_get_object_terms( $id, $tax ) {
 }
 function get_term_meta( $id, $k, $single = false ) { return $GLOBALS['paw_term_meta'][ $id ][ $k ] ?? ''; }
 function update_term_meta( $id, $k, $v ) { $GLOBALS['paw_term_meta'][ $id ][ $k ] = $v; return true; }
+function wp_strip_all_tags( $s ) { return trim( strip_tags( (string) $s ) ); }

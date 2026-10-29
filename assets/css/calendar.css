@@ -833,6 +833,330 @@
 	background: var(--paw-primary-tint);
 }
 
+/* ---------- Event page ---------- */
+
+.paw-event {
+	max-width: 52rem;
+	margin: 0 auto;
+	padding: 1.5rem 0 3rem;
+}
+
+.paw-event .paw-event__hero {
+	position: relative;
+	overflow: hidden;
+	padding: clamp(2rem, 6vw, 3.5rem) 1.5rem;
+	border-radius: 1.5rem;
+	background: color-mix(in srgb, var(--paw-ev, var(--paw-primary)) 14%, #fff8f3) center / cover no-repeat;
+	text-align: center;
+}
+
+/* A cover photo sits behind the heading, darkened so the text stays readable. */
+.paw-event .paw-event__hero.has-photo::before {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(180deg, rgba(36, 48, 57, 0.35), rgba(36, 48, 57, 0.75));
+	content: "";
+}
+
+.paw-event .paw-event__hero-inner {
+	position: relative;
+}
+
+.paw-event .paw-event__hero.has-photo .paw-event__title,
+.paw-event .paw-event__hero.has-photo .paw-event__tagline {
+	color: #fff;
+}
+
+.paw-event .paw-event__ended {
+	display: inline-block;
+	margin-bottom: 0.75rem;
+	padding: 0.25rem 0.875rem;
+	border-radius: var(--paw-pill);
+	background: var(--paw-ink);
+	color: #fff;
+	font-size: 0.875rem;
+	font-weight: 800;
+}
+
+.paw-event .paw-event__dateline {
+	display: block;
+	width: fit-content;
+	margin: 0 auto 1rem;
+	padding: 0.375rem 1rem;
+	border-radius: var(--paw-pill);
+	background: var(--paw-card);
+	color: var(--paw-primary-dark);
+	font-size: 0.9375rem;
+	font-weight: 800;
+}
+
+.paw-event .paw-event__emoji {
+	margin-bottom: 0.25rem;
+	font-size: clamp(3.5rem, 10vw, 5rem);
+	line-height: 1.1;
+}
+
+.paw-event .paw-event__title {
+	color: var(--paw-ink);
+	font-size: clamp(2.25rem, 6vw, 3.25rem);
+	font-weight: 800;
+	line-height: 1.1;
+}
+
+.paw-event .paw-event__tagline {
+	max-width: 34rem;
+	margin: 0.75rem auto 0;
+	color: var(--paw-ink);
+	font-size: 1.125rem;
+}
+
+.paw-event .paw-event__facts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	justify-content: center;
+	margin: 1.25rem 0 0;
+}
+
+.paw-event .paw-event__facts li {
+	padding: 0.5rem 0.875rem;
+	border-radius: var(--paw-pill);
+	background: var(--paw-card);
+	box-shadow: var(--paw-shadow);
+	font-size: 0.9375rem;
+	font-weight: 700;
+}
+
+.paw-event .paw-event__facts a {
+	color: inherit;
+	text-decoration: underline;
+	text-decoration-color: var(--paw-line);
+	text-underline-offset: 3px;
+}
+
+.paw-event .paw-event__description {
+	max-width: 40rem;
+	margin: 2rem auto 0;
+	font-size: 1.0625rem;
+	line-height: 1.65;
+}
+
+.paw-event .paw-event__description :where(p, ul, ol) {
+	margin: 0 0 1em;
+}
+
+.paw-event .paw-event__description :where(ul, ol) {
+	padding-left: 1.25rem;
+	list-style: revert;
+}
+
+.paw-event .paw-event__tickets {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	align-items: center;
+	margin: 2rem 0 0;
+	text-align: center;
+}
+
+.paw-event .paw-event__btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 3.25rem;
+	padding: 0 2rem;
+	border-radius: var(--paw-pill);
+	background: var(--paw-primary);
+	color: #fff;
+	font-size: 1.125rem;
+	font-weight: 800;
+	text-decoration: none;
+	box-shadow: 0 0.5rem 1.25rem rgba(255, 127, 80, 0.3);
+	transition: background-color 0.15s ease;
+}
+
+.paw-event .paw-event__btn:hover {
+	background: var(--paw-primary-dark);
+	color: #fff;
+}
+
+.paw-event .paw-event__btn:focus-visible,
+.paw-event .paw-event__addcal summary:focus-visible {
+	outline: none;
+	box-shadow: var(--paw-ring);
+}
+
+.paw-event .paw-event__note {
+	max-width: 34rem;
+	font-weight: 700;
+}
+
+.paw-event .paw-event__note a,
+.paw-event .paw-event__section a {
+	color: var(--paw-primary-dark);
+	font-weight: 800;
+}
+
+.paw-event .paw-event__addcal summary {
+	color: var(--paw-steel);
+	font-size: 0.9375rem;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.paw-event .paw-event__addcal[open] {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 1rem;
+	justify-content: center;
+}
+
+.paw-event .paw-event__addcal[open] summary {
+	flex-basis: 100%;
+}
+
+.paw-event .paw-event__addcal a {
+	color: var(--paw-ink);
+	font-size: 0.9375rem;
+}
+
+.paw-event .paw-event__section {
+	margin-top: 3rem;
+}
+
+.paw-event .paw-event__heading {
+	color: var(--paw-ink);
+	font-size: clamp(1.5rem, 4vw, 1.875rem);
+	font-weight: 800;
+	line-height: 1.2;
+	text-align: center;
+}
+
+.paw-event .paw-event__intro {
+	max-width: 34rem;
+	margin: 0.5rem auto 0;
+	color: var(--paw-muted);
+	text-align: center;
+}
+
+.paw-event .paw-event__sessions {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+	gap: 1rem;
+	margin-top: 1.5rem;
+}
+
+.paw-event .paw-event__session {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	padding: 1.25rem;
+	border-top: 4px solid var(--paw-ev, var(--paw-primary));
+	border-radius: 1rem;
+	background: var(--paw-card);
+	box-shadow: var(--paw-shadow);
+	text-align: center;
+}
+
+.paw-event .paw-event__session-time {
+	color: var(--paw-primary-dark);
+	font-size: 1.25rem;
+	font-weight: 800;
+}
+
+.paw-event .paw-event__session-name {
+	font-weight: 700;
+}
+
+.paw-event .paw-event__includes,
+.paw-event .paw-event__knows {
+	display: flex;
+	flex-direction: column;
+	gap: 0.625rem;
+	max-width: 36rem;
+	margin: 1.5rem auto 0;
+}
+
+.paw-event .paw-event__include,
+.paw-event .paw-event__know {
+	display: flex;
+	gap: 0.875rem;
+	align-items: flex-start;
+	padding: 0.875rem 1rem;
+	border-radius: 0.875rem;
+	background: var(--paw-card);
+	box-shadow: var(--paw-shadow);
+	font-weight: 600;
+}
+
+.paw-event .paw-event__know {
+	background: var(--paw-cream);
+	box-shadow: none;
+	font-weight: 500;
+}
+
+.paw-event .paw-event__include-emoji,
+.paw-event .paw-event__know-emoji {
+	flex: 0 0 auto;
+	font-size: 1.375rem;
+	line-height: 1.1;
+}
+
+.paw-event .paw-event__goodies {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+	gap: 1rem;
+	margin-top: 1.5rem;
+}
+
+.paw-event .paw-event__goodie {
+	padding: 1.5rem 1.25rem;
+	border-radius: 1rem;
+	background: var(--paw-card);
+	box-shadow: var(--paw-shadow);
+	text-align: center;
+}
+
+.paw-event .paw-event__goodie-emoji {
+	display: block;
+	margin-bottom: 0.5rem;
+	font-size: 2.5rem;
+	line-height: 1;
+}
+
+.paw-event .paw-event__goodie-title {
+	margin-bottom: 0.375rem;
+	font-size: 1.125rem;
+	font-weight: 800;
+}
+
+.paw-event .paw-event__closing {
+	margin-top: 3.5rem;
+	padding: clamp(1.75rem, 5vw, 2.75rem) 1.5rem;
+	border-radius: 1.5rem;
+	background: color-mix(in srgb, var(--paw-ev, var(--paw-primary)) 14%, #fff8f3);
+	text-align: center;
+}
+
+.paw-event .paw-event__summary {
+	max-width: 36rem;
+	margin: 0.75rem auto 0;
+	font-weight: 700;
+}
+
+.paw-event .paw-event__closing .paw-event__btn {
+	margin-top: 1.25rem;
+}
+
+.paw-event .paw-event__soon {
+	display: inline-block;
+	margin-top: 1.25rem;
+	padding: 0.5rem 1rem;
+	border-radius: var(--paw-pill);
+	background: var(--paw-card);
+	font-weight: 700;
+}
+
 /* ---------- Popover (appended to <body>) ---------- */
 
 .paw-cal-pop {
@@ -1038,7 +1362,8 @@
 @media (prefers-reduced-motion: reduce) {
 	.paw-cal-pop,
 	.paw-cal .paw-cal__btn,
-	.paw-events .paw-events__card {
+	.paw-events .paw-events__card,
+	.paw-event .paw-event__btn {
 		transition: none;
 	}
 

@@ -21,6 +21,7 @@ final class Plugin {
 		Events::init();
 		Calendar::init();
 		EventsList::init();
+		EventPage::init();
 		Uploads::init();
 		Shortcode::init();
 		Pages::init();
