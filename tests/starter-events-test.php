@@ -49,7 +49,9 @@ $pages = array_filter( $evs, static fn( $e ) => str_contains( Pawfectly\EventPag
 t( 'every one renders as an event page with its sign-up form', 30 === count( $pages ) && str_contains( Pawfectly\EventPage::body( $evs[0], new DateTimeImmutable( '2026-08-01', new DateTimeZone( 'UTC' ) ) ), 'data-paw-signup' ) );
 
 $cats = array_column( Events::categories(), 'color', 'name' );
-t( 'categories are added beside yours, yours kept as they were', array( 'Holiday party', 'Members only', 'Training', 'Social', 'Adoption', 'Grooming', 'Fundraiser' ) === array_keys( $cats ) && '#0f42c0' === $cats['Holiday party'] && '#8a5cd8' === $cats['Members only'] );
+$names = array_keys( $cats );
+sort( $names );
+t( 'categories are added beside yours, yours kept as they were', array( 'Adoption', 'Fundraiser', 'Grooming', 'Holiday party', 'Members only', 'Social', 'Training' ) === $names && '#0f42c0' === $cats['Holiday party'] && '#8a5cd8' === $cats['Members only'] );
 t( 'the holiday events use your existing Holiday party category', 'holiday-party' === Events::get( $ids[9] )['category'] );
 t( 'on again while on: nothing more', 0 === StarterEvents::on()['added'] && 30 === count( get_option( StarterEvents::OPTION )['ids'] ) );
 
@@ -63,8 +65,20 @@ t( 'off: 29 removed, 1 kept for its sign-up', 29 === $res['removed'] && 1 === $r
 t( 'removed ones go to the trash', 'trash' === get_post( $ids[0] )->post_status && 'publish' === get_post( $ids[11] )->post_status );
 t( 'your own event is untouched', 'publish' === get_post( $mine )->post_status );
 t( 'categories stay', 7 === count( Events::categories() ) );
+$res  = StarterEvents::on();
+$ids2 = get_option( StarterEvents::OPTION )['ids'];
+t( 'on again: the 29 removed come back fresh; the kept one is not added twice', 29 === $res['added'] && 30 === count( $ids2 ) && in_array( $ids[11], $ids2, true ) && 1 === count( array_filter( Events::between( '2026-10-31', '2026-10-31' ), static fn( $e ) => 'Howl-o-ween Costume Parade' === $e['title'] ) ) );
+StarterEvents::off();
+$ids = $ids2;
 $res = StarterEvents::on();
-t( 'on again: a fresh 30', 30 === $res['added'] && 30 === count( array_diff( get_option( StarterEvents::OPTION )['ids'], $ids ) ) );
+t( 'and again', 29 === $res['added'] );
+
+// Two requests at once: the second one adds nothing.
+StarterEvents::off();
+add_option( 'paw_starter_lock', time() ); // Another request is adding them right now.
+t( 'busy: a second request adds nothing', 0 === StarterEvents::on()['added'] && false === StarterEvents::state()['on'] );
+delete_option( 'paw_starter_lock' );
+t( 'and the lock is released after a run', 29 === StarterEvents::on()['added'] && false === get_option( 'paw_starter_lock' ) );
 
 // The route: settings access only.
 $desk = paw_test_user( 'desk@example.com', 'desk pass1', array( Accounts::STAFF_ROLE ), array( Activator::CAPABILITY => true ) );
@@ -74,9 +88,9 @@ $GLOBALS['paw_options']['admin_email'] = 'boss@example.com';
 $boss = paw_test_user( 'boss@example.com', 'boss pass1', array( 'administrator' ), array( 'manage_options' => true, Activator::CAPABILITY => true ) );
 wp_set_current_user( $boss->ID );
 $off = StarterEvents::route( $req( false ) )->get_data();
-t( 'the route turns it off and says what happened', false === $off['on'] && 30 === $off['removed'] && '30 events removed.' === $off['message'] );
+t( 'the route turns it off and says what happened', false === $off['on'] && 29 === $off['removed'] && '29 events removed. 1 kept because people signed up.' === $off['message'] );
 $on = StarterEvents::route( $req( true ) )->get_data();
-t( 'the route turns it on', true === $on['on'] && 30 === $on['count'] && '30 events added.' === $on['message'] );
+t( 'the route turns it on', true === $on['on'] && 30 === $on['count'] && '29 events added.' === $on['message'] );
 t( 'kept events are explained', str_contains( StarterEvents::message( array( 'on' => false, 'removed' => 28, 'kept' => 2 ) ), '2 kept because people signed up' ) );
 
 done();

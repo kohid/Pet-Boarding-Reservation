@@ -52,6 +52,9 @@ function wp_timezone() { return new DateTimeZone( $GLOBALS['paw_tz'] ?? 'UTC' );
 function wp_json_encode( $v, $flags = 0 ) { return json_encode( $v, $flags ); }
 function get_option( $k, $d = false ) { return $GLOBALS['paw_options'][ $k ] ?? $d; }
 function update_option( $k, $v, $autoload = null ) { $GLOBALS['paw_options'][ $k ] = $v; return true; }
+/** Like core: false when the option already exists (an atomic insert there). */
+function add_option( $k, $v = '', $deprecated = '', $autoload = 'yes' ) { if ( array_key_exists( $k, $GLOBALS['paw_options'] ) ) { return false; } $GLOBALS['paw_options'][ $k ] = $v; return true; }
+function delete_option( $k ) { unset( $GLOBALS['paw_options'][ $k ] ); return true; }
 function get_transient( $k ) { return $GLOBALS['paw_transients'][ $k ] ?? false; }
 function set_transient( $k, $v, $ttl = 0 ) { $GLOBALS['paw_transients'][ $k ] = $v; return true; }
 function trailingslashit( $s ) { return rtrim( $s, '/\\' ) . '/'; }

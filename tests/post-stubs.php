@@ -151,6 +151,15 @@ function get_terms( $a = array() ) {
 	$tax = is_array( $a ) ? ( $a['taxonomy'] ?? '' ) : $a;
 	return array_values( array_filter( $GLOBALS['paw_terms'], static fn( $t ) => $t->taxonomy === $tax ) );
 }
+/** Like core: the term, or null when there is none. */
+function get_term( $id, $tax = '' ) {
+	foreach ( get_terms( array( 'taxonomy' => $tax ) ) as $t ) {
+		if ( (int) $t->term_id === (int) $id ) {
+			return $t;
+		}
+	}
+	return null;
+}
 function get_term_by( $field, $value, $tax ) {
 	foreach ( get_terms( array( 'taxonomy' => $tax ) ) as $t ) {
 		if ( (string) $t->$field === (string) $value ) {
