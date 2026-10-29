@@ -1,7 +1,8 @@
 <?php
 /**
- * [pawfectly_my_profile]: signed in, details and password forms for everyone; signed out, the
- * login panel in place (the same one [pawfectly_login] shows).
+ * [pawfectly_my_profile]: signed in, details and password forms for everyone, My Pets and
+ * details for bookings (SavedPets, so the booking form fills them in), and recent activity;
+ * signed out, the login panel in place (the same one [pawfectly_login] shows).
  *
  * @package Pawfectly
  */
@@ -61,14 +62,58 @@ final class Profile {
 		return $html;
 	}
 
+	/** What account.js needs for My Pets: the saved pets and the booking form's pet questions. */
+	public static function pets_config( int $user_id ): array {
+		$groups = array();
+		foreach ( SavedPets::pet_groups() as $paw_step => $group ) {
+			$fields = array();
+			foreach ( $group[1] as $f ) {
+				$fields[] = array(
+					'id'          => $f['id'],
+					'label'       => $f['label'],
+					'type'        => $f['type'],
+					'options'     => (object) $f['options'],
+					'showIf'      => (object) array_intersect_key( $f['show_if'], SavedPets::pet_fields() ),
+					'placeholder' => (string) $f['placeholder'],
+					'max'         => (int) $f['max'],
+				);
+			}
+			$groups[] = array( 'title' => $group[0], 'fields' => $fields );
+		}
+		return array(
+			'pets'   => SavedPets::get( $user_id ),
+			'groups' => $groups,
+			'max'    => SavedPets::MAX,
+			'i18n'   => array(
+				'add'      => __( '+ Add a pet', 'pawfectly-reservations' ),
+				'edit'     => __( 'Edit', 'pawfectly-reservations' ),
+				'remove'   => __( 'Remove', 'pawfectly-reservations' ),
+				'save'     => __( 'Save pet', 'pawfectly-reservations' ),
+				'cancel'   => __( 'Cancel', 'pawfectly-reservations' ),
+				'newPet'   => __( 'New pet', 'pawfectly-reservations' ),
+				'none'     => __( 'No pets saved yet. Add your pets once and the booking form fills them in for you.', 'pawfectly-reservations' ),
+				/* translators: %s: pet name */
+				'confirmRemove' => __( 'Remove %s from your saved pets? Your past bookings are not changed.', 'pawfectly-reservations' ),
+				'unsaved'  => __( 'From your last booking — press Save pet to keep it.', 'pawfectly-reservations' ),
+			),
+			'saved'  => is_array( get_user_meta( $user_id, SavedPets::META_PETS, true ) ),
+		);
+	}
+
 	public static function render(): string {
 		$user = wp_get_current_user();
 		if ( ! $user->exists() ) {
 			return Login::panel( (string) ( get_permalink() ?: home_url( '/' ) ) );
 		}
 		self::enqueue();
-		$links = array( 'bookings' => Pages::url( MyBookings::TAG ) );
+		$links = array( 'bookings' => Pages::url( MyBookings::TAG ), 'book' => Pages::url( Shortcode::TAG ) );
 		$phone = $user->exists() ? (string) get_user_meta( (int) $user->ID, Accounts::META_PHONE, true ) : '';
+		$pets  = self::pets_config( (int) $user->ID );
+		$info  = SavedPets::info( (int) $user->ID );
+		$recent = array(
+			'reservations' => Reservations::for_owner( (int) $user->ID, (string) $user->user_email, Accounts::is_verified( (int) $user->ID ), 5 ),
+			'signups'      => array_slice( MyBookings::signup_rows( (int) $user->ID ), 0, 5 ),
+		);
 
 		ob_start();
 		include PAW_DIR . 'templates/profile.php';

@@ -17,7 +17,7 @@ Requires WordPress 6.0+ and PHP 8.0+. This is v0.4. See `docs/superpowers/specs/
 | `[pawfectly_reservation_form]` | everyone | The reservation form. Signed-out visitors can sign in or create an account on the owner step; signed-in owners get their details filled in. |
 | `[pawfectly_login]` | everyone | The one sign-in and create-account page for owners, staff and admins. `?tab=signup` opens Create account. WordPress's own login page sends people here (see below). |
 | `[pawfectly_user_menu]` | everyone | The avatar and dropdown for your site header (an Elementor Shortcode widget in the header template). Guests: Sign In / Sign Up. Signed in: Dashboard (staff), My Bookings, My Profile, Settings (admins), Admin Panel (see below), Log Out. `align="left"` opens it to the right. |
-| `[pawfectly_my_profile]` | everyone signed in | Name, email, phone and password. Signed out, it shows the login panel in place. |
+| `[pawfectly_my_profile]` | everyone signed in | Name, email, phone and password; My Pets, details for bookings and recent activity. Signed out, it shows the login panel in place. |
 | `[pawfectly_my_bookings]` | owners | Their reservations, with Cancel while a stay is Pending or Confirmed and check-in is still ahead. |
 | `[pawfectly_dashboard]` | staff | The staff dashboard: Overview, Reservations and Events. It fills the browser; `fullscreen="no"` keeps it in the page column, and `view="reservations"` opens that view first. |
 | `[pawfectly_calendar]` | everyone | The event calendar: Month, List and Day views, search, a category filter and Add to calendar. `view="list"` opens the list; `category="slug"` shows one category. |
@@ -27,7 +27,14 @@ Requires WordPress 6.0+ and PHP 8.0+. This is v0.4. See `docs/superpowers/specs/
 
 ## Owner accounts
 
-- **Accounts are optional.** On the owner step, visitors can tick "Create an account with these details" and choose a password. The account is made once the reservation is saved, and they're signed in. Visitors who already have an account can click "Sign in" right there; the page reloads with their details filled in from their last reservation, never the dates, health answers, files or signature.
+- **Accounts are optional.** On the owner step, visitors can tick "Create an account with these details" and choose a password. The account is made once the reservation is saved, and they're signed in. Visitors who already have an account can click "Sign in" right there; the page reloads with their details and pets filled in (see My Pets below), never the dates, the vaccination question, files or signature.
+- **My Profile → My Pets:**
+  - **What owners can do:** save each pet once (every pet, health and care question from the booking form), edit it, or remove it. Up to 10 pets. Only the name is required here; the booking form still checks everything.
+  - **Vaccination records** are still uploaded with each booking.
+  - **Booking while signed in** saves that booking's pets automatically, matched by name, adding new ones and updating known ones.
+- **My Profile → Details for bookings:** home address, emergency contact and vet, saved once and filled in on the booking form.
+- **My Profile → Recent activity:** the last 5 reservations and event sign-ups, with a link to My Bookings.
+- **The booking form's "Who's coming?":** owners with two or more saved pets tap the pets that are coming. Each tap adds or removes that pet's card, filled in from the profile. At the start, the pets from their last booking are chosen.
 - **New accounts confirm their email with a link,** valid for 7 days. Until they do, My Bookings shows only reservations made while signed in. After confirming, it also shows earlier reservations made with that email.
 - **Everyone signs in on the login page,** owners, staff and admins alike, with their email or username. It goes through WordPress's own sign-in, so login-limit and security plugins still apply. After signing in, everyone lands on My Profile (or the page that sent them to sign in). After logging out, they land on the homepage.
 - **Create account** asks for the password twice, and every password box has a Show/Hide button, on the booking form too.

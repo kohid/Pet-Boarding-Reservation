@@ -231,38 +231,53 @@ final class Accounts {
 			return array();
 		}
 		$last = Reservations::last_for_owner( $user_id, (string) $user->user_email, self::is_verified( $user_id ) );
-		if ( ! $last ) {
-			return array_filter(
-				array(
-					'owner_first_name' => (string) $user->first_name,
-					'owner_last_name'  => (string) $user->last_name,
-					'owner_email'      => (string) $user->user_email,
-					'owner_phone'      => (string) get_user_meta( $user_id, self::META_PHONE, true ),
-				),
-				'strlen'
-			);
-		}
-
-		// Booking-level answers from the owner and emergency steps; each pet's details and care.
-		$values  = Reservations::values( $last );
-		$per_pet = Fields::pet_fields();
-		$keep    = array();
-		$pet_ids = array();
-		foreach ( Fields::steps() as $step ) {
-			if ( ! in_array( $step['id'], self::PREFILL_STEPS, true ) ) {
-				continue;
-			}
-			foreach ( $step['fields'] as $field ) {
-				if ( isset( $per_pet[ $field['id'] ] ) ) {
-					$pet_ids[] = $field['id'];
-				} elseif ( isset( $values[ $field['id'] ] ) && '' !== (string) $values[ $field['id'] ] ) {
-					$keep[ $field['id'] ] = (string) $values[ $field['id'] ];
+		$keep = array_filter(
+			array(
+				'owner_first_name' => (string) $user->first_name,
+				'owner_last_name'  => (string) $user->last_name,
+				'owner_phone'      => (string) get_user_meta( $user_id, self::META_PHONE, true ),
+			),
+			'strlen'
+		);
+		if ( $last ) {
+			// Booking-level answers from the owner and emergency steps of the last booking.
+			$values  = Reservations::values( $last );
+			$per_pet = Fields::pet_fields();
+			foreach ( Fields::steps() as $step ) {
+				if ( ! in_array( $step['id'], self::PREFILL_STEPS, true ) ) {
+					continue;
+				}
+				foreach ( $step['fields'] as $field ) {
+					if ( ! isset( $per_pet[ $field['id'] ] ) && isset( $values[ $field['id'] ] ) && '' !== (string) $values[ $field['id'] ] ) {
+						$keep[ $field['id'] ] = (string) $values[ $field['id'] ];
+					}
 				}
 			}
 		}
-		$keep['pets'] = array();
-		foreach ( Reservations::pets( $last ) as $pet ) {
-			$keep['pets'][] = array_filter( array_map( 'strval', array_intersect_key( $pet, array_flip( $pet_ids ) ) ), 'strlen' );
+		// My Profile's details for bookings win over the last booking.
+		$keep = array_merge( $keep, SavedPets::info( $user_id, $last ) );
+
+		// The saved pets to choose from; the form starts with those that came last time.
+		$came  = $last ? array_map( static fn( array $p ): string => mb_strtolower( trim( (string) ( $p['pet_name'] ?? '' ) ) ), Reservations::pets( $last ) ) : array();
+		$saved = array();
+		$start = array();
+		foreach ( SavedPets::get( $user_id, $last ) as $pet ) {
+			$name    = (string) ( $pet['values']['pet_name'] ?? '' );
+			$is_last = ! $came || in_array( mb_strtolower( trim( $name ) ), $came, true );
+			$saved[] = array(
+				'uid'    => $pet['uid'],
+				'name'   => $name,
+				'type'   => (string) ( $pet['values']['pet_type'] ?? '' ),
+				'last'   => $is_last,
+				'values' => $pet['values'],
+			);
+			if ( $is_last ) {
+				$start[] = $pet['values'];
+			}
+		}
+		if ( $saved ) {
+			$keep['pets']       = $start ? $start : array_column( $saved, 'values' );
+			$keep['saved_pets'] = $saved;
 		}
 		$keep['owner_email'] = (string) $user->user_email;
 		return $keep;

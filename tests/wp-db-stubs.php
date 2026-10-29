@@ -83,7 +83,16 @@ class Fake_WPDB {
 		if ( $this->row_queue ) {
 			return array_shift( $this->row_queue );
 		}
-		return preg_match( '/WHERE id = (\d+)/', $sql, $m ) ? ( $this->rows[ (int) $m[1] ] ?? null ) : null;
+		if ( preg_match( '/WHERE id = (\d+)/', $sql, $m ) ) {
+			return $this->rows[ (int) $m[1] ] ?? null;
+		}
+		// An owner's latest booking (Reservations::last_for_owner): newest first, one row.
+		if ( str_contains( $sql, 'user_id =' ) && str_contains( $sql, 'ORDER BY created_at DESC' ) ) {
+			$rows = $this->get_results( $sql );
+			usort( $rows, static fn( $a, $b ) => array( $b['created_at'] ?? '', (int) ( $b['id'] ?? 0 ) ) <=> array( $a['created_at'] ?? '', (int) ( $a['id'] ?? 0 ) ) );
+			return $rows[0] ?? null;
+		}
+		return null;
 	}
 
 	public function get_results( $sql, $output = null ) {

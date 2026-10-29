@@ -119,6 +119,73 @@ function ok(name, cond) { assert.ok(cond, name); passed++; console.log('ok   - '
     ok('profile saved message', (await page.textContent('#profile-in [data-paw-msg]')).trim() === 'Your details are saved.');
     ok('signed-in requests carry the REST nonce', profileHeaders && profileHeaders['x-wp-nonce'] === (await page.evaluate(() => window.PAW_ACCOUNT.nonce)));
 
+    // My Profile: My Pets.
+    const pets = '#profile-in [data-paw-pets]';
+    const petNames = () => page.$$eval(`${pets} .paw-acct__pet-name`, els => els.map(e => e.textContent));
+    ok('my pets: the pet from the last booking, with a note to keep it', (await petNames()).join() === 'Luna' && (await page.textContent(`${pets} [data-paw-pets-msg]`)).includes('press Save pet'));
+    let petsBody = null;
+    let petsFail = false;
+    await page.route('**/mock/account/pets', route => {
+      petsBody = route.request().postDataJSON();
+      if (petsFail) {
+        return route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ code: 'paw_invalid', message: 'This field is required.', data: { status: 400, fields: { [`pets.${petsBody.pets.length - 1}.pet_name`]: 'This field is required.' } } }) });
+      }
+      const saved = petsBody.pets.map((p, i) => ({ uid: p.uid || ('0000000000' + i).slice(-12), values: p.values }));
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, pets: saved, message: 'Your pets are saved.' }) });
+    });
+    await page.click(`${pets} [data-paw-pet-add]`);
+    ok('add: the editor has the booking form\'s pet questions, grouped', (await page.locator(`${pets} .paw-acct__pet-group legend`).allTextContents()).join('|') === 'Pet Information|Health & Vaccination Records|Special Care Instructions' && await page.isHidden(`${pets} [data-paw-pet-add]`));
+    ok('add: no vaccination upload or per-booking vaccination question', (await page.locator(`${pets} [name=vaccination_files], ${pets} [name=vaccinations_current]`).count()) === 0);
+    ok('conditional questions start hidden', await page.isHidden(`${pets} [data-paw-field=dog_size]`) && await page.isHidden(`${pets} [data-paw-field=medications_details]`));
+    petsFail = true;
+    await page.click(`${pets} .paw-acct__pet-editor button[type=submit]`);
+    await page.waitForSelector(`${pets} [data-paw-field=pet_name].is-invalid`);
+    ok('a missing name is shown on the field', (await page.textContent(`${pets} [data-paw-field=pet_name] .paw-acct__error`)) === 'This field is required.');
+    petsFail = false;
+    await page.fill(`${pets} [name=pet_name]`, 'Brax');
+    await page.selectOption(`${pets} [name=pet_type]`, 'dog');
+    await page.selectOption(`${pets} [name=medications]`, 'yes');
+    ok('choosing Dog and medications Yes shows their follow-ups', await page.isVisible(`${pets} [data-paw-field=dog_size]`) && await page.isVisible(`${pets} [data-paw-field=medications_details]`));
+    await page.selectOption(`${pets} [name=dog_size]`, 'large');
+    await page.fill(`${pets} [name=medications_details]`, 'Apoquel 16mg daily');
+    await page.fill(`${pets} [name=feeding_schedule]`, '2 cups, twice a day');
+    await page.click(`${pets} .paw-acct__pet-editor button[type=submit]`);
+    await page.waitForFunction(() => document.querySelectorAll('#profile-in .paw-acct__pet').length === 2);
+    const added = petsBody.pets[1].values;
+    ok('save: the whole list is sent, the new pet with its answers', petsBody.pets.length === 2 && petsBody.pets[0].values.pet_name === 'Luna' && added.pet_name === 'Brax' && added.dog_size === 'large' && added.medications_details === 'Apoquel 16mg daily' && added.feeding_schedule === '2 cups, twice a day' && !('pet_type_other' in added));
+    ok('save: listed, editor closed, message shown', (await petNames()).join() === 'Luna,Brax' && await page.isHidden(`${pets} [data-paw-pet-editor]`) && (await page.textContent(`${pets} [data-paw-pets-msg]`)) === 'Your pets are saved.');
+    await page.click(`${pets} [data-paw-pet-edit="1"]`);
+    ok('edit: the editor opens inside that pet\'s row (valid list markup)', await page.evaluate(() => document.querySelector('#profile-in [data-paw-pet-editor]').parentElement.matches('li[data-paw-pet-row="1"]')));
+    ok('edit: the saved answers are filled in', (await page.inputValue(`${pets} [name=pet_name]`)) === 'Brax' && (await page.inputValue(`${pets} [name=medications_details]`)) === 'Apoquel 16mg daily');
+    await page.selectOption(`${pets} [name=medications]`, 'no');
+    await page.click(`${pets} .paw-acct__pet-editor button[type=submit]`);
+    await page.waitForSelector(`${pets} [data-paw-pet-editor]`, { state: 'hidden' });
+    ok('after saving, focus goes back to that pet\'s Edit button', await page.evaluate(() => document.activeElement && document.activeElement.getAttribute('data-paw-pet-edit') === '1'));
+    ok('edit: a hidden follow-up answer is dropped', petsBody.pets[1].uid !== '' && petsBody.pets[1].values.medications === 'no' && !('medications_details' in petsBody.pets[1].values));
+    if (SHOTS) await page.locator(pets).screenshot({ path: path.join(SHOTS, 'profile-pets.png') });
+    page.once('dialog', d => d.accept());
+    await page.click(`${pets} [data-paw-pet-remove="0"]`);
+    await page.waitForFunction(() => document.querySelectorAll('#profile-in .paw-acct__pet').length === 1);
+    ok('remove: asks, then saves the list without it', petsBody.pets.length === 1 && petsBody.pets[0].values.pet_name === 'Brax' && (await petNames()).join() === 'Brax');
+
+    // My Profile: details for bookings.
+    let infoBody = null;
+    await page.route('**/mock/account/info', route => {
+      infoBody = route.request().postDataJSON();
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, values: infoBody, message: 'Your details for bookings are saved.' }) });
+    });
+    const info = '#profile-in form[data-paw-form="account/info"]';
+    await page.fill(`${info} [name=address_city]`, 'Estero');
+    await page.fill(`${info} [name=emergency_name]`, 'Amy Miralles');
+    await page.selectOption(`${info} [name=vet_authorization]`, 'yes');
+    await page.click(`${info} button[type=submit]`);
+    await page.waitForSelector(`${info} [data-paw-msg]:not([hidden])`);
+    ok('details for bookings: address, emergency contact and vet are sent', infoBody.address_city === 'Estero' && infoBody.emergency_name === 'Amy Miralles' && infoBody.vet_authorization === 'yes' && (await page.textContent(`${info} [data-paw-msg]`)) === 'Your details for bookings are saved.');
+
+    // My Profile: recent activity.
+    const act = await page.textContent('#profile-in .paw-acct__activity');
+    ok('recent activity: reservations and event sign-ups', act.includes('PAW-7K3QX9') && act.includes('Biscuit') && act.includes('X-Mas Party') && act.includes('Biscuit, Luna'));
+
     // My Bookings: cancel.
     ok('both reservations listed', (await page.textContent('#bookings')).includes('PAW-7K3QX9') && (await page.textContent('#bookings')).includes('PAW-ABCDEF'));
     ok('only the future confirmed one can be cancelled', (await page.locator('#bookings [data-paw-cancel]').count()) === 1);

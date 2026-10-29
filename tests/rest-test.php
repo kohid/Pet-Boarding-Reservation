@@ -146,11 +146,14 @@ $ada = paw_test_user( 'ada@example.com', 'some pass1', array( 'paw_customer' ) )
 wp_set_current_user( $ada->ID );
 Rest::submit( request( $good ) );
 t( 'signed-in owner: reservation linked to the account', (string) $ada->ID === ( $wpdb->rows[1]['user_id'] ?? '' ) );
+$ada_pets = get_user_meta( $ada->ID, \Pawfectly\SavedPets::META_PETS, true );
+t( 'signed-in owner: the booking\'s pets are saved to My Profile', is_array( $ada_pets ) && $good['pets'][0]['pet_name'] === ( $ada_pets[0]['values']['pet_name'] ?? '' ) && is_array( get_user_meta( $ada->ID, \Pawfectly\SavedPets::META_INFO, true ) ) );
 reset_state();
 $staffer = paw_test_user( 'front@example.com', 'some pass1', array( 'administrator' ) );
 wp_set_current_user( $staffer->ID );
 Rest::submit( request( $good ) );
 t( 'staff booking for a customer: not linked to the staff account', null === $wpdb->rows[1]['user_id'] );
+t( 'staff booking for a customer: nothing saved to the staff account', '' === get_user_meta( $staffer->ID, \Pawfectly\SavedPets::META_PETS, true ) );
 wp_set_current_user( 0 );
 
 reset_state();

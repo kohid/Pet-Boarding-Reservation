@@ -65,3 +65,23 @@ $page = '<!doctype html>
 $file = $signed_in ? 'signed-in.html' : 'index.html';
 file_put_contents( __DIR__ . '/out/' . $file, $page );
 echo "wrote tests/e2e/out/$file\n";
+
+// Signed in with pets saved on My Profile: out/saved-pets.html, for the "Who's coming?" chooser.
+if ( $signed_in ) {
+	\Pawfectly\SavedPets::save(
+		$jay->ID,
+		array(
+			array( 'uid' => 'aaaaaaaaaaaa', 'values' => array( 'pet_name' => 'Rex', 'pet_type' => 'dog', 'dog_size' => 'large', 'pet_breed' => 'Labrador', 'feeding_schedule' => '2 cups twice a day' ) ),
+			array( 'uid' => 'bbbbbbbbbbbb', 'values' => array( 'pet_name' => 'Mingming', 'pet_type' => 'cat', 'pet_breed' => 'Siamese' ) ),
+			array( 'uid' => 'cccccccccccc', 'values' => array( 'pet_name' => 'Brax', 'pet_type' => 'dog', 'dog_size' => 'small' ) ),
+		)
+	);
+	\Pawfectly\SavedPets::save_info( $jay->ID, array( 'address_street' => '1 Bark St', 'address_city' => 'Estero', 'address_state' => 'FL', 'address_postcode' => '33928', 'address_country' => 'US', 'vet_name' => 'Dr. Paws' ) );
+	$config2            = Shortcode::config();
+	$config2['restUrl'] = '/mock/reservations';
+	$config2['nonceUrl'] = '/mock/nonce';
+	$config2['today']   = gmdate( 'Y-m-d' );
+	$saved_page = str_replace( 'window.PAW_FORM = ' . json_encode( $config ) . ';', 'window.PAW_FORM = ' . json_encode( $config2 ) . ';', $page );
+	file_put_contents( __DIR__ . '/out/saved-pets.html', $saved_page );
+	echo "wrote tests/e2e/out/saved-pets.html\n";
+}

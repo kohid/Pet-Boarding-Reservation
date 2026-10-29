@@ -428,6 +428,7 @@
 		if (addBtn) {
 			addBtn.hidden = petCount() >= CFG.maxPets;
 		}
+		syncSaved();
 		showPrices();
 		showEstimate();
 		showProgress();
@@ -1243,6 +1244,124 @@
 			ensurePets(pets.length);
 			pets.forEach(function (pet, n) { setPetValues(n, pet); });
 		}
+	}
+
+	/* ---------- Saved pets (My Profile): "Who's coming?" ---------- */
+
+	var savedBox = root.querySelector('[data-paw-saved-pets]');
+	var SAVED = ACCOUNT.prefill && Array.isArray(ACCOUNT.prefill.saved_pets) ? ACCOUNT.prefill.saved_pets : [];
+
+	function sameName(a, b) {
+		return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+	}
+
+	/** The pet cards holding this saved pet (matched by name, as the server matches them). */
+	function cardsFor(pet) {
+		var out = [];
+		for (var n = 0; n < petCount(); n++) {
+			if (sameName(petValues(n).pet_name, pet.name)) {
+				out.push(n);
+			}
+		}
+		return out;
+	}
+
+	/** Card n has nothing typed, chosen or uploaded yet (every control still as the page drew it). */
+	function blankCard(n) {
+		if (files[n] && files[n].length) {
+			return false;
+		}
+		return Array.prototype.every.call(root.querySelectorAll('[data-paw-pet="' + n + '"] input, [data-paw-pet="' + n + '"] textarea, [data-paw-pet="' + n + '"] select'), function (input) {
+			if (input.type === 'radio' || input.type === 'checkbox') {
+				return input.checked === input.defaultChecked;
+			}
+			if (input.tagName === 'SELECT') {
+				var first = input.querySelector('option[selected]') || input.options[0]; // What clearPet() resets it to.
+				return !first || input.value === first.value;
+			}
+			return input.type === 'file' || input.value === input.defaultValue;
+		});
+	}
+
+	function onlyBlankCard() {
+		return petCount() === 1 && blankCard(0);
+	}
+
+	/** Each saved pet's card as it looked when filled in, to tell later edits apart. */
+	var snaps = {};
+
+	function snapKey(pet) {
+		return String(pet.name).trim().toLowerCase();
+	}
+
+	/** Card n was changed since it was filled in (typed over, added to, or files uploaded). */
+	function changedFrom(n, pet) {
+		if (files[n] && files[n].length) {
+			return true;
+		}
+		var snap = snaps[snapKey(pet)];
+		return !!snap && JSON.stringify(petValues(n)) !== snap;
+	}
+
+	function syncSaved() {
+		if (!savedBox) {
+			return;
+		}
+		savedBox.hidden = SAVED.length < 2;
+		SAVED.forEach(function (pet) {
+			var at = cardsFor(pet);
+			if (at.length && !snaps[snapKey(pet)]) {
+				snaps[snapKey(pet)] = JSON.stringify(petValues(at[0]));
+			}
+		});
+		savedBox.querySelectorAll('[data-paw-saved]').forEach(function (chip) {
+			var on = cardsFor(SAVED[+chip.getAttribute('data-paw-saved')]).length > 0;
+			chip.setAttribute('aria-pressed', on ? 'true' : 'false');
+			chip.disabled = !on && petCount() >= CFG.maxPets && !onlyBlankCard();
+		});
+	}
+
+	if (savedBox) {
+		var chips = savedBox.querySelector('[data-paw-saved-chips]');
+		SAVED.forEach(function (pet, i) {
+			var chip = document.createElement('button');
+			chip.type = 'button';
+			chip.className = 'paw-saved-pets__chip';
+			chip.setAttribute('data-paw-saved', String(i));
+			chip.textContent = (pet.type === 'cat' ? '🐱 ' : pet.type === 'dog' ? '🐶 ' : '🐾 ') + pet.name;
+			chips.appendChild(chip);
+		});
+		chips.addEventListener('click', function (e) {
+			var chip = e.target.closest('[data-paw-saved]');
+			if (!chip) {
+				return;
+			}
+			var pet = SAVED[+chip.getAttribute('data-paw-saved')];
+			var at = cardsFor(pet);
+			if (at.length) {
+				// Leaving: its cards go (the last card left is emptied instead), after asking if anything was changed there.
+				if (at.some(function (n) { return changedFrom(n, pet); }) && !window.confirm(I18N.dropSavedPet.replace('%s', pet.name))) {
+					return;
+				}
+				delete snaps[snapKey(pet)];
+				at.reverse().forEach(function (n) {
+					if (petCount() === 1) {
+						clearPet(0);
+					} else {
+						removePet(n);
+					}
+				});
+			} else {
+				// Coming: a new card (or the blank first one), filled from the profile.
+				if (!onlyBlankCard()) {
+					addPet();
+				}
+				setPetValues(petCount() - 1, pet.values);
+				snaps[snapKey(pet)] = JSON.stringify(petValues(petCount() - 1));
+			}
+			refresh();
+			saveDraft();
+		});
 	}
 
 	/* ---------- Start ---------- */

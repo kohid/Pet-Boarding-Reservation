@@ -150,6 +150,10 @@ final class Rest {
 		$reservation = Reservations::find( $id );
 		if ( $reservation ) {
 			Mailer::reservation_received( $reservation );
+			// The owner's account keeps these pets and details for next time (My Profile).
+			if ( ! empty( $reservation['user_id'] ) ) {
+				SavedPets::remember( (int) $reservation['user_id'], $reservation );
+			}
 		}
 
 		return new \WP_REST_Response( array( 'reference' => $reference, 'account' => $made_account ), 201 );

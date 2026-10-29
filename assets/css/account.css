@@ -302,7 +302,7 @@
 	font-weight: 600;
 }
 
-.paw-acct .paw-acct__field input:not(#paw-0) {
+.paw-acct .paw-acct__field :is(input, select, textarea):not(#paw-0) {
 	display: block;
 	width: 100%;
 	min-height: 2.75rem;
@@ -316,14 +316,14 @@
 	font: inherit;
 }
 
-.paw-acct .paw-acct__field input:not(#paw-0):focus {
+.paw-acct .paw-acct__field :is(input, select, textarea):not(#paw-0):focus {
 	border-color: var(--paw-primary);
 	background: #fff;
 	box-shadow: var(--paw-ring);
 	outline: none;
 }
 
-.paw-acct .paw-acct__field.is-invalid input:not(#paw-0) {
+.paw-acct .paw-acct__field.is-invalid :is(input, select, textarea):not(#paw-0) {
 	border-color: var(--paw-danger);
 }
 
@@ -548,4 +548,108 @@
 	width: 1.25rem;
 	height: 1.25rem;
 	fill: currentColor;
+}
+
+/* ---------- My Profile: My Pets, details for bookings, recent activity ---------- */
+
+.paw-acct .paw-acct__field textarea:not(#paw-0) {
+	min-height: 5rem;
+	resize: vertical;
+}
+
+.paw-acct .paw-acct__field--wide {
+	grid-column: 1 / -1;
+}
+
+.paw-acct .paw-acct__field[hidden] {
+	display: none;
+}
+
+.paw-acct .paw-acct__card-head .paw-acct__muted {
+	margin: -0.5rem 0 1rem;
+}
+
+.paw-acct .paw-acct__card .paw-acct__subhead {
+	margin: 1.5rem 0 0.75rem;
+	padding: 0;
+	color: var(--paw-ink);
+	font-size: 0.9375rem;
+	font-weight: 700;
+}
+
+.paw-acct .paw-acct__petlist,
+.paw-acct .paw-acct__activitylist {
+	margin: 0 0 1rem;
+	padding: 0;
+	list-style: none;
+}
+
+.paw-acct .paw-acct__pet,
+.paw-acct .paw-acct__activitylist li {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 1rem;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.875rem 0;
+	border-bottom: 1px solid var(--paw-line);
+}
+
+.paw-acct .paw-acct__pet-main,
+.paw-acct .paw-acct__activity-main {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.paw-acct .paw-acct__pet-name {
+	color: var(--paw-ink);
+	font-size: 1rem;
+}
+
+.paw-acct .paw-acct__pet-actions {
+	display: flex;
+	gap: 1rem;
+}
+
+.paw-acct .paw-acct__link--danger {
+	color: var(--paw-danger);
+}
+
+.paw-acct .paw-acct__pet-editor {
+	margin: 0 0 1rem;
+	padding: 1rem 1.25rem 1.25rem;
+	border: 1px solid var(--paw-line);
+	border-radius: 0.475rem;
+	background: var(--paw-hover);
+}
+
+.paw-acct .paw-acct__pet-group {
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.paw-acct .paw-acct__card .paw-acct__pet-group:first-child .paw-acct__subhead {
+	margin-top: 0;
+}
+
+
+.paw-acct button.paw-acct__link:not(#paw-0) {
+	padding: 0;
+	border: 0;
+	background: none;
+	box-shadow: none;
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.paw-acct button.paw-acct__link:not(#paw-0):hover {
+	text-decoration: underline;
+}
+
+.paw-acct .paw-acct__pet > [data-paw-pet-editor] {
+	flex-basis: 100%;
 }

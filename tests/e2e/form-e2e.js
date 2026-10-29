@@ -574,6 +574,45 @@ let window_today;
       await ctx.close();
     }
 
+    // Signed in with pets saved on My Profile: "Who's coming?".
+    {
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+      const page = await ctx.newPage();
+      const errors = [];
+      page.on('pageerror', e => errors.push(e.message));
+      await page.goto(URL.replace('index.html', 'saved-pets.html'));
+      await next(page);
+      ok('saved pets: the saved details for bookings are filled in', (await page.inputValue('[name=address_street]')) === '1 Bark St' && (await page.inputValue('[name=address_postcode]')) === '33928');
+      await next(page);
+      const chips = '[data-paw-saved-pets] [data-paw-saved]';
+      const names = () => page.$$eval('[data-paw-pets="pet"] [data-paw-pet]', cards => cards.map((c, n) => c.querySelector(`[name="pets[${n}][pet_name]"]`).value));
+      const pressed = () => page.$$eval(chips, cs => cs.map(c => c.getAttribute('aria-pressed')));
+      ok("saved pets: \"Who's coming?\" lists every saved pet", await page.isVisible('[data-paw-saved-pets]') && (await page.locator(chips).count()) === 3);
+      ok('saved pets: no booking yet, so every saved pet starts filled in', (await names()).join() === 'Rex,Mingming,Brax' && (await pressed()).join() === 'true,true,true' && (await page.inputValue('[name="pets[0][pet_breed]"]')) === 'Labrador');
+      await page.click(`${chips} >> nth=1`);
+      ok('untick: that pet\'s card goes, the others stay', (await names()).join() === 'Rex,Brax' && (await pressed()).join() === 'true,false,true');
+      await page.fill('[name="pets[1][pet_age]"]', '4 years');
+      await page.click(`${chips} >> nth=1`);
+      ok('tick: added at the end with its saved answers; typing elsewhere kept', (await names()).join() === 'Rex,Brax,Mingming' && (await page.inputValue('[name="pets[2][pet_breed]"]')) === 'Siamese' && (await page.inputValue('[name="pets[1][pet_age]"]')) === '4 years');
+      let asked = '';
+      page.once('dialog', d => { asked = d.message(); d.dismiss(); });
+      await page.click(`${chips} >> nth=2`);
+      ok('untick a pet you changed here: asks first, and No keeps it', asked.includes('Brax') && (await names()).join() === 'Rex,Brax,Mingming');
+      page.once('dialog', d => d.accept());
+      for (const n of [0, 1, 2]) await page.click(`${chips} >> nth=${n}`);
+      ok('untick all: one blank card is left', (await names()).join() === '' && (await page.locator('[data-paw-pets="pet"] [data-paw-pet]').count()) === 1 && (await pressed()).join() === 'false,false,false');
+      await page.click(`${chips} >> nth=2`);
+      ok('tick into the blank card', (await names()).join() === 'Brax' && (await page.locator('[data-paw-pets="pet"] [data-paw-pet]').count()) === 1);
+      page.once('dialog', d => d.accept());
+      await page.click(`${chips} >> nth=2`);
+      await page.fill('[name="pets[0][pet_breed]"]', 'Poodle mix');
+      await page.click(`${chips} >> nth=0`);
+      ok('a card with something typed (but no name) is never filled over: the pet gets its own card', (await names()).join() === ',Rex' && (await page.inputValue('[name="pets[0][pet_breed]"]')) === 'Poodle mix');
+      if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'form-saved-pets.png') });
+      ok('saved pets: no script errors', errors.length === 0 || (console.log(errors), false));
+      await ctx.close();
+    }
+
     console.log(`\nall ${passed} passed`);
   } finally {
     await browser.close();

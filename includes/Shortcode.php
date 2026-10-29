@@ -132,6 +132,8 @@ final class Shortcode {
 				'boardingPetMany' => __( 'Boarding, %d nights', 'pawfectly-reservations' ),
 				'petN'          => __( 'Pet %d', 'pawfectly-reservations' ),
 				'removePet'     => __( 'Remove', 'pawfectly-reservations' ),
+				/* translators: %s: pet name */
+				'dropSavedPet'  => __( "Take %s off this booking? What you changed or uploaded for this pet here will be cleared.", 'pawfectly-reservations' ),
 				'groomedOnly'   => __( 'Grooming is for dogs and cats. Choose Boarding + grooming to board your other pets.', 'pawfectly-reservations' ),
 				'oneGroomed'    => __( 'Choose a service for at least one pet, or book Boarding only.', 'pawfectly-reservations' ),
 				'lastGroom'     => __( "The last groom date can't be in the future.", 'pawfectly-reservations' ),
