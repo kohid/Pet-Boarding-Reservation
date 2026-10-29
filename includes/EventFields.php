@@ -48,8 +48,12 @@ final class EventFields {
 		if ( $preview && Events::get( $preview ) ) {
 			return $preview;
 		}
-		$latest = get_posts( array( 'post_type' => Events::TYPE, 'post_status' => 'publish', 'posts_per_page' => 1, 'orderby' => 'date', 'order' => 'DESC', 'fields' => 'ids', 'no_found_rows' => true ) );
-		return (int) ( $latest[0] ?? 0 );
+		static $latest = null; // The editor draws many tags per request.
+		if ( null === $latest ) {
+			$found  = get_posts( array( 'post_type' => Events::TYPE, 'post_status' => 'publish', 'posts_per_page' => 1, 'orderby' => 'date', 'order' => 'DESC', 'fields' => 'ids', 'no_found_rows' => true ) );
+			$latest = (int) ( $found[0] ?? 0 );
+		}
+		return $latest;
 	}
 
 	/**

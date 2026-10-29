@@ -200,9 +200,10 @@ final class Section_Rows extends Text_Tag {
 	protected const FIELD = 'section_rows';
 
 	public function render() {
-		$ev = EventFields::current();
-		if ( $ev ) {
-			echo EventShortcode::part( $ev, (string) $this->get_settings( 'section' ) ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in the rows partial.
+		$ev      = EventFields::current();
+		$section = (string) $this->get_settings( 'section' );
+		if ( $ev && in_array( $section, array( 'sessions', 'includes', 'goodies', 'good_to_know' ), true ) ) { // Rows only: a saved value can't draw another part.
+			echo EventShortcode::part( $ev, $section ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in the rows partial.
 		}
 	}
 }

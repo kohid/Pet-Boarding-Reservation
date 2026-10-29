@@ -111,6 +111,7 @@ namespace {
 	t( 'section rows: the repeater as a list, pick the section', str_contains( $rows, '<ul class="paw-ev-list paw-ev-list--sessions">' ) && str_contains( $rows, '<span class="paw-ev-row__name">S1</span>' ) );
 	t( 'section rows: another section', str_contains( $out( 'paw-event-section-rows', array( 'section' => 'includes' ) ), '<span class="paw-ev-row__text">Photo booth</span>' ) );
 	t( 'section rows: the section control lists the four repeaters', array( 'sessions', 'includes', 'goodies', 'good_to_know' ) === array_keys( ( new ( get_class( $m->tags['paw-event-section-rows'] ) )() )->get_controls()['section']['options'] ) );
+	t( 'section rows: only the four repeaters, never another part', '' === $out( 'paw-event-section-rows', array( 'section' => 'signup' ) ) && '' === $out( 'paw-event-section-rows', array( 'section' => 'description' ) ) );
 	t( 'section rows: an empty section prints nothing on the site', '' === $out( 'paw-event-section-rows', array( 'section' => 'goodies' ) ) );
 	t( 'description (formatted): keeps its HTML', str_contains( $out( 'paw-event-description-html' ), '<strong>paws</strong>' ) );
 	t( 'spots left: pick the session', '' === $out( 'paw-event-spots-left', array( 'session' => '1' ) ) );
