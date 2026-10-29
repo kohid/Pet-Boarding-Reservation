@@ -94,7 +94,7 @@ final class UserMenu {
 					'dashboard' => $dash,
 					'settings'  => '' !== $dash ? add_query_arg( array( 'paw_view' => 'settings' ), $dash ) : ( $wp_admin ? admin_url( 'admin.php?page=' . Settings::PAGE ) : '' ),
 					'wp_admin'  => admin_url(),
-					'logout'    => wp_logout_url( $here ),
+					'logout'    => Login::logout_url(),
 				),
 			)
 		);

@@ -57,7 +57,7 @@ final class Shortcode {
 			'prefill'   => $customer ? Accounts::prefill( (int) $user->ID ) : array(),
 			'loginRest' => rest_url( Rest::NS . '/account/login' ),
 			'lostUrl'   => wp_lostpassword_url( $here ),
-			'logoutUrl' => wp_logout_url( $here ),
+			'logoutUrl' => Login::logout_url(),
 		);
 	}
 

@@ -1,6 +1,7 @@
 <?php
 /**
- * The login page: where people land after signing in, and when wp-login.php hands over to it.
+ * The login page: where people land after signing in (My Profile) and signing out (the homepage),
+ * and when wp-login.php hands over to it.
  * Run: php tests/login-test.php
  */
 require __DIR__ . '/bootstrap.php';
@@ -31,8 +32,17 @@ $staff = paw_test_user( 'desk@example.com', 'pass word1', array( 'paw_staff' ), 
 t( 'staff land on the dashboard', 'https://example.test/dashboard/' === Login::home_for( $staff ) );
 t( 'owners land on My Bookings', 'https://example.test/my-bookings/' === Login::home_for( $cust ) );
 t( 'redirect_to on this site wins', 'https://example.test/book/' === Login::target( 'https://example.test/book/', $cust ) );
-t( 'redirect_to on another site is ignored', 'https://example.test/my-bookings/' === Login::target( 'https://evil.test/x', $cust ) );
-t( 'empty redirect_to → home', 'https://example.test/dashboard/' === Login::target( '', $staff ) );
+t( 'no My Profile page: signing in goes to their home', 'https://example.test/dashboard/' === Login::target( '', $staff ) && 'https://example.test/my-bookings/' === Login::target( '', $cust ) );
+$page( Pawfectly\Profile::TAG, 'https://example.test/my-profile/' );
+t( 'signing in lands on My Profile, staff and owners alike', 'https://example.test/my-profile/' === Login::target( '', $cust ) && 'https://example.test/my-profile/' === Login::target( '', $staff ) );
+t( 'redirect_to on another site is ignored', 'https://example.test/my-profile/' === Login::target( 'https://evil.test/x', $cust ) );
+t( 'redirect_to on this site still wins', 'https://example.test/book/' === Login::target( 'https://example.test/book/', $cust ) );
+t( 'Log Out goes to the homepage, as a plain URL', str_contains( Login::logout_url(), 'redirect_to=' . rawurlencode( 'https://example.test/' ) ) && ! str_contains( Login::logout_url(), '&amp;' ) && str_contains( Login::logout_url(), '_wpnonce=' ) );
+t( 'any other log out with no destination ends on the homepage', 'https://example.test/' === Login::after_logout( 'https://example.test/wp-login.php?loggedout=true', '', null ) && 'https://example.test/book/' === Login::after_logout( 'https://example.test/book/', 'https://example.test/book/', null ) );
+wp_set_current_user( $cust->ID );
+$signed_in = Login::render();
+t( 'signed in on the login page: Continue to My Profile, Log Out to the homepage', str_contains( $signed_in, 'href="https://example.test/my-profile/"' ) && str_contains( $signed_in, 'redirect_to=' . rawurlencode( 'https://example.test/' ) ) );
+wp_set_current_user( 0 );
 
 $deep = 'https://example.test/wp-admin/post.php?post=5&action=edit';
 t( 'redirect_to is encoded, so its own & and ? survive', str_ends_with( Login::url_for( $deep ), 'redirect_to=' . rawurlencode( $deep ) ) );
@@ -79,7 +89,7 @@ t( 'account menu: no Admin Panel for staff', ! str_contains( \Pawfectly\UserMenu
 
 wp_set_current_user( $cust->ID );
 $in = Login::render();
-t( 'signed in: continue link and no forms', str_contains( $in, 'https://example.test/my-bookings/' ) && ! str_contains( $in, 'data-paw-form' ) );
+t( 'signed in: continue link and no forms', str_contains( $in, 'https://example.test/my-profile/' ) && ! str_contains( $in, 'data-paw-form' ) );
 
 $page( Login::TAG, '' );
 wp_set_current_user( 0 );

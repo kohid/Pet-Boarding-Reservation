@@ -54,7 +54,7 @@ final class Dashboard {
 
 		$full       = 'no' !== $a['fullscreen'];
 		$settings   = Settings::get();
-		$logout_url = wp_logout_url( $here );
+		$logout_url = Login::logout_url();
 
 		ob_start();
 		include PAW_DIR . 'templates/dashboard.php';
