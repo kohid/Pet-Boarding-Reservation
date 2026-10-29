@@ -141,7 +141,7 @@ final class ElementorTags {
 			'section_rows'    => __( 'Section rows (pick the section)', 'pawfectly-reservations' ),
 			'part_heading'    => __( 'Heading', 'pawfectly-reservations' ),
 			'part_intro'      => __( 'Intro', 'pawfectly-reservations' ),
-			'part_rows'       => __( 'All rows (list)', 'pawfectly-reservations' ),
+			'part_rows'       => __( 'All rows (list, for a Text Editor)', 'pawfectly-reservations' ),
 			'part_row'        => __( 'Row field (pick row and field)', 'pawfectly-reservations' ),
 			'tickets'         => __( 'Tickets / sign-up link', 'pawfectly-reservations' ),
 			'ticket_url'      => __( 'Ticket link', 'pawfectly-reservations' ),

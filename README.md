@@ -87,7 +87,7 @@ With **Elementor Pro**, build the event page yourself in **Templates → Theme B
 | **Event · When & where** | Start date, Start time, End date, End time (each with a **Format**, like `F j, Y` or `g:i A`), Date line, Day, Time range, Summary line, Venue, Address, Venue + address, Map link |
 | **Event · Price & tickets** | Price (number), Price text, Free badge, Spots per session, Spots left (pick the session), Ticket button text, Ticket link, Tickets / sign-up link (your ticket link, or the sign-up form on the page), Highlight note |
 | **Event · Description** | Description (plain text), Description (formatted) |
-| **Event · Sessions (repeater)** | Heading, Intro, All rows (list), Row field |
+| **Event · Sessions (repeater)** | Heading, Intro, All rows (list, for a Text Editor), Row field |
 | **Event · Ticket includes (repeater)** | Heading, Intro, All rows (list), Row field |
 | **Event · Extra goodies (repeater)** | Heading, All rows (list), Row field |
 | **Event · Good to know (repeater)** | Heading, All rows (list), Row field |

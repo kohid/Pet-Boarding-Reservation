@@ -65,7 +65,7 @@ abstract class Text_Tag extends Tag {
 			);
 		} elseif ( 'spots_left' === $field ) {
 			$options = array( '0' => __( 'Event without sessions', 'pawfectly-reservations' ) );
-			for ( $n = 1; $n <= 8; $n++ ) {
+			for ( $n = 1; $n <= \Pawfectly\Events::LIMITS['sessions']; $n++ ) {
 				/* translators: %d: session number */
 				$options[ (string) $n ] = sprintf( __( 'Session %d', 'pawfectly-reservations' ), $n );
 			}
@@ -204,7 +204,7 @@ final class Section_Rows extends Text_Tag {
 	public function render() {
 		$ev      = EventFields::current();
 		$section = (string) $this->get_settings( 'section' );
-		if ( $ev && in_array( $section, array( 'sessions', 'includes', 'goodies', 'good_to_know' ), true ) ) { // Rows only: a saved value can't draw another part.
+		if ( $ev && isset( EventFields::ROW_FIELDS[ $section ] ) ) { // Rows only: a saved value can't draw another part.
 			echo EventShortcode::part( $ev, $section ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in the rows partial.
 		}
 	}
