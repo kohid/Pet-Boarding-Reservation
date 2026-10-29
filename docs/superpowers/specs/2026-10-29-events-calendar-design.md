@@ -1,6 +1,6 @@
 # Pawfectly v0.5: events and an event calendar (design spec)
 
-- Status: **draft, for review**.
+- Status: **approved** (2026-10-29).
 - Date: 2026-10-29
 - Builds on the v0.1–v0.4 specs. Their conventions still apply.
 - Modelled on the events and `[cbd_calendar]` of kohid/Community-Business-Directory, in Pawfectly's look.
@@ -36,7 +36,7 @@
 |---|---|
 | Title | Required, at most 120 characters. This is the post title. |
 | Tagline | Optional, at most 160 characters ("A jingle-bark holiday party for dogs of every breed"). |
-| Emoji | Optional, one emoji (at most 16 bytes; the picker fills it). |
+| Emoji | Optional, one emoji (at most 32 bytes, so joined emoji such as 👨‍👩‍👧‍👦 fit; the picker fills it). |
 | Cover photo | Optional, from the media library. This is the featured image. |
 | Category | Optional, one of the event categories. |
 | Starts / ends | Required: a date and time for each. The end must be after the start. Events can run over several days. Times are in the site's timezone. |
