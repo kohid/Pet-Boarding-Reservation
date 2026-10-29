@@ -40,6 +40,7 @@ final class Rest {
 		);
 		Calendar::routes();
 		EventsList::routes();
+		SignupRest::routes();
 	}
 
 	/** @return \WP_REST_Response|\WP_Error */
