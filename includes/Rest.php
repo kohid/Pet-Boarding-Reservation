@@ -39,6 +39,7 @@ final class Rest {
 			)
 		);
 		Calendar::routes();
+		EventsList::routes();
 	}
 
 	/** @return \WP_REST_Response|\WP_Error */

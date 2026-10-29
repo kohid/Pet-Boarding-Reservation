@@ -326,4 +326,30 @@
 	}
 
 	document.querySelectorAll('.paw-cal').forEach(setup);
+
+	/* ---------- [pawfectly_events]: Load more ---------- */
+
+	document.querySelectorAll('.paw-events').forEach(function (list) {
+		var btn = list.querySelector('[data-paw-events-more]');
+		var grid = list.querySelector('[data-paw-events-grid]');
+		if (!btn) {
+			return;
+		}
+		btn.addEventListener('click', function () {
+			var url = list.getAttribute('data-rest');
+			url += (url.indexOf('?') < 0 ? '?' : '&') + 'tab=' + encodeURIComponent(list.getAttribute('data-tab'))
+				+ '&cat=' + encodeURIComponent(list.getAttribute('data-cat') || '')
+				+ '&limit=' + encodeURIComponent(list.getAttribute('data-limit') || '9')
+				+ '&offset=' + grid.querySelectorAll('.paw-events__card').length;
+			btn.disabled = true;
+			fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+				.then(function (r) { return r.json(); })
+				.then(function (d) {
+					grid.insertAdjacentHTML('beforeend', d.html); // Rendered and escaped by the server.
+					btn.hidden = !d.more;
+				})
+				.catch(function () { /* The button stays; trying again is safe. */ })
+				.then(function () { btn.disabled = false; });
+		});
+	});
 })();

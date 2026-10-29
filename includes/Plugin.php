@@ -20,6 +20,7 @@ final class Plugin {
 		StaffRest::init();
 		Events::init();
 		Calendar::init();
+		EventsList::init();
 		Uploads::init();
 		Shortcode::init();
 		Pages::init();
