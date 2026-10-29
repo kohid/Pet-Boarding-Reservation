@@ -230,6 +230,30 @@ async function nextTitle(page, before) {
     await noScroll(page, 'sign-up form with two dogs');
     await shot(page, 'event-page-phone');
 
+    /* ---------- An Elementor-style page from the Dynamic Tag values and [pawfectly_event] parts ---------- */
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(BASE + 'event-parts.html');
+    const font = sel => page.$eval(sel, e => getComputedStyle(e).fontFamily);
+    ok('parts: the lists take the page\'s font', (await font('.paw-ev-list--includes .paw-ev-row__text')).includes('Georgia') && (await font('.paw-ev-list--sessions .paw-ev-row__time')).includes('Georgia'));
+    ok('parts: plain lists, no bullets', (await page.$eval('.paw-ev-list--includes', e => getComputedStyle(e).listStyleType)) === 'none' && (await page.locator('.paw-ev-list--includes .paw-ev-row').count()) === 5);
+    ok('parts: the form takes the page\'s font too', (await font('#paw-event-reserve [name=first_name]')).includes('Georgia') || (await font('#paw-event-reserve label')).includes('Georgia'));
+    ok('parts: the tag values', (await page.textContent('.el-title')).includes('X-Mas Party') && (await page.textContent('.el-btn')) === 'Get Tickets — $15' && (await page.textContent('.el-facts')).includes('$15 per dog'));
+    await page.click('.el-btn');
+    await page.waitForTimeout(300);
+    ok('parts: the Get Tickets link goes to the form', page.url().endsWith('#paw-event-reserve') && await page.isVisible('#paw-event-reserve [data-paw-signup]'));
+    await page.check('#paw-event-reserve [name=session] >> nth=0');
+    for (const [k, v] of [['first_name', 'Kim'], ['last_name', 'Ray'], ['email', 'kim@example.com'], ['phone', '239-555-0102']]) await page.fill(`#paw-event-reserve [name=${k}]`, v);
+    await page.fill('[data-paw-su-dog] >> nth=0 >> [data-paw-su-dog-field=name]', 'Rex');
+    await page.check('#paw-event-reserve [name=agree]');
+    await page.click('#paw-event-reserve button[type=submit]');
+    await page.waitForSelector('[data-paw-su-thanks]:not([hidden])');
+    ok('parts: the sign-up form works inside the part', /^EVT-/.test((await page.textContent('[data-paw-su-ref]')).trim()));
+    await shot(page, 'event-parts');
+    await page.setViewportSize({ width: 390, height: 800 });
+    await page.goto(BASE + 'event-parts.html');
+    await noScroll(page, 'parts page');
+    await shot(page, 'event-parts-phone');
+
     ok('no script errors', errors.length === 0 || (console.log(errors), false));
     console.log(`\nall ${passed} passed`);
   } finally {
