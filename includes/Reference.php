@@ -14,8 +14,9 @@ final class Reference {
 	/** No O/0, I/1 or L, so a reference read out over the phone is never ambiguous. */
 	public const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
-	public static function generate(): string {
-		$ref = 'PAW-';
+	/** PAW-7K3QX9 for reservations; EVT-… for event sign-ups. */
+	public static function generate( string $prefix = 'PAW' ): string {
+		$ref = $prefix . '-';
 		$max = strlen( self::ALPHABET ) - 1;
 		for ( $i = 0; $i < 6; $i++ ) {
 			$ref .= self::ALPHABET[ random_int( 0, $max ) ];
