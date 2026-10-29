@@ -38,6 +38,7 @@ final class Rest {
 				'permission_callback' => '__return_true',
 			)
 		);
+		Calendar::routes();
 	}
 
 	/** @return \WP_REST_Response|\WP_Error */
