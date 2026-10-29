@@ -64,6 +64,13 @@ $GLOBALS['paw_the_id'] = $page;
 $GLOBALS['paw_enqueued'] = array();
 $sc( array( 'part' => 'includes', 'id' => (string) $ev ) );
 t( 'lists off an event page load the CSS, not the form script', array( 'paw-calendar' ) === $GLOBALS['paw_enqueued'] );
+// In the Elementor editor an empty part says so (visitors never see it).
+eval( 'namespace Elementor; class Plugin { public static $instance; }' );
+\Elementor\Plugin::$instance = (object) array( 'editor' => new class() { public function is_edit_mode() { return false; } }, 'preview' => new class() { public function is_preview_mode() { return true; } } );
+$hint = $sc( array( 'part' => 'goodies', 'id' => (string) $bare ) );
+t( 'editor: an empty section shows a hint', str_contains( $hint, 'paw-ev-empty' ) && str_contains( $hint, 'No extra goodies for this event' ) );
+t( 'editor: parts with rows show no hint', ! str_contains( $sc( array( 'part' => 'sessions', 'id' => (string) $ev ) ), 'paw-ev-empty' ) );
+\Elementor\Plugin::$instance = null;
 t( 'not on an event: nothing', '' === $sc( array( 'part' => 'sessions' ) ) );
 t( 'id= picks the event', str_contains( $sc( array( 'part' => 'sessions', 'id' => (string) $ev ) ), 'Session 1' ) );
 $draft = Events::save( Events::sanitize( array_merge( $base, array( 'title' => 'Secret', 'status' => 'draft' ) ) ) );

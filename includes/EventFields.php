@@ -25,11 +25,35 @@ final class EventFields {
 	 * $id. Null when it isn't an event, or is a draft and the viewer isn't staff.
 	 */
 	public static function current( int $id = 0 ): ?array {
-		$ev = Events::get( $id ? $id : (int) get_the_ID() );
+		$ev = Events::get( $id ? $id : self::shown_id() );
 		if ( ! $ev || ( 'publish' !== $ev['status'] && ! current_user_can( Activator::CAPABILITY ) ) ) {
 			return null;
 		}
 		return $ev;
+	}
+
+	/**
+	 * The current post's ID; in the Elementor editor, where the current post is the template, the
+	 * template's Preview Settings event, or else the latest published event (as Elementor does).
+	 */
+	private static function shown_id(): int {
+		$id   = (int) get_the_ID();
+		$post = $id ? get_post( $id ) : null;
+		if ( ! $post || 'elementor_library' !== $post->post_type ) {
+			return $id;
+		}
+		$settings = get_post_meta( $id, '_elementor_page_settings', true );
+		$preview  = is_array( $settings ) ? $settings['preview_id'] ?? 0 : 0;
+		$preview  = absint( is_array( $preview ) ? reset( $preview ) : $preview );
+		if ( $preview && Events::get( $preview ) ) {
+			return $preview;
+		}
+		static $latest = null; // The editor draws many tags per request.
+		if ( null === $latest ) {
+			$found  = get_posts( array( 'post_type' => Events::TYPE, 'post_status' => 'publish', 'posts_per_page' => 1, 'orderby' => 'date', 'order' => 'DESC', 'fields' => 'ids', 'no_found_rows' => true ) );
+			$latest = (int) ( $found[0] ?? 0 );
+		}
+		return $latest;
 	}
 
 	/**

@@ -82,6 +82,17 @@ t( 'current: drafts are hidden from visitors', null === EventFields::current() )
 $desk = paw_test_user( 'desk@example.com', 'desk pass1', array( Accounts::STAFF_ROLE ), array( Activator::CAPABILITY => true ) );
 wp_set_current_user( $desk->ID );
 t( 'current: staff see drafts (for previews)', $draft === EventFields::current()['id'] );
+// The Elementor editor draws a Single template: the event is its Preview Settings event.
+$tpl = wp_insert_post( array( 'post_type' => 'elementor_library', 'post_title' => 'Single Event', 'post_status' => 'publish' ) );
+update_post_meta( $tpl, '_elementor_page_settings', array( 'preview_type' => 'single/paw_event', 'preview_id' => (string) $ev['id'] ) );
+$GLOBALS['paw_the_id'] = $tpl;
+t( 'editor: the template previews its Preview Settings event', $ev['id'] === EventFields::current()['id'] );
+update_post_meta( $tpl, '_elementor_page_settings', array() );
+$latest = Events::save( Events::sanitize( array_merge( $base, array( 'title' => 'Latest party' ) ) ) );
+t( 'editor: no preview event set, the latest published event', $latest === EventFields::current()['id'] );
+update_post_meta( $tpl, '_elementor_page_settings', array( 'preview_id' => (string) $page ) );
+t( 'editor: a preview that is not an event falls back to the latest event', $latest === EventFields::current()['id'] );
+$GLOBALS['paw_the_id'] = $draft;
 t( 'current: a given id', $ev['id'] === EventFields::current( $ev['id'] )['id'] && null === EventFields::current( $page ) );
 
 done();
