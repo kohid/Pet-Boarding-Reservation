@@ -1,7 +1,7 @@
 <?php
 /**
  * Staff event routes: permissions, list tabs, create, update, errors keyed by row,
- * duplicate, delete, and event categories (manage-settings only).
+ * duplicate, delete, sign-ups (counts, status, CSV) and event categories (manage-settings only).
  */
 
 require __DIR__ . '/bootstrap.php';
@@ -13,6 +13,7 @@ function home_url( $p = '' ) { return 'https://example.test/' . ltrim( $p, '/' )
 use Pawfectly\Accounts;
 use Pawfectly\Activator;
 use Pawfectly\Events;
+use Pawfectly\Signups;
 use Pawfectly\StaffEvents;
 use Pawfectly\StaffRest;
 
@@ -70,6 +71,34 @@ $copy = StaffEvents::duplicate( req( array(), array( 'id' => (string) $id ) ) )-
 t( 'duplicate', 'X-Mas Party 2030 (copy)' === Events::get( $copy )['title'] && 'draft' === Events::get( $copy )['status'] );
 StaffEvents::delete( req( array(), array( 'id' => (string) $copy ) ) );
 t( 'delete moves it to the trash', 'trash' === get_post( $copy )->post_status );
+
+// Sign-ups.
+$party = StaffEvents::save( req( body( array( 'title' => 'Sign-up party', 'spots' => '4', 'coupon' => 'PawPark', 'sections' => array( 'sessions' => array( 'rows' => array( array( 'from' => '10:00', 'to' => '12:00', 'name' => 'Session 1', 'who' => 'Small dogs' ), array( 'from' => '12:00', 'to' => '14:00', 'name' => 'Session 2', 'who' => '' ) ) ) ) ) ) ) )->get_data()['id'];
+$pev   = Events::get( $party );
+$su_in = static fn( string $email, string $session, array $dogs ): array => array( 'first_name' => 'Zoe', 'last_name' => 'O', 'email' => $email, 'phone' => '239-420-7418', 'session' => $session, 'dogs' => $dogs, 'agree' => '1' );
+$s1    = Signups::create( $pev, Signups::sanitize( $pev, $su_in( 'zoe@example.com', '0', array( array( 'name' => 'Rex', 'breed' => 'Beagle' ), array( 'name' => 'Ivy' ) ) ) ), 0, '' );
+$s2    = Signups::create( $pev, Signups::sanitize( $pev, $su_in( 'amy@example.com', '1', array( array( 'name' => '=cmd()' ) ) ) ), 0, '' );
+$list  = StaffEvents::signups( req( array(), array( 'id' => (string) $party ) ) )->get_data();
+t( 'sign-ups: a meter per session', array( array( 'label' => '10:00 AM – 12:00 PM · Session 1: Small dogs', 'taken' => 2, 'spots' => 4 ), array( 'label' => '12:00 – 2:00 PM · Session 2', 'taken' => 1, 'spots' => 4 ) ) === $list['sessions'] || ( var_dump( $list['sessions'] ) && false ) );
+t( 'sign-ups: the rows, newest first, with dogs and the total', 2 === count( $list['rows'] ) && $s2['reference'] === $list['rows'][0]['reference'] && 'Rex' === $list['rows'][1]['dogs'][0]['name'] && '2 × $15 = $30, paid at the event' === $list['rows'][1]['total_text'] && 'confirmed' === $list['rows'][1]['status'] );
+t( 'sign-ups: the counts', array( 'signups' => 2, 'dogs' => 3 ) === $list['counts'] );
+t( 'sign-ups: the CSV link is a plain URL with its own nonce', str_contains( $list['csv_url'], 'action=paw_signups_csv' ) && str_contains( $list['csv_url'], 'event=' . $party ) && str_contains( $list['csv_url'], '_wpnonce=' ) && ! str_contains( $list['csv_url'], '&amp;' ) );
+t( 'sign-ups: never the member code', ! str_contains( wp_json_encode( $list ), 'PawPark' ) );
+t( 'sign-ups: not an event is a 404', is_wp_error( StaffEvents::signups( req( array(), array( 'id' => (string) $page ) ) ) ) );
+$row = array_values( array_filter( StaffEvents::list( req( array(), array( 'tab' => 'upcoming' ) ) )->get_data()['rows'], static fn( $r ) => $r['id'] === $party ) )[0];
+t( 'list rows count the dogs signed up', 3 === $row['dogs'] );
+
+$st = StaffEvents::signup_status( req( array( 'status' => 'cancelled' ), array( 'id' => (string) $s1['id'] ) ) );
+t( 'status: changed, and the cancel frees its spots', 200 === $st->get_status() && 'cancelled' === $st->get_data()['row']['status'] && 0 === StaffEvents::signups( req( array(), array( 'id' => (string) $party ) ) )->get_data()['sessions'][0]['taken'] );
+t( 'status: only known statuses', is_wp_error( StaffEvents::signup_status( req( array( 'status' => 'lost' ), array( 'id' => (string) $s1['id'] ) ) ) ) );
+t( 'status: not a sign-up is a 404', 404 === StaffEvents::signup_status( req( array( 'status' => 'attended' ), array( 'id' => (string) $party ) ) )->get_error_data()['status'] );
+
+$csv = StaffEvents::csv_lines( $party );
+t( 'CSV: a header, one row per dog, formulas defused', 'Reference' === $csv[0][0] && 4 === count( $csv ) && in_array( "'=cmd()", array_merge( ...$csv ), true ) );
+t( 'CSV: needs the capability and its nonce', StaffEvents::csv_allowed( $party, wp_create_nonce( 'paw_signups_csv_' . $party ) ) && ! StaffEvents::csv_allowed( $party, 'bad' ) );
+wp_set_current_user( $owner->ID );
+t( 'CSV: owners are refused', ! StaffEvents::csv_allowed( $party, wp_create_nonce( 'paw_signups_csv_' . $party ) ) );
+wp_set_current_user( $desk->ID );
 
 // Categories: manage-settings only.
 t( 'categories: staff without settings access are refused', false === StaffRest::can_settings() );

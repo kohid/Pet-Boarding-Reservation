@@ -81,6 +81,27 @@ $paw_sections = array(
 	</div>
 	<p class="paw-dash__savemsg is-error" data-paw-ev-msg hidden role="alert"></p>
 
+	<section class="paw-dash__card paw-dash__ev-signups" data-paw-su hidden>
+		<div class="paw-dash__ev-su-head">
+			<h4 class="paw-dash__card-title"><?php esc_html_e( 'Sign-ups', 'pawfectly-reservations' ); ?> <span class="paw-dash__ev-su-count" data-paw-su-count></span></h4>
+			<a class="paw-dash__btn paw-dash__btn--light" data-paw-su-csv href="#"><?php esc_html_e( 'Download CSV', 'pawfectly-reservations' ); ?></a>
+		</div>
+		<ul class="paw-dash__ev-meters" data-paw-su-meters></ul>
+		<div class="paw-dash__tablewrap">
+			<table class="paw-dash__table paw-dash__ev-su-table">
+				<thead><tr>
+					<th scope="col"><?php esc_html_e( 'Who', 'pawfectly-reservations' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Session', 'pawfectly-reservations' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Dogs', 'pawfectly-reservations' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Total', 'pawfectly-reservations' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Status', 'pawfectly-reservations' ); ?></th>
+				</tr></thead>
+				<tbody data-paw-su-rows></tbody>
+			</table>
+		</div>
+		<p class="paw-dash__empty" data-paw-su-empty hidden><?php esc_html_e( 'No sign-ups yet.', 'pawfectly-reservations' ); ?></p>
+	</section>
+
 	<section class="paw-dash__card">
 		<h4 class="paw-dash__card-title"><?php esc_html_e( 'Basics', 'pawfectly-reservations' ); ?></h4>
 		<div class="paw-dash__fields">
@@ -128,7 +149,9 @@ $paw_sections = array(
 			?>
 			<label class="paw-dash__check paw-dash__ev-free" data-paw-ev-key="free"><input type="checkbox" data-paw-ev-field="free"> <?php esc_html_e( 'Free event', 'pawfectly-reservations' ); ?></label>
 			<?php
-			$paw_input( __( 'Ticket link (optional)', 'pawfectly-reservations' ), '<input type="url" data-paw-ev-field="ticket_url" placeholder="https://"><small>' . esc_html__( 'Get Tickets and Reserve Your Spot go here. Without one, the page says sign-ups open soon.', 'pawfectly-reservations' ) . '</small>', 'ticket_url', 'paw-dash__field--wide' );
+			$paw_input( __( 'Spots per session (optional)', 'pawfectly-reservations' ), '<input type="number" min="1" max="' . esc_attr( (string) Events::MAX_SPOTS ) . '" step="1" inputmode="numeric" data-paw-ev-field="spots" placeholder="' . esc_attr__( 'No limit', 'pawfectly-reservations' ) . '"><small>' . esc_html__( 'Each dog takes one spot. Blank means no limit.', 'pawfectly-reservations' ) . '</small>', 'spots', 'paw-dash__field--narrow' );
+			$paw_input( __( 'Member coupon code (optional)', 'pawfectly-reservations' ), '<input type="text" data-paw-ev-field="coupon" maxlength="30" autocomplete="off" placeholder="' . esc_attr__( 'PAWPARK', 'pawfectly-reservations' ) . '"><small>' . esc_html__( 'Members who enter it attend free. Any letter case works. It is never shown on the page.', 'pawfectly-reservations' ) . '</small>', 'coupon' );
+			$paw_input( __( 'Ticket link (optional)', 'pawfectly-reservations' ), '<input type="url" data-paw-ev-field="ticket_url" placeholder="https://"><small>' . esc_html__( 'Only if tickets are sold elsewhere: Get Tickets and Reserve Your Spot go there. Without one, people sign up on the event page.', 'pawfectly-reservations' ) . '</small>', 'ticket_url', 'paw-dash__field--wide' );
 			$paw_input( __( 'Highlight note (optional)', 'pawfectly-reservations' ), '<input type="text" data-paw-ev-field="note" maxlength="200" placeholder="' . esc_attr__( '🐾 FREE for Dog Park Members — call or text us for your coupon code', 'pawfectly-reservations' ) . '"><small>' . esc_html__( 'Shown under the ticket button. Phone numbers become tap-to-call links.', 'pawfectly-reservations' ) . '</small>', 'note', 'paw-dash__field--wide' );
 			?>
 		</div>

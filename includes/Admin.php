@@ -23,6 +23,7 @@ final class Admin {
 		add_action( 'admin_post_paw_notes', array( self::class, 'handle_notes' ) );
 		add_action( 'admin_post_paw_export', array( self::class, 'handle_export' ) );
 		add_action( 'admin_post_paw_delete', array( self::class, 'handle_delete' ) );
+		add_action( 'admin_post_paw_signups_csv', array( StaffEvents::class, 'handle_csv' ) );
 	}
 
 	public static function menu(): void {

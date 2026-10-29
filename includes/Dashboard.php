@@ -108,6 +108,22 @@ final class Dashboard {
 					'choosePhoto'   => __( 'Choose cover photo', 'pawfectly-reservations' ),
 					'noCategory'    => __( 'No category', 'pawfectly-reservations' ),
 					'categoriesSaved' => __( 'Categories saved.', 'pawfectly-reservations' ),
+					/* translators: %d: number of dogs */
+					'dogsSignedUp'  => __( '%d dogs signed up', 'pawfectly-reservations' ),
+					'oneDogSignedUp' => __( '1 dog signed up', 'pawfectly-reservations' ),
+					/* translators: 1: sign-ups, 2: dogs */
+					'suCount'       => __( '%1$d sign-ups · %2$d dogs', 'pawfectly-reservations' ),
+					/* translators: 1: spots taken, 2: spots in the session */
+					'taken'         => __( '%1$d of %2$d spots taken', 'pawfectly-reservations' ),
+					/* translators: %d: spots taken */
+					'takenNoLimit'  => __( '%d dogs, no limit', 'pawfectly-reservations' ),
+					/* translators: %s: the person's name */
+					'statusFor'     => __( 'Status for %s', 'pawfectly-reservations' ),
+					'statuses'      => array(
+						'confirmed' => __( 'Confirmed', 'pawfectly-reservations' ),
+						'attended'  => __( 'Attended', 'pawfectly-reservations' ),
+						'cancelled' => __( 'Cancelled', 'pawfectly-reservations' ),
+					),
 				),
 			),
 			'i18n'     => array(

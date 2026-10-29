@@ -1,7 +1,7 @@
 /*
  * Pawfectly — dashboard Events: the list, the Add / Edit editor with its repeatable sections
- * (add, remove, Move up / Move down, drag), the emoji fields, the cover photo, and Settings →
- * Event categories. Everything goes through the staff routes; staff-typed text is set with
+ * (add, remove, Move up / Move down, drag), the emoji fields, the cover photo, the event's
+ * sign-ups (session meters, rows, status, CSV), and Settings → Event categories. Everything goes through the staff routes; staff-typed text is set with
  * textContent or .value, never as HTML.
  */
 (function () {
@@ -52,6 +52,13 @@
 		});
 	}
 
+	/** "%d" / "%1$d" placeholders, in order. */
+	function fmt(str) {
+		var args = Array.prototype.slice.call(arguments, 1);
+		var i = 0;
+		return String(str).replace(/%(\d)\$[ds]|%[ds]/g, function (m, n) { return n ? args[n - 1] : args[i++]; });
+	}
+
 	function url(params) {
 		var u = new URL(location.href);
 		u.searchParams.set('paw_view', 'events');
@@ -87,6 +94,9 @@
 				main.appendChild(el('span', 'paw-dash__ev-item-when', ev.when));
 				var meta = el('span', 'paw-dash__ev-item-meta');
 				[ev.venue, ev.price_text].filter(Boolean).forEach(function (t) { meta.appendChild(el('span', '', t)); });
+				if (ev.dogs) {
+					meta.appendChild(el('span', 'paw-dash__ev-chip paw-dash__ev-chip--dogs', ev.dogs === 1 ? T.oneDogSignedUp : fmt(T.dogsSignedUp, ev.dogs)));
+				}
 				if (ev.category_name) {
 					meta.appendChild(el('span', 'paw-dash__ev-chip', ev.category_name));
 				}
@@ -295,8 +305,8 @@
 	}
 
 	function fill(ev) {
-		['title', 'tagline', 'emoji', 'start_date', 'start_time', 'end_date', 'end_time', 'venue', 'address', 'price', 'ticket_url', 'note', 'description'].forEach(function (k) {
-			field(k).value = ev[k] || '';
+		['title', 'tagline', 'emoji', 'start_date', 'start_time', 'end_date', 'end_time', 'venue', 'address', 'price', 'spots', 'coupon', 'ticket_url', 'note', 'description'].forEach(function (k) {
+			field(k).value = ev[k] || ''; // A spots of 0 means no limit: blank.
 		});
 		field('free').checked = !!ev.free;
 		categoryOptions(ev.category);
@@ -328,11 +338,101 @@
 		clearErrors();
 		$('[data-paw-ev-msg]', form).hidden = true;
 		state.dirty = false;
+		loadSignups(ev.id);
 	}
+
+	/* ---------- Sign-ups (saved events) ---------- */
+
+	var su = $('[data-paw-su]', form);
+	var suToken = 0;
+
+	function loadSignups(id) {
+		var token = ++suToken;
+		su.hidden = true;
+		if (!id) {
+			return;
+		}
+		api('staff/events/' + id + '/signups').then(function (r) {
+			if (token !== suToken || !r.ok) {
+				return;
+			}
+			var d = r.body;
+			$('[data-paw-su-count]', su).textContent = fmt(T.suCount, d.counts.signups, d.counts.dogs);
+			$('[data-paw-su-csv]', su).href = d.csv_url;
+			var meters = $('[data-paw-su-meters]', su);
+			meters.textContent = '';
+			d.sessions.forEach(function (s) {
+				var li = el('li', 'paw-dash__ev-meter');
+				li.appendChild(el('span', 'paw-dash__ev-meter-label', s.label));
+				li.appendChild(el('span', 'paw-dash__ev-meter-num', s.spots ? fmt(T.taken, s.taken, s.spots) : fmt(T.takenNoLimit, s.taken)));
+				if (s.spots) {
+					var bar = el('span', 'paw-dash__ev-meter-bar');
+					var fill = el('span', s.taken >= s.spots ? 'is-full' : '');
+					fill.style.width = Math.min(100, Math.round(s.taken / s.spots * 100)) + '%';
+					bar.appendChild(fill);
+					li.appendChild(bar);
+				}
+				meters.appendChild(li);
+			});
+			var rows = $('[data-paw-su-rows]', su);
+			rows.textContent = '';
+			d.rows.forEach(function (row) { rows.appendChild(signupRow(row)); });
+			$('[data-paw-su-empty]', su).hidden = d.rows.length > 0;
+			su.querySelector('.paw-dash__tablewrap').hidden = d.rows.length === 0;
+			su.hidden = false;
+		});
+	}
+
+	function signupRow(row) {
+		var tr = el('tr', row.status === 'cancelled' ? 'is-cancelled' : '');
+		var who = el('td');
+		who.appendChild(el('strong', '', row.name));
+		[row.reference, row.email, row.phone].filter(Boolean).forEach(function (t) { who.appendChild(el('small', '', t)); });
+		if (row.notes) {
+			who.appendChild(el('small', 'paw-dash__ev-su-notes', row.notes));
+		}
+		tr.appendChild(who);
+		tr.appendChild(el('td', '', row.session || '—'));
+		var dogs = el('td');
+		row.dogs.forEach(function (dog) {
+			dogs.appendChild(el('span', 'paw-dash__ev-su-dog', [dog.name, dog.breed, dog.weight].filter(Boolean).join(' · ')));
+		});
+		tr.appendChild(dogs);
+		tr.appendChild(el('td', '', row.total_text));
+		var cell = el('td');
+		var select = el('select', 'paw-dash__ev-su-status');
+		select.setAttribute('aria-label', fmt(T.statusFor, row.name));
+		Object.keys(T.statuses).forEach(function (key) {
+			var opt = el('option', '', T.statuses[key]);
+			opt.value = key;
+			opt.selected = key === row.status;
+			select.appendChild(opt);
+		});
+		select.setAttribute('data-paw-su-status', String(row.id));
+		cell.appendChild(select);
+		tr.appendChild(cell);
+		return tr;
+	}
+
+	su.addEventListener('change', function (e) {
+		var select = e.target.closest('[data-paw-su-status]');
+		if (!select) {
+			return;
+		}
+		select.disabled = true;
+		api('staff/signups/' + select.getAttribute('data-paw-su-status') + '/status', { method: 'POST', json: { status: select.value } }).then(function (r) {
+			if (r.ok) {
+				loadSignups(state.id); // Counts and meters change with it.
+			} else {
+				select.disabled = false;
+				alert((r.body && r.body.message) || CFG.i18n.failed);
+			}
+		});
+	});
 
 	function collect(status) {
 		var out = { status: status, free: field('free').checked, sections: {} };
-		['title', 'tagline', 'emoji', 'category', 'photo_id', 'start_date', 'start_time', 'end_date', 'end_time', 'venue', 'address', 'price', 'ticket_url', 'note', 'description'].forEach(function (k) {
+		['title', 'tagline', 'emoji', 'category', 'photo_id', 'start_date', 'start_time', 'end_date', 'end_time', 'venue', 'address', 'price', 'spots', 'coupon', 'ticket_url', 'note', 'description'].forEach(function (k) {
 			out[k] = field(k).value.trim();
 		});
 		Object.keys(E.defaults).forEach(function (name) {
@@ -438,7 +538,11 @@
 		});
 	});
 
-	function dirty() { state.dirty = true; }
+	function dirty(e) {
+		if (!e || !e.target.closest('[data-paw-su]')) { // A sign-up's status saves on its own.
+			state.dirty = true;
+		}
+	}
 	form.addEventListener('input', dirty);
 	form.addEventListener('change', dirty);
 	window.addEventListener('beforeunload', function (e) {
