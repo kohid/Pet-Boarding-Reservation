@@ -17,6 +17,13 @@ final class EventFields {
 	public const LINKS = array( 'tickets', 'ticket_url', 'url', 'google', 'outlook', 'ics', 'map' );
 	/** Sections with a heading and an intro. */
 	public const SECTIONS = array( 'sessions', 'includes', 'goodies', 'good_to_know', 'closing' );
+	/** The fields of one row in each repeater (sessions also get their time range and spots left). */
+	public const ROW_FIELDS = array(
+		'sessions'     => array( 'from', 'to', 'time', 'name', 'who', 'spots_left' ),
+		'includes'     => array( 'emoji', 'text' ),
+		'goodies'      => array( 'emoji', 'title', 'text' ),
+		'good_to_know' => array( 'emoji', 'text' ),
+	);
 	public const DATE_FORMAT = 'l, F jS, Y';
 	public const TIME_FORMAT = 'g:i A';
 
@@ -112,6 +119,28 @@ final class EventFields {
 				return in_array( $section, self::SECTIONS, true ) ? EventDates::fill( (string) ( $ev['sections'][ $section ][ $part ] ?? '' ), $ev ) : '';
 		}
 		return '';
+	}
+
+	/**
+	 * One field of one repeater row ($row counts from 1), or '' when the event has no such row.
+	 * $opts['format'] formats a session's From and To.
+	 */
+	public static function row_value( array $ev, string $section, int $row, string $field, array $opts = array() ): string {
+		$r = $ev['sections'][ $section ]['rows'][ $row - 1 ] ?? null;
+		if ( ! is_array( $r ) || ! in_array( $field, self::ROW_FIELDS[ $section ] ?? array(), true ) ) {
+			return '';
+		}
+		switch ( $field ) {
+			case 'from':
+			case 'to':
+				$at = \DateTimeImmutable::createFromFormat( '!H:i', (string) $r[ $field ] );
+				return $at ? $at->format( self::format( $opts, self::TIME_FORMAT ) ) : '';
+			case 'time':
+				return EventDates::times( (string) $r['from'], (string) $r['to'] );
+			case 'spots_left':
+				return self::spots_left( $ev, $row );
+		}
+		return (string) ( $r[ $field ] ?? '' );
 	}
 
 	/**

@@ -152,3 +152,24 @@ Plain lists:
 - Elementor widgets of our own. Dynamic Tags plus the Shortcode widget cover the page.
 - Loop Grid query sources for events. Elementor Pro's Posts query with post type Events already works.
 - Dynamic tags for individual section rows. Rows are lists, which Elementor tags can't repeat.
+
+## v0.9: groups and repeater rows
+
+Added after the user designed their first template. They reported that the repeaters had no per-row tags, and that the flat group didn't show where each value comes from.
+
+- **Groups follow the Add Event screen:**
+  - Event · Basics, When & where, Price & tickets, Description
+  - one group per repeater, each marked "(repeater)": Sessions, Ticket includes, Extra goodies, Good to know
+  - Closing call to action, Calendar & links
+  - "Any section (pick one)", which holds the first, generic section tags so existing templates keep working
+- **Tag names stay as they were;** only the group changes.
+- **Each repeater group has:**
+  - Heading (and Intro for Sessions and Ticket includes)
+  - All rows (list), which is the same plain list as the shortcode part
+  - Row field, with Row 1…`Events::LIMITS[section]` and Field from `EventFields::ROW_FIELDS`:
+    - sessions: from, to, time, name, who, spots_left (From and To take a time format)
+    - includes / good to know: emoji, text
+    - goodies: emoji, title, text
+- **Closing has** Heading and Intro.
+- **Missing rows:** a row the event doesn't have prints nothing on the site. In the editor it shows a hint, "No session 3 for this event.", like the empty-list hints ("No extra goodies for this event.").
+

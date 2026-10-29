@@ -84,7 +84,7 @@ final class EventShortcode {
 	}
 
 	/** True while Elementor draws its editor or preview. */
-	private static function in_editor(): bool {
+	public static function in_editor(): bool {
 		$el = class_exists( '\Elementor\Plugin' ) ? \Elementor\Plugin::$instance : null;
 		if ( ! $el ) {
 			return false;
