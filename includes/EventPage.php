@@ -28,6 +28,7 @@ final class EventPage {
 			static function (): void {
 				if ( is_singular( Events::TYPE ) ) {
 					wp_enqueue_style( 'paw-calendar', PAW_URL . 'assets/css/calendar.css', array(), PAW_VERSION );
+					wp_enqueue_script( 'paw-signup', PAW_URL . 'assets/js/signup.js', array(), PAW_VERSION, true );
 				}
 			}
 		);

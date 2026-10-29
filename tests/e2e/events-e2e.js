@@ -129,7 +129,10 @@ async function nextTitle(page, before) {
     ok('events: a card shows the date block, emoji and price', (await page.textContent('.paw-events__card >> nth=0 >> .paw-events__mon')) === 'DEC' && (await page.textContent('.paw-events__card >> nth=0 >> .paw-events__emoji')) === '🐶' && (await page.textContent('.paw-events__card >> nth=0 >> .paw-events__price')) === '$15 per dog');
     await page.click('[data-paw-events-more]');
     await page.waitForFunction(() => document.querySelectorAll('.paw-events__card').length > 9);
-    ok('events: Load more adds the rest, then hides', (await cards()) === 18 && await page.isHidden('[data-paw-events-more]'));
+    ok('events: Load more adds nine more', (await cards()) === 18 && await page.isVisible('[data-paw-events-more]'));
+    await page.click('[data-paw-events-more]');
+    await page.waitForFunction(() => document.querySelectorAll('.paw-events__card').length > 18);
+    ok('events: then the rest, and hides', (await cards()) === 19 && await page.isHidden('[data-paw-events-more]'));
     await shot(page, 'events-list');
     await page.goto(BASE + 'events.html?paw_events=past');
     ok('events: the tabs are links that keep the page', (await page.getAttribute('.paw-events__tab >> nth=2', 'href')) === '/tests/e2e/out/events.html?paw_events=past' && (await page.getAttribute('.paw-events__tab[aria-current="page"]', 'href')).endsWith('paw_events=upcoming'));
@@ -148,13 +151,60 @@ async function nextTitle(page, before) {
     ok('event page: phone numbers are tap-to-call', (await page.locator('.paw-event a[href="tel:2394207418"]').count()) === 3);
     await page.click('[data-paw-ticket]');
     await page.waitForTimeout(400);
-    ok('event page: Get Tickets with no ticket link goes to the closing block', page.url().endsWith('#paw-event-reserve') && (await page.textContent('#paw-event-reserve')).includes('Sign-ups open soon'));
+    ok('event page: Get Tickets with no ticket link goes to the sign-up form', page.url().endsWith('#paw-event-reserve') && await page.isVisible('#paw-event-reserve [data-paw-signup]'));
     await page.click('.paw-event__addcal summary');
     ok('event page: Add to calendar', (await page.getAttribute('.paw-event__addcal a >> nth=0', 'href')).includes('calendar.google.com') && (await page.getAttribute('.paw-event__addcal a >> nth=2', 'href')).endsWith('?paw_ics=1'));
     await shot(page, 'event-page');
+
+    /* ---------- Sign-up form ---------- */
+    const form = '[data-paw-signup]';
+    const total = () => page.textContent('[data-paw-su-total]').then(t => t.trim());
+    const errFor = key => page.locator(`[data-paw-su-key="${key}"] [data-paw-su-err]`);
+    const sessions = page.locator(form + ' [name=session]');
+    ok('sign-up: two session cards; the full one is disabled and says Full', (await sessions.count()) === 2 && await sessions.nth(1).isDisabled() && (await page.textContent('.paw-event__su-session.is-full')).includes('Full') && (await page.textContent('.paw-event__su-session >> nth=0')).includes('3 spots left'));
+    ok('sign-up: one dog card to start, no Remove on it, the total for one dog', (await page.locator('[data-paw-su-dog]').count()) === 1 && !(await page.isVisible('[data-paw-su-dog] [data-paw-su-remove]')) && (await total()) === '1 × $15 = $15, paid at the event');
+    ok('sign-up: the member code is never in the page', !(await page.content()).includes('PawPark'));
+
+    await page.click('[data-paw-su-add]');
+    await page.click('[data-paw-su-add]');
+    ok('sign-up: Add another dog, renumbered', (await page.locator('[data-paw-su-dog]').count()) === 3 && (await page.textContent('[data-paw-su-dog] >> nth=2 >> [data-paw-su-dog-title]')) === 'Dog 3');
+    await page.click('[data-paw-su-dog] >> nth=1 >> [data-paw-su-remove]');
+    ok('sign-up: Remove a dog, the rest renumbered', (await page.locator('[data-paw-su-dog]').count()) === 2 && (await page.textContent('[data-paw-su-dog] >> nth=1 >> [data-paw-su-dog-title]')) === 'Dog 2' && (await page.getAttribute('[data-paw-su-dog] >> nth=1 >> .paw-event__su-field', 'data-paw-su-key')) === 'dogs.1.name');
+    await page.fill('[data-paw-su-dog] >> nth=0 >> [data-paw-su-dog-field=name]', 'Rex');
+    await page.fill('[data-paw-su-dog] >> nth=1 >> [data-paw-su-dog-field=breed]', 'Pug');
+    ok('sign-up: the live total counts filled dogs', (await total()) === '2 × $15 = $30, paid at the event');
+
+    await page.check(form + ' [name=session] >> nth=0');
+    await page.fill(form + ' [name=first_name]', 'Zoe');
+    await page.fill(form + ' [name=last_name]', 'Olsen');
+    await page.fill(form + ' [name=email]', 'zoe@example.com');
+    await page.fill(form + ' [name=phone]', '239-420-7418');
+    await page.fill(form + ' [name=coupon]', 'nope');
+    await page.check(form + ' [name=agree]');
+    await page.click(form + ' button[type=submit]');
+    await page.waitForSelector('[data-paw-su-err]');
+    ok('sign-up: a missing dog name shows under that dog', (await errFor('dogs.1.name').count()) === 1);
+    ok('sign-up: a wrong member code shows under the code', (await errFor('coupon').textContent()) === "That code isn't valid for this event." && await page.isVisible('[data-paw-su-alert]'));
+    await shot(page, 'signup-errors');
+
+    await page.fill('[data-paw-su-dog] >> nth=1 >> [data-paw-su-dog-field=name]', 'Ivy');
+    await page.fill(form + ' [name=coupon]', 'pawpark');
+    await page.click(form + ' button[type=submit]');
+    await page.waitForSelector('[data-paw-su-thanks]:not([hidden])');
+    const thanks = await page.textContent('[data-paw-su-thanks]');
+    ok('sign-up: the thank-you shows an EVT- reference', /^EVT-[A-Z0-9]{6}$/.test((await page.textContent('[data-paw-su-ref]')).trim()) && !(await page.isVisible(form)));
+    ok('sign-up: the summary has the session, the dogs and Free with member code', thanks.includes('Session 1: Small dogs') && thanks.includes('Rex, Ivy') && thanks.includes('Free with member code'));
+    ok('sign-up: add-to-calendar links', (await page.locator('[data-paw-su-cal] a').count()) === 3 && (await page.getAttribute('[data-paw-su-cal] a >> nth=0', 'href')).includes('calendar.google.com'));
+    await shot(page, 'signup-thanks');
+
+    await page.goto(BASE + 'event-ticket.html');
+    ok('sign-up: an event with a ticket link has no form, its button goes to the tickets', (await page.locator(form).count()) === 0 && (await page.getAttribute('#paw-event-reserve [data-paw-ticket]', 'href')) === 'https://tickets.example/gala');
+
     await page.setViewportSize({ width: 390, height: 800 });
     await page.goto(BASE + 'event.html');
     await noScroll(page, 'event page');
+    await page.click('[data-paw-su-add]');
+    await noScroll(page, 'sign-up form with two dogs');
     await shot(page, 'event-page-phone');
 
     ok('no script errors', errors.length === 0 || (console.log(errors), false));
