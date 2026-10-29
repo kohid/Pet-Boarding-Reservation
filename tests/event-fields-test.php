@@ -55,7 +55,7 @@ $open = Events::get( Events::save( Events::sanitize( array_merge( $base, array( 
 t( 'no price: the button just says Get Tickets', 'Get Tickets' === EventFields::value( $open, 'ticket_text' ) && '' === EventFields::value( $open, 'price' ) );
 
 // Links, image, colour.
-t( 'tickets / sign-up: the form on the page, or the ticket link', '#paw-event-reserve' === EventFields::link( $ev, 'tickets' ) && 'https://tickets.example/walk' === EventFields::link( $open, 'tickets' ) && '' === EventFields::link( $ev, 'ticket_url' ) && 'https://tickets.example/walk' === EventFields::link( $open, 'ticket_url' ) );
+t( 'tickets / sign-up: the form on the page, or the ticket link', 'https://example.test/event/x-mas-party/#paw-event-reserve' === EventFields::link( $ev, 'tickets' ) && 'https://tickets.example/walk' === EventFields::link( $open, 'tickets' ) && '' === EventFields::link( $ev, 'ticket_url' ) && 'https://tickets.example/walk' === EventFields::link( $open, 'ticket_url' ) );
 t( 'event page, calendars and map', 'https://example.test/event/x-mas-party/' === EventFields::link( $ev, 'url' ) && str_contains( EventFields::link( $ev, 'google' ), 'calendar.google.com' ) && str_contains( EventFields::link( $ev, 'outlook' ), 'outlook' ) && str_contains( EventFields::link( $ev, 'ics' ), 'paw_ics=1' ) && 'https://www.google.com/maps/search/?api=1&query=Paw-radise+Indoor+Dog+Park%2C+Estero%2C+FL' === EventFields::link( $ev, 'map' ) && '' === EventFields::link( $ev, 'nope' ) );
 t( 'cover photo', array( 'id' => 7, 'url' => 'https://example.test/logo-7.png' ) === EventFields::image( $ev ) && array() === EventFields::image( $open ) );
 t( 'category colour', '#e8a33a' === EventFields::color( $ev ) );

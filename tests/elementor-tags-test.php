@@ -42,6 +42,7 @@ namespace Elementor {
 	class Controls_Manager {
 		const TEXT   = 'text';
 		const SELECT = 'select';
+		const MEDIA  = 'media';
 	}
 }
 namespace {
@@ -104,12 +105,21 @@ namespace {
 	t( 'section heading: pick the section', 'Everything Your $15 Ticket Includes' === $out( 'paw-event-section-heading', array( 'section' => 'includes' ) ) );
 	t( 'the section control lists every section', array( 'sessions', 'includes', 'goodies', 'good_to_know', 'closing' ) === array_keys( ( new ( get_class( $m->tags['paw-event-section-heading'] ) )() )->get_controls()['section']['options'] ) );
 	t( 'spots left: pick the session', '' === $out( 'paw-event-spots-left', array( 'session' => '1' ) ) );
-	t( 'a link tag', '#paw-event-reserve' === $value( 'paw-event-tickets' ) && str_contains( $value( 'paw-event-google' ), 'calendar.google.com' ) );
+	t( 'a link tag', str_ends_with( $value( 'paw-event-tickets' ), '/event/x-mas-party/#paw-event-reserve' ) && str_contains( $value( 'paw-event-google' ), 'calendar.google.com' ) );
 	t( 'the image tag', array( 'id' => 7, 'url' => 'https://example.test/logo-7.png' ) === $value( 'paw-event-photo' ) );
 	t( 'the colour tag', '#ff7f50' === $value( 'paw-event-color' ) );
 	$page                  = wp_insert_post( array( 'post_type' => 'page', 'post_title' => 'Home', 'post_status' => 'publish' ) );
 	$GLOBALS['paw_the_id'] = $page;
+	$photo = static function ( array $settings ) use ( $m ) {
+		$class = get_class( $m->tags['paw-event-photo'] );
+		return ( new $class( array( 'settings' => $settings ) ) )->get_value();
+	};
+	$fallback = array( 'id' => 9, 'url' => 'https://example.test/fallback.png' );
+	$GLOBALS['paw_the_id'] = $ev;
+	t( 'the cover photo has a Fallback image setting, used only without a photo', 'media' === ( ( new ( get_class( $m->tags['paw-event-photo'] ) )() )->get_controls()['fallback']['type'] ?? '' ) && array( 'id' => 7, 'url' => 'https://example.test/logo-7.png' ) === $photo( array( 'fallback' => $fallback ) ) );
+	$GLOBALS['paw_the_id'] = $page;
 	t( 'not on an event: empty, so Elementor\'s fallback shows', '' === $out( 'paw-event-title' ) && '' === $value( 'paw-event-tickets' ) && array() === $value( 'paw-event-photo' ) && '' === $value( 'paw-event-color' ) );
+	t( 'no cover photo: the Fallback image', $fallback === $photo( array( 'fallback' => $fallback ) ) );
 
 	done();
 }

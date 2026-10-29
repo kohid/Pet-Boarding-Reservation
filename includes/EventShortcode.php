@@ -28,6 +28,9 @@ final class EventShortcode {
 		if ( ! $ev ) {
 			return '';
 		}
+		if ( ! is_singular( Events::TYPE ) ) {
+			wp_enqueue_style( 'paw-calendar', PAW_URL . 'assets/css/calendar.css', array(), PAW_VERSION ); // The plain-list reset (EventPage::enqueue covers event pages).
+		}
 		$paw_ev    = $ev;
 		$paw_plain = true;
 		ob_start();

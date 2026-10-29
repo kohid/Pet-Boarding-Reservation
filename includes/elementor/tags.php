@@ -139,9 +139,25 @@ final class Photo extends Data_Tag {
 		return array( Module::IMAGE_CATEGORY );
 	}
 
+	/** Image tags get no Fallback from Elementor (only text tags do), so this one has its own. */
+	protected function register_controls() {
+		$this->add_control(
+			'fallback',
+			array(
+				'label' => __( 'Fallback', 'pawfectly-reservations' ),
+				'type'  => Controls_Manager::MEDIA,
+			)
+		);
+	}
+
 	public function get_value( array $options = array() ) {
-		$ev = EventFields::current();
-		return $ev ? EventFields::image( $ev ) : array();
+		$ev    = EventFields::current();
+		$image = $ev ? EventFields::image( $ev ) : array();
+		if ( $image ) {
+			return $image;
+		}
+		$fallback = $this->get_settings( 'fallback' );
+		return is_array( $fallback ) && ! empty( $fallback['url'] ) ? $fallback : array();
 	}
 }
 

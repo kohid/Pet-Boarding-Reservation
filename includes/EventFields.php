@@ -90,11 +90,14 @@ final class EventFields {
 		return '';
 	}
 
-	/** One link: tickets (the ticket link, or the sign-up form on the page), ticket_url, url, google, outlook, ics, map. */
+	/**
+	 * One link: tickets (the ticket link, or the event page's sign-up form, so it also works from a
+	 * Loop Grid card), ticket_url, url, google, outlook, ics, map.
+	 */
 	public static function link( array $ev, string $which ): string {
 		switch ( $which ) {
 			case 'tickets':
-				return '' !== $ev['ticket_url'] ? $ev['ticket_url'] : '#paw-event-reserve';
+				return '' !== $ev['ticket_url'] ? $ev['ticket_url'] : $ev['url'] . '#paw-event-reserve';
 			case 'ticket_url':
 				return (string) $ev['ticket_url'];
 			case 'url':

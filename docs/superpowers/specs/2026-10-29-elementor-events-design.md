@@ -17,7 +17,7 @@ The user's choices (2026-10-29):
 
 ## Dynamic Tags
 
-All tags sit in one group, **Pawfectly Event**. They read the event being shown: `get_the_ID()`, which is the queried event on its page, or the current item in an Elementor Loop Grid. In the Elementor editor this is the preview post chosen in the template's Preview Settings. When that post isn't an event, or is a draft the viewer can't preview, every tag is empty, so Elementor's own Fallback setting applies.
+All tags sit in one group, **Pawfectly Event**. They read the event being shown: `get_the_ID()`, which is the queried event on its page, or the current item in an Elementor Loop Grid. In the Elementor editor this is the preview post chosen in the template's Preview Settings. When that post isn't an event, or is a draft the viewer can't preview, every tag is empty. Text tags then show Elementor's own Fallback; the cover photo has its own Fallback image setting (Elementor gives image, link and colour tags none).
 
 ### Text tags
 
@@ -53,7 +53,7 @@ All tags sit in one group, **Pawfectly Event**. They read the event being shown:
 
 | Tag | URL |
 |---|---|
-| Tickets / sign-up | `ticket_url` when set, else `#paw-event-reserve` (the sign-up part) |
+| Tickets / sign-up | `ticket_url` when set, else the event page + `#paw-event-reserve` (the sign-up part), so it also works from a Loop Grid card |
 | Ticket link | `ticket_url` (empty when not set) |
 | Event page | the event's permalink (for Loop Grid cards) |
 | Google Calendar / Outlook / Apple iCal | `EventDates::links()` |

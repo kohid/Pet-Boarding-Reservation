@@ -238,9 +238,10 @@ async function nextTitle(page, before) {
     ok('parts: plain lists, no bullets', (await page.$eval('.paw-ev-list--includes', e => getComputedStyle(e).listStyleType)) === 'none' && (await page.locator('.paw-ev-list--includes .paw-ev-row').count()) === 5);
     ok('parts: the form takes the page\'s font too', (await font('#paw-event-reserve [name=first_name]')).includes('Georgia') || (await font('#paw-event-reserve label')).includes('Georgia'));
     ok('parts: the tag values', (await page.textContent('.el-title')).includes('X-Mas Party') && (await page.textContent('.el-btn')) === 'Get Tickets — $15' && (await page.textContent('.el-facts')).includes('$15 per dog'));
-    await page.click('.el-btn');
+    ok('parts: the Get Tickets link is the event page\'s form (works from a Loop Grid card too)', (await page.getAttribute('.el-btn', 'href')) === '/event/x-mas-party/#paw-event-reserve');
+    await page.goto(BASE + 'event-parts.html#paw-event-reserve');
     await page.waitForTimeout(300);
-    ok('parts: the Get Tickets link goes to the form', page.url().endsWith('#paw-event-reserve') && await page.isVisible('#paw-event-reserve [data-paw-signup]'));
+    ok('parts: #paw-event-reserve lands on the form', await page.isVisible('#paw-event-reserve [data-paw-signup]') && (await page.$eval('#paw-event-reserve', e => e.getBoundingClientRect().top)) < 200);
     await page.check('#paw-event-reserve [name=session] >> nth=0');
     for (const [k, v] of [['first_name', 'Kim'], ['last_name', 'Ray'], ['email', 'kim@example.com'], ['phone', '239-555-0102']]) await page.fill(`#paw-event-reserve [name=${k}]`, v);
     await page.fill('[data-paw-su-dog] >> nth=0 >> [data-paw-su-dog-field=name]', 'Rex');

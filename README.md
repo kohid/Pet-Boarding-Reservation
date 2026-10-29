@@ -112,7 +112,7 @@ With **Elementor Pro**, build the event page yourself in **Templates → Theme B
   - `.paw-ev-row__time`, `__name`, `__who` (sessions)
   - `.paw-ev-row__emoji`, `__title`, `__text` (the other sections)
 - **Empty parts:** a part with nothing in it shows nothing, so hide its heading with Elementor's display conditions or leave the section out.
-- **Linking to the form:** the sign-up form sits in `#paw-event-reserve`, so give your "Get Tickets" button the **Tickets / sign-up link** tag and it jumps to the form.
+- **Linking to the form:** the sign-up form sits in `#paw-event-reserve`, so give your "Get Tickets" button the **Tickets / sign-up link** tag and it jumps to the form (from an events list card it opens the event page at the form). The **Cover photo** tag has its own Fallback image.
 - **Other events:** add `id="123"` to show a different event's part.
 
 The plugin's own event page still shows wherever the theme prints the content, for example in Elementor's **Post Content** widget. Use either that or your own design, not both.

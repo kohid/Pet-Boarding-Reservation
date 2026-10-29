@@ -61,6 +61,9 @@ t( 'empty parts give nothing', '' === $sc( array( 'part' => 'sessions', 'id' => 
 t( 'an unknown part gives nothing', '' === $sc( array( 'part' => 'coupon' ) ) && '' === $sc( array() ) );
 $page = wp_insert_post( array( 'post_type' => 'page', 'post_title' => 'Home', 'post_status' => 'publish' ) );
 $GLOBALS['paw_the_id'] = $page;
+$GLOBALS['paw_enqueued'] = array();
+$sc( array( 'part' => 'includes', 'id' => (string) $ev ) );
+t( 'lists off an event page load the CSS, not the form script', array( 'paw-calendar' ) === $GLOBALS['paw_enqueued'] );
 t( 'not on an event: nothing', '' === $sc( array( 'part' => 'sessions' ) ) );
 t( 'id= picks the event', str_contains( $sc( array( 'part' => 'sessions', 'id' => (string) $ev ) ), 'Session 1' ) );
 $draft = Events::save( Events::sanitize( array_merge( $base, array( 'title' => 'Secret', 'status' => 'draft' ) ) ) );

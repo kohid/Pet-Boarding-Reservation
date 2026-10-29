@@ -20,7 +20,7 @@ $paw_fill    = static fn( string $text ): string => EventDates::fill( $text, $pa
 $paw_text    = static fn( string $text ): string => EventDates::phone_links( esc_html( $text ) ); // Escaped, then phone numbers linked.
 $paw_price   = EventDates::price_text( $paw_ev );
 $paw_one_day = EventDates::at( $paw_ev['start'] )->format( 'Y-m-d' ) === EventDates::at( $paw_ev['end'] )->format( 'Y-m-d' );
-$paw_ticket  = EventFields::link( $paw_ev, 'tickets' );
+$paw_ticket  = '' !== $paw_ev['ticket_url'] ? $paw_ev['ticket_url'] : '#paw-event-reserve'; // In-page: draft previews have no public address.
 $paw_cta     = EventFields::value( $paw_ev, 'ticket_text' );
 $paw_where   = EventDates::where( $paw_ev );
 $paw_plain   = false;
