@@ -1,7 +1,8 @@
 <?php
 /**
  * [pawfectly_login]: the one sign-in and create-account page for everyone (owners, staff and
- * admins). WordPress's own wp-login.php hands plain logins and registrations over to it, while
+ * admins). Signing in lands on My Profile (or the page that sent them here); signing out, on the
+ * homepage. WordPress's own wp-login.php hands plain logins and registrations over to it, while
  * logout, password reset and the other wp-login actions keep working there.
  *
  * Turn the hand-over off with the `paw_redirect_wp_login` filter (for example for a two-factor
@@ -25,6 +26,7 @@ final class Login {
 		add_shortcode( self::TAG, array( self::class, 'render' ) );
 		add_action( 'login_init', array( self::class, 'handle_wp_login' ) );
 		add_filter( 'login_url', array( self::class, 'login_url' ), 10, 2 );
+		add_filter( 'logout_redirect', array( self::class, 'after_logout' ), 10, 3 );
 	}
 
 	public static function url(): string {
@@ -51,10 +53,29 @@ final class Login {
 		return '' !== $bookings ? $bookings : home_url( '/' );
 	}
 
-	/** A same-site redirect_to, else the user's home. */
+	/** Where signing in lands when nothing else was asked for: My Profile, else the user's home. */
+	public static function after_signin( \WP_User $u ): string {
+		$profile = Pages::url( Profile::TAG );
+		return '' !== $profile ? $profile : self::home_for( $u );
+	}
+
+	/** A same-site redirect_to, else My Profile. */
 	public static function target( string $redirect_to, \WP_User $u ): string {
 		$safe = '' !== $redirect_to ? (string) wp_validate_redirect( $redirect_to, '' ) : '';
-		return '' !== $safe ? $safe : self::home_for( $u );
+		return '' !== $safe ? $safe : self::after_signin( $u );
+	}
+
+	/**
+	 * Log Out, ending on the homepage. A plain URL: wp_logout_url() escapes its & for HTML, and
+	 * this one is also handed to JavaScript.
+	 */
+	public static function logout_url(): string {
+		return html_entity_decode( wp_logout_url( home_url( '/' ) ), ENT_QUOTES, 'UTF-8' );
+	}
+
+	/** logout_redirect: a log out that asked for no destination (wp-admin, other plugins) ends on the homepage. */
+	public static function after_logout( $redirect_to, $requested, $user ): string {
+		return '' === (string) $requested ? home_url( '/' ) : (string) $redirect_to;
 	}
 
 	private static function takes_over(): bool {
@@ -130,7 +151,7 @@ final class Login {
 		return '<div class="paw-acct"><div class="paw-acct__card"><p>'
 			/* translators: %s: the signed-in user's name */
 			. esc_html( sprintf( __( "You're signed in as %s.", 'pawfectly-reservations' ), $user->display_name ) )
-			. '</p><div class="paw-acct__actions"><a class="paw-acct__btn" href="' . esc_url( self::home_for( $user ) ) . '">' . esc_html__( 'Continue', 'pawfectly-reservations' ) . '</a>'
-			. '<a class="paw-acct__link" href="' . esc_url( wp_logout_url( self::url_for( '' ) ) ) . '">' . esc_html__( 'Log Out', 'pawfectly-reservations' ) . '</a></div></div></div>';
+			. '</p><div class="paw-acct__actions"><a class="paw-acct__btn" href="' . esc_url( self::after_signin( $user ) ) . '">' . esc_html__( 'Continue', 'pawfectly-reservations' ) . '</a>'
+			. '<a class="paw-acct__link" href="' . esc_url( self::logout_url() ) . '">' . esc_html__( 'Log Out', 'pawfectly-reservations' ) . '</a></div></div></div>';
 	}
 }

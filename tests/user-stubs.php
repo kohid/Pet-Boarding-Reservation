@@ -99,7 +99,8 @@ function is_user_logged_in() { return get_current_user_id() > 0; }
 function current_user_can( $cap ) { $u = wp_get_current_user(); return $u->exists() && $u->has_cap( $cap ); }
 function wp_login_url( $redirect = '' ) { return 'https://example.test/wp-login.php' . ( $redirect ? '?redirect_to=' . rawurlencode( $redirect ) : '' ); }
 function wp_lostpassword_url( $redirect = '' ) { return 'https://example.test/wp-login.php?action=lostpassword'; }
-function wp_logout_url( $redirect = '' ) { return 'https://example.test/wp-login.php?action=logout'; }
+/** Like core: a nonce link, so its & come back HTML-escaped (&amp;). */
+function wp_logout_url( $redirect = '' ) { return 'https://example.test/wp-login.php?action=logout' . ( $redirect ? '&amp;redirect_to=' . rawurlencode( $redirect ) : '' ) . '&amp;_wpnonce=nonce-log-out'; }
 /** Like core: values are NOT url-encoded. */
 function add_query_arg( $args, $url ) { return $url . ( str_contains( $url, '?' ) ? '&' : '?' ) . implode( '&', array_map( fn( $k, $v ) => $k . '=' . $v, array_keys( $args ), $args ) ); }
 function add_role( $role, $name, $caps ) {

@@ -29,7 +29,7 @@ Requires WordPress 6.0+ and PHP 8.0+. This is v0.4. See `docs/superpowers/specs/
 
 - **Accounts are optional.** On the owner step, visitors can tick "Create an account with these details" and choose a password. The account is made once the reservation is saved, and they're signed in. Visitors who already have an account can click "Sign in" right there; the page reloads with their details filled in from their last reservation, never the dates, health answers, files or signature.
 - **New accounts confirm their email with a link,** valid for 7 days. Until they do, My Bookings shows only reservations made while signed in. After confirming, it also shows earlier reservations made with that email.
-- **Everyone signs in on the login page,** owners, staff and admins alike, with their email or username. It goes through WordPress's own sign-in, so login-limit and security plugins still apply. After signing in, staff land on the Dashboard and owners on My Bookings (or wherever they were headed).
+- **Everyone signs in on the login page,** owners, staff and admins alike, with their email or username. It goes through WordPress's own sign-in, so login-limit and security plugins still apply. After signing in, everyone lands on My Profile (or the page that sent them to sign in). After logging out, they land on the homepage.
 - **Create account** asks for the password twice, and every password box has a Show/Hide button, on the booking form too.
 - **Changing email in My Profile:** owners switch at once and confirm the new address. Staff keep their current address until they click the link sent to the new one. The admin-email account changes its email in wp-admin.
 - **Forgotten passwords** use WordPress's own reset page.
