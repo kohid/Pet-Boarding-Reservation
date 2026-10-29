@@ -25,7 +25,8 @@ $base = array(
 	'note' => 'FREE for members — text 239-420-7418', 'description' => '<p>Deck the <strong>paws</strong>!</p><p>Treats &amp; fun.</p>', 'status' => 'publish',
 	'sections' => array(
 		'sessions' => array( 'heading' => "Pick Your Pup's Session", 'intro' => 'Two sessions', 'rows' => array( array( 'from' => '10:00', 'to' => '12:00', 'name' => 'Session 1', 'who' => 'Small dogs' ), array( 'from' => '12:00', 'to' => '14:00', 'name' => 'Session 2', 'who' => 'Large dogs' ) ) ),
-		'includes' => array( 'heading' => 'Everything Your {price} Ticket Includes', 'intro' => 'One {price} ticket', 'rows' => array() ),
+		'includes' => array( 'heading' => 'Everything Your {price} Ticket Includes', 'intro' => 'One {price} ticket', 'rows' => array( array( 'emoji' => '📸', 'text' => 'Photo booth' ) ) ),
+		'goodies'  => array( 'rows' => array( array( 'emoji' => '🎅', 'title' => 'Santa Paws', 'text' => 'Photos with Santa' ) ) ),
 		'closing'  => array( 'heading' => 'Reserve Your Spot Today!', 'intro' => 'Register in seconds' ),
 	),
 );
@@ -44,9 +45,18 @@ t( 'spots per session', '3' === $v( 'spots' ) );
 t( 'section heading and intro, {price} filled in', "Pick Your Pup's Session" === $v( 'section_heading', array( 'section' => 'sessions' ) ) && 'Everything Your $15 Ticket Includes' === $v( 'section_heading', array( 'section' => 'includes' ) ) && 'One $15 ticket' === $v( 'section_intro', array( 'section' => 'includes' ) ) && 'Reserve Your Spot Today!' === $v( 'section_heading', array( 'section' => 'closing' ) ) && '' === $v( 'section_heading', array( 'section' => 'nope' ) ) );
 t( 'an unknown field is empty', '' === $v( 'nope' ) );
 
+t( 'include and goodie row fields', '📸' === EventFields::row_value( $ev, 'includes', 1, 'emoji' ) && 'Photo booth' === EventFields::row_value( $ev, 'includes', 1, 'text' ) && 'Santa Paws' === EventFields::row_value( $ev, 'goodies', 1, 'title' ) && 'Photos with Santa' === EventFields::row_value( $ev, 'goodies', 1, 'text' ) );
+
 // Spots left.
 Signups::create( $ev, Signups::sanitize( $ev, array( 'first_name' => 'Bo', 'last_name' => 'L', 'email' => 'bo@example.com', 'phone' => '239-555-0100', 'session' => '1', 'dogs' => array( array( 'name' => 'A' ), array( 'name' => 'B' ), array( 'name' => 'C' ) ), 'agree' => '1' ) ), 0, '' );
 t( 'spots left per session', '3 spots left' === $v( 'spots_left', array( 'session' => 1 ) ) && 'Full' === $v( 'spots_left', array( 'session' => 2 ) ) && '' === $v( 'spots_left', array( 'session' => 5 ) ) );
+
+// Repeater rows, one field at a time (row numbers start at 1).
+$r = static fn( string $section, int $row, string $field, array $o = array() ): string => EventFields::row_value( $ev, $section, $row, $field, $o );
+t( 'session row fields', '10:00 AM' === $r( 'sessions', 1, 'from' ) && '2:00 PM' === $r( 'sessions', 2, 'to' ) && '14:00' === $r( 'sessions', 2, 'to', array( 'format' => 'H:i' ) ) && '10:00 AM – 12:00 PM' === $r( 'sessions', 1, 'time' ) && 'Session 2' === $r( 'sessions', 2, 'name' ) && 'Large dogs' === $r( 'sessions', 2, 'who' ) );
+t( 'session row: spots left', '3 spots left' === $r( 'sessions', 1, 'spots_left' ) );
+t( 'a row that is not there, or a field it does not have, is empty', '' === $r( 'sessions', 3, 'name' ) && '' === $r( 'sessions', 1, 'title' ) && '' === $r( 'nope', 1, 'text' ) );
+t( 'every repeater lists its row fields', array( 'sessions' => array( 'from', 'to', 'time', 'name', 'who', 'spots_left' ), 'includes' => array( 'emoji', 'text' ), 'goodies' => array( 'emoji', 'title', 'text' ), 'good_to_know' => array( 'emoji', 'text' ) ) === EventFields::ROW_FIELDS );
 
 // Free, no price, no limit.
 $free = Events::get( Events::save( Events::sanitize( array_merge( $base, array( 'title' => 'Agility', 'free' => true, 'spots' => '', 'coupon' => '' ) ) ) ) );

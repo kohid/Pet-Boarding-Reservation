@@ -1,7 +1,9 @@
 <?php
 /**
  * The Dynamic Tag classes (see ElementorTags). Elementor re-creates a tag from its class name, so
- * each tag is a small named class over three bases: Text_Tag, Link_Tag and the image and colour tags.
+ * each tag is a small named class over a few bases: Text_Tag and Link_Tag (one field each),
+ * Section_Part_Tag (a section's heading, intro or all its rows), Row_Tag (one field of one
+ * repeater row), and the image and colour tags.
  * Loaded only from ElementorTags::register(), once Elementor's base classes exist.
  *
  * @package Pawfectly
@@ -32,7 +34,7 @@ abstract class Text_Tag extends Tag {
 	}
 
 	public function get_group() {
-		return ElementorTags::GROUP;
+		return ElementorTags::group( ElementorTags::field_group( static::FIELD ) );
 	}
 
 	public function get_categories() {
@@ -119,7 +121,7 @@ abstract class Link_Tag extends Data_Tag {
 	}
 
 	public function get_group() {
-		return ElementorTags::GROUP;
+		return ElementorTags::group( ElementorTags::field_group( static::FIELD ) );
 	}
 
 	public function get_categories() {
@@ -143,7 +145,7 @@ final class Photo extends Data_Tag {
 	}
 
 	public function get_group() {
-		return ElementorTags::GROUP;
+		return ElementorTags::group( 'basics' );
 	}
 
 	public function get_categories() {
@@ -183,7 +185,7 @@ final class Color extends Data_Tag {
 	}
 
 	public function get_group() {
-		return ElementorTags::GROUP;
+		return ElementorTags::group( 'basics' );
 	}
 
 	public function get_categories() {
@@ -220,6 +222,129 @@ final class Description_Html extends Text_Tag {
 	}
 }
 
+/** One section's heading, intro or all its rows, in that section's group. */
+abstract class Section_Part_Tag extends Tag {
+	protected const SECTION = '';
+	protected const PART    = ''; // heading, intro or rows.
+
+	public function get_name() {
+		return 'paw-event-' . str_replace( '_', '-', static::SECTION ) . '-' . static::PART;
+	}
+
+	public function get_title() {
+		return ElementorTags::title( 'part_' . static::PART );
+	}
+
+	public function get_group() {
+		return ElementorTags::group( static::SECTION );
+	}
+
+	public function get_categories() {
+		return array( Module::TEXT_CATEGORY );
+	}
+
+	public function render() {
+		$ev = EventFields::current();
+		if ( ! $ev ) {
+			return;
+		}
+		if ( 'rows' === static::PART ) {
+			echo EventShortcode::part( $ev, static::SECTION ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in the rows partial.
+			return;
+		}
+		echo esc_html( EventFields::value( $ev, 'section_' . static::PART, array( 'section' => static::SECTION ) ) );
+	}
+}
+
+/** One field of one repeater row: pick the row number and the field. */
+abstract class Row_Tag extends Tag {
+	protected const SECTION = '';
+
+	public function get_name() {
+		return 'paw-event-' . str_replace( '_', '-', static::SECTION ) . '-row';
+	}
+
+	public function get_title() {
+		return ElementorTags::title( 'part_row' );
+	}
+
+	public function get_group() {
+		return ElementorTags::group( static::SECTION );
+	}
+
+	public function get_categories() {
+		return array( Module::TEXT_CATEGORY );
+	}
+
+	protected function register_controls() {
+		$rows = array();
+		for ( $n = 1; $n <= \Pawfectly\Events::LIMITS[ static::SECTION ]; $n++ ) {
+			$rows[ (string) $n ] = (string) $n;
+		}
+		$fields = ElementorTags::row_fields( static::SECTION );
+		$this->add_control(
+			'row',
+			array(
+				'label'   => __( 'Row', 'pawfectly-reservations' ),
+				'type'    => Controls_Manager::SELECT,
+				'options' => $rows,
+				'default' => '1',
+			)
+		);
+		$this->add_control(
+			'field',
+			array(
+				'label'   => __( 'Field', 'pawfectly-reservations' ),
+				'type'    => Controls_Manager::SELECT,
+				'options' => $fields,
+				'default' => (string) array_key_first( $fields ),
+			)
+		);
+		if ( 'sessions' === static::SECTION ) {
+			$this->add_control(
+				'format',
+				array(
+					'label'       => __( 'Time format', 'pawfectly-reservations' ),
+					'type'        => Controls_Manager::TEXT,
+					'default'     => EventFields::TIME_FORMAT,
+					'description' => __( 'For From and To, like "g:i A" or "H:i".', 'pawfectly-reservations' ),
+					'condition'   => array( 'field' => array( 'from', 'to' ) ),
+				)
+			);
+		}
+	}
+
+	public function render() {
+		$ev = EventFields::current();
+		if ( ! $ev ) {
+			return;
+		}
+		$row   = max( 1, (int) $this->get_settings( 'row' ) );
+		$value = EventFields::row_value( $ev, static::SECTION, $row, (string) $this->get_settings( 'field' ), array( 'format' => (string) $this->get_settings( 'format' ) ) );
+		if ( '' === $value && EventShortcode::in_editor() && ! isset( $ev['sections'][ static::SECTION ]['rows'][ $row - 1 ] ) ) {
+			$value = ElementorTags::missing_row( static::SECTION, $row ); // Editor only, like the empty-list hints.
+		}
+		echo esc_html( $value );
+	}
+}
+
+final class Sessions_Heading extends Section_Part_Tag { protected const SECTION = 'sessions'; protected const PART = 'heading'; }
+final class Sessions_Intro extends Section_Part_Tag { protected const SECTION = 'sessions'; protected const PART = 'intro'; }
+final class Sessions_Rows extends Section_Part_Tag { protected const SECTION = 'sessions'; protected const PART = 'rows'; }
+final class Sessions_Row extends Row_Tag { protected const SECTION = 'sessions'; }
+final class Includes_Heading extends Section_Part_Tag { protected const SECTION = 'includes'; protected const PART = 'heading'; }
+final class Includes_Intro extends Section_Part_Tag { protected const SECTION = 'includes'; protected const PART = 'intro'; }
+final class Includes_Rows extends Section_Part_Tag { protected const SECTION = 'includes'; protected const PART = 'rows'; }
+final class Includes_Row extends Row_Tag { protected const SECTION = 'includes'; }
+final class Goodies_Heading extends Section_Part_Tag { protected const SECTION = 'goodies'; protected const PART = 'heading'; }
+final class Goodies_Rows extends Section_Part_Tag { protected const SECTION = 'goodies'; protected const PART = 'rows'; }
+final class Goodies_Row extends Row_Tag { protected const SECTION = 'goodies'; }
+final class Know_Heading extends Section_Part_Tag { protected const SECTION = 'good_to_know'; protected const PART = 'heading'; }
+final class Know_Rows extends Section_Part_Tag { protected const SECTION = 'good_to_know'; protected const PART = 'rows'; }
+final class Know_Row extends Row_Tag { protected const SECTION = 'good_to_know'; }
+final class Closing_Heading extends Section_Part_Tag { protected const SECTION = 'closing'; protected const PART = 'heading'; }
+final class Closing_Intro extends Section_Part_Tag { protected const SECTION = 'closing'; protected const PART = 'intro'; }
+
 final class Title extends Text_Tag { protected const FIELD = 'title'; }
 final class Tagline extends Text_Tag { protected const FIELD = 'tagline'; }
 final class Emoji extends Text_Tag { protected const FIELD = 'emoji'; }
@@ -253,12 +378,16 @@ final class Outlook_Link extends Link_Tag { protected const FIELD = 'outlook'; }
 final class Ics_Link extends Link_Tag { protected const FIELD = 'ics'; }
 final class Map_Link extends Link_Tag { protected const FIELD = 'map'; }
 
-/** Every tag, in the order Elementor lists them. */
+/** Every tag. Elementor lists them by group (ElementorTags::GROUPS), in this order within each. */
 const TAGS = array(
+	// Event · Basics.
+	Emoji::class,
 	Title::class,
 	Tagline::class,
-	Emoji::class,
 	Category::class,
+	Color::class,
+	Photo::class,
+	// Event · When & where.
 	StartDate::class,
 	StartTime::class,
 	EndDate::class,
@@ -270,25 +399,44 @@ const TAGS = array(
 	Venue::class,
 	Address::class,
 	Where::class,
+	Map_Link::class,
+	// Event · Price & tickets.
 	Price::class,
 	PriceText::class,
 	Free::class,
-	TicketText::class,
-	Note::class,
-	Description::class,
-	Description_Html::class,
 	Spots::class,
 	SpotsLeft::class,
-	SectionHeading::class,
-	SectionIntro::class,
-	Section_Rows::class,
-	Tickets_Link::class,
+	TicketText::class,
 	TicketUrl_Link::class,
+	Tickets_Link::class,
+	Note::class,
+	// Event · Description.
+	Description::class,
+	Description_Html::class,
+	// The repeaters and the closing section.
+	Sessions_Heading::class,
+	Sessions_Intro::class,
+	Sessions_Rows::class,
+	Sessions_Row::class,
+	Includes_Heading::class,
+	Includes_Intro::class,
+	Includes_Rows::class,
+	Includes_Row::class,
+	Goodies_Heading::class,
+	Goodies_Rows::class,
+	Goodies_Row::class,
+	Know_Heading::class,
+	Know_Rows::class,
+	Know_Row::class,
+	Closing_Heading::class,
+	Closing_Intro::class,
+	// Event · Calendar & links.
 	Url_Link::class,
 	Google_Link::class,
 	Outlook_Link::class,
 	Ics_Link::class,
-	Map_Link::class,
-	Photo::class,
-	Color::class,
+	// Event · Any section (pick one): the first tags, kept so templates made with them still work.
+	SectionHeading::class,
+	SectionIntro::class,
+	Section_Rows::class,
 );

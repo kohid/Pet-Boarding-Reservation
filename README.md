@@ -79,21 +79,30 @@ Put `[pawfectly_dashboard]` on a page, for example `/dashboard/`.
 
 With **Elementor Pro**, build the event page yourself in **Templates → Theme Builder → Single** with the condition **Include → Events → All**. In the template's **Preview Settings**, pick an event so the editor shows real data.
 
-**Dynamic Tags:** click the Dynamic Tags icon on any text, link, image or colour setting and open the **Pawfectly Event** group. Every Add Event field is there except the member coupon code, which never appears anywhere public.
+**Dynamic Tags:** click the Dynamic Tags icon on any text, link, image or colour setting. The groups follow the Add Event screen, and every field is there except the member coupon code, which never appears anywhere public.
 
-- **Text:**
-  - Event title, Tagline, Emoji, Category
-  - Start date, Start time, End date, End time. Each has a **Format** setting, like `F j, Y` or `g:i A`.
-  - Date line, Day, Time range, Summary line
-  - Venue, Address, Venue + address
-  - Price (number), Price text, Free badge, Ticket button text
-  - Highlight note, Description (plain text), Description (formatted)
-  - Spots per session, Spots left (pick the session)
-  - Section heading and Section intro (pick the section: Sessions, Ticket includes, Extra goodies, Good to know, Closing call to action). `{price}` is filled in.
-  - **Section rows (list):** a section's rows as a list (pick Sessions, Ticket includes, Extra goodies or Good to know). Use it in a **Text Editor** widget, under the section's heading.
-- **Links:** Tickets / sign-up link (your ticket link, or the sign-up form on the page), Ticket link, Event page link, Google Calendar, Outlook, Apple / iCal (.ics), Map.
-- **Image:** Cover photo.
-- **Colour:** Category colour.
+| Group | Tags |
+|---|---|
+| **Event · Basics** | Emoji, Event title, Tagline, Category, Category colour, Cover photo (with its own Fallback image) |
+| **Event · When & where** | Start date, Start time, End date, End time (each with a **Format**, like `F j, Y` or `g:i A`), Date line, Day, Time range, Summary line, Venue, Address, Venue + address, Map link |
+| **Event · Price & tickets** | Price (number), Price text, Free badge, Spots per session, Spots left (pick the session), Ticket button text, Ticket link, Tickets / sign-up link (your ticket link, or the sign-up form on the page), Highlight note |
+| **Event · Description** | Description (plain text), Description (formatted) |
+| **Event · Sessions (repeater)** | Heading, Intro, All rows (list), Row field |
+| **Event · Ticket includes (repeater)** | Heading, Intro, All rows (list), Row field |
+| **Event · Extra goodies (repeater)** | Heading, All rows (list), Row field |
+| **Event · Good to know (repeater)** | Heading, All rows (list), Row field |
+| **Event · Closing call to action** | Heading, Intro |
+| **Event · Calendar & links** | Event page link, Google Calendar, Outlook, Apple / iCal (.ics) |
+| **Event · Any section (pick one)** | The first section tags (heading, intro, rows) with a section picker, kept so templates made with them still work |
+
+- **Headings and intros:** `{price}` is filled in.
+- **All rows (list):** shows the repeater's rows as a list. Use it in a **Text Editor** widget.
+- **Row field:** pick the **Row** (1, 2, 3…) and the **Field**, to lay out each row yourself:
+  - **Sessions:** From, To (both with a time format), Time range, Name, Who it's for, Spots left
+  - **Ticket includes** and **Good to know:** Emoji, Text
+  - **Extra goodies:** Emoji, Title, Text
+
+  A row the event doesn't have is empty for visitors. In the editor it says so, for example "No session 3 for this event."
 
 In the Elementor editor, the tags and the shortcode show the event picked in the template's **Preview Settings** (or your latest event). An empty section says so in the editor, for example "No extra goodies for this event"; visitors see nothing.
 
