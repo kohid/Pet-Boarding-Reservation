@@ -31,17 +31,10 @@ final class Pages {
 		add_action( 'deleted_post', array( self::class, 'forget' ) );
 		add_action( 'trashed_post', array( self::class, 'forget' ) );
 		add_action( 'transition_post_status', array( self::class, 'forget' ) );
-		// Elementor writes its page data after save_post has fired.
-		add_action(
-			'updated_post_meta',
-			static function ( $meta_id, $post_id, $key ): void {
-				if ( '_elementor_data' === $key ) {
-					self::forget();
-				}
-			},
-			10,
-			3
-		);
+		// Elementor writes its page data after save_post has fired: added for a new page, updated after.
+		foreach ( array( 'added_post_meta', 'updated_post_meta', 'deleted_post_meta' ) as $hook ) {
+			add_action( $hook, array( self::class, 'meta_changed' ), 10, 3 );
+		}
 		add_action( 'admin_post_paw_create_page', array( self::class, 'handle_create' ) );
 	}
 
@@ -79,6 +72,13 @@ final class Pages {
 		}
 		set_transient( $key, $url, 5 * MINUTE_IN_SECONDS );
 		return $url;
+	}
+
+	/** A page's Elementor content was added, changed or removed: look the pages up again. */
+	public static function meta_changed( $meta_id, $post_id, $key ): void {
+		if ( '_elementor_data' === $key ) {
+			self::forget();
+		}
 	}
 
 	public static function forget(): void {

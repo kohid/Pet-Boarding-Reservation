@@ -16,6 +16,7 @@ function get_post( $id ) { return isset( $GLOBALS['paw_posts'][ $id ] ) ? (objec
 function get_post_meta( $id, $key = '', $single = false ) { return ''; }
 function get_permalink( $id = 0 ) { return "https://example.test/page-$id/"; }
 function delete_transient( $k ) { unset( $GLOBALS['paw_transients'][ $k ] ); return true; }
+function add_action( $hook, $cb, ...$a ) { $GLOBALS['paw_hooks'][ $hook ][] = $cb; }
 
 $wpdb->col_queue = array( array( 10, 11 ) );
 t( 'finds the page with the exact shortcode', 'https://example.test/page-11/' === Pages::url( 'pawfectly_my_profile' ) );
@@ -31,6 +32,19 @@ Pages::forget();
 $wpdb->col_queue = array( array( 11 ) );
 Pages::url( 'pawfectly_my_bookings' );
 t( 'forget clears the cache', count( $wpdb->queries ) === $n + 1 );
+// Elementor writes a page's content after it is saved: adding it (a new page) clears the cache too.
+$GLOBALS['paw_hooks'] = array();
+Pages::init();
+t( 'new and changed Elementor content both clear the cache', isset( $GLOBALS['paw_hooks']['added_post_meta'], $GLOBALS['paw_hooks']['updated_post_meta'], $GLOBALS['paw_hooks']['deleted_post_meta'] ) );
+Pages::url( 'pawfectly_my_bookings' );
+$n = count( $wpdb->queries );
+Pages::meta_changed( 1, 11, '_wp_page_template' );
+Pages::url( 'pawfectly_my_bookings' );
+t( 'other meta keeps the cache', count( $wpdb->queries ) === $n );
+Pages::meta_changed( 1, 11, '_elementor_data' );
+$wpdb->col_queue = array( array( 11 ) );
+Pages::url( 'pawfectly_my_bookings' );
+t( 'Elementor content clears it', count( $wpdb->queries ) === $n + 1 );
 t( 'eight shortcodes listed', array( 'pawfectly_reservation_form', 'pawfectly_user_menu', 'pawfectly_login', 'pawfectly_my_profile', 'pawfectly_my_bookings', 'pawfectly_dashboard', 'pawfectly_calendar', 'pawfectly_events' ) === array_keys( Pages::TAGS ) );
 
 t( 'the event calendar and events list are offered as pages', isset( \Pawfectly\Pages::TAGS['pawfectly_calendar'], \Pawfectly\Pages::TAGS['pawfectly_events'] ) && 'Event Calendar' === \Pawfectly\Pages::TAGS['pawfectly_calendar'][0] && 'Events' === \Pawfectly\Pages::TAGS['pawfectly_events'][0] );
