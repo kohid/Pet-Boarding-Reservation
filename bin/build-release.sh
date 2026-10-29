@@ -19,7 +19,7 @@ if [ -z "$version" ] || [ "$version" != "$const" ]; then
 fi
 
 echo "Checking PHP and running tests..."
-for f in pawfectly-reservations.php includes/*.php includes/data/*.php templates/*.php; do php -l "$f" >/dev/null; done
+for f in pawfectly-reservations.php includes/*.php includes/data/*.php includes/elementor/*.php templates/*.php templates/partials/*.php; do php -l "$f" >/dev/null; done
 bash bin/test.sh >/dev/null
 
 mkdir -p dist
@@ -29,7 +29,7 @@ git archive --format=zip --prefix=pawfectly-reservations/ -o dist/pawfectly-rese
 # The zip must carry everything the plugin needs at runtime, and nothing from development.
 # List it once into a variable: piping unzip into `grep -q` can fail under pipefail.
 listing=$(unzip -Z1 dist/pawfectly-reservations.zip)
-for must in pawfectly-reservations/pawfectly-reservations.php pawfectly-reservations/includes/data/countries.php pawfectly-reservations/assets/vendor/flatpickr/flatpickr.min.js pawfectly-reservations/assets/js/form.js pawfectly-reservations/templates/form.php; do
+for must in pawfectly-reservations/pawfectly-reservations.php pawfectly-reservations/includes/data/countries.php pawfectly-reservations/assets/vendor/flatpickr/flatpickr.min.js pawfectly-reservations/assets/js/form.js pawfectly-reservations/templates/form.php pawfectly-reservations/includes/elementor/tags.php pawfectly-reservations/templates/partials/event-rows.php; do
 	grep -qxF "$must" <<<"$listing" || { echo "Missing from zip: $must" >&2; exit 1; }
 done
 if grep -qE '^pawfectly-reservations/(tests|docs|bin|\.github)/' <<<"$listing"; then

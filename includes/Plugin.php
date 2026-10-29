@@ -23,6 +23,8 @@ final class Plugin {
 		Calendar::init();
 		EventsList::init();
 		EventPage::init();
+		EventShortcode::init();
+		ElementorTags::init();
 		Uploads::init();
 		Shortcode::init();
 		Pages::init();
