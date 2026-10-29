@@ -24,6 +24,7 @@ final class AccountRest {
 			array( '/account/password', 'POST', 'password' ),
 			array( '/account/resend', 'POST', 'resend' ),
 			array( '/account/reservations/(?P<id>\d+)/cancel', 'POST', 'cancel' ),
+			array( '/account/signups/(?P<id>\d+)/cancel', 'POST', 'cancel_signup' ),
 		);
 		foreach ( $routes as $r ) {
 			register_rest_route(
@@ -196,6 +197,25 @@ final class AccountRest {
 			Mailer::owner_cancelled( $reservation );
 		}
 		return new \WP_REST_Response( array( 'ok' => true, 'status' => 'cancelled', 'label' => Reservations::label( 'cancelled' ) ) );
+	}
+
+	/** Owner cancels one of their own event sign-ups, until the event starts (Signups::can_cancel). */
+	public static function cancel_signup( \WP_REST_Request $req ) {
+		$user = self::signed_in();
+		if ( is_wp_error( $user ) ) {
+			return $user;
+		}
+		$su    = Signups::get( absint( $req->get_param( 'id' ) ) );
+		$event = $su ? Events::get( $su['event'] ) : null;
+		if ( ! $su || ! $event || $su['user_id'] !== (int) $user->ID ) {
+			return new \WP_Error( 'paw_not_found', __( 'Sign-up not found.', 'pawfectly-reservations' ), array( 'status' => 404 ) );
+		}
+		if ( ! Signups::can_cancel( $su, $event ) ) {
+			return new \WP_Error( 'paw_not_cancellable', __( 'This sign-up can no longer be cancelled online — please call us.', 'pawfectly-reservations' ), array( 'status' => 409 ) );
+		}
+		Signups::set_status( $su['id'], 'cancelled' );
+		Mailer::signup_cancelled( Signups::get( $su['id'] ), $event );
+		return new \WP_REST_Response( array( 'ok' => true, 'status' => 'cancelled', 'label' => Signups::label( 'cancelled' ) ) );
 	}
 
 	/** @return \WP_User|\WP_Error */

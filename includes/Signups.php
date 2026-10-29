@@ -237,6 +237,16 @@ final class Signups {
 	}
 
 	/** "2 × $15 = $30, paid at the event", "Free with member code", "Free", or "Price on request". */
+	/** A status for people: Confirmed, Attended, Cancelled. */
+	public static function label( string $status ): string {
+		$labels = array(
+			'confirmed' => __( 'Confirmed', 'pawfectly-reservations' ),
+			'attended'  => __( 'Attended', 'pawfectly-reservations' ),
+			'cancelled' => __( 'Cancelled', 'pawfectly-reservations' ),
+		);
+		return $labels[ $status ] ?? $status;
+	}
+
 	public static function total_text( array $su ): string {
 		if ( '' === $su['total'] ) {
 			return __( 'Price on request', 'pawfectly-reservations' );

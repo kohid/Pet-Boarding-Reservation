@@ -1,23 +1,24 @@
 <?php
 /**
  * Renders the account menu (guest and signed-in), My Profile (signed out and in) and My Bookings
- * into tests/e2e/out/account.html with the real CSS and JS, for account-e2e.js.
+ * (reservations and event sign-ups) into tests/e2e/out/account.html with the real CSS and JS, for account-e2e.js.
  * Run: php tests/e2e/build-account.php
  */
 define( 'PAW_URL', '/' );
 require dirname( __DIR__ ) . '/bootstrap.php';
+require dirname( __DIR__ ) . '/post-stubs.php';
 require dirname( __DIR__ ) . '/wp-db-stubs.php';
 require dirname( __DIR__ ) . '/user-stubs.php';
 function get_permalink( $id = 0 ) { return '/tests/e2e/out/account.html'; }
 function home_url( $p = '' ) { return '/' . ltrim( $p, '/' ); }
-function get_post( $id ) { return null; }
-function get_post_meta( $id, $k = '', $s = false ) { return ''; }
 function shortcode_atts( $pairs, $atts, $tag = '' ) { return array_merge( $pairs, array_intersect_key( (array) $atts, $pairs ) ); }
 function wp_enqueue_style() {}
 function wp_enqueue_script() {}
 function wp_add_inline_script() {}
 
+use Pawfectly\Events;
 use Pawfectly\MyBookings;
+use Pawfectly\Signups;
 use Pawfectly\Profile;
 use Pawfectly\Reservations;
 use Pawfectly\UserMenu;
@@ -36,6 +37,11 @@ foreach ( array( array( 'PAW-7K3QX9', 'Biscuit', 'confirmed', '2030-01-10' ), ar
 	$row['status']  = $r[2];
 	$row['user_id'] = $jay->ID;
 	Reservations::insert( $row );
+}
+// Event sign-ups: one ahead (Cancel), one over.
+foreach ( array( array( 'X-Mas Party', '2030-12-19', '🎄' ), array( 'Summer splash', '2020-07-01', '💦' ) ) as $e ) {
+	$ev = Events::get( Events::save( Events::sanitize( array( 'title' => $e[0], 'emoji' => $e[2], 'start_date' => $e[1], 'start_time' => '10:00', 'end_date' => $e[1], 'end_time' => '14:00', 'venue' => 'Paw-radise', 'price' => '15', 'status' => 'publish', 'sections' => array( 'sessions' => array( 'rows' => array( array( 'from' => '10:00', 'to' => '12:00', 'name' => 'Session 1', 'who' => 'Small dogs' ) ) ) ) ) ) ) );
+	Signups::create( $ev, Signups::sanitize( $ev, array( 'first_name' => 'Jay', 'last_name' => 'Miralles', 'email' => 'jay@example.com', 'phone' => '555-0100', 'session' => '0', 'dogs' => array( array( 'name' => 'Biscuit' ), array( 'name' => 'Luna' ) ), 'agree' => '1' ) ), $jay->ID, '' );
 }
 // A My Profile page exists (customers can't use wp-admin's profile screen any more).
 set_transient( 'paw_pg_' . md5( Profile::TAG ), '/tests/e2e/out/account.html#profile-in' );

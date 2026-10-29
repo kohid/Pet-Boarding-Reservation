@@ -155,6 +155,34 @@ final class Mailer {
 		);
 	}
 
+	/** Tells staff an owner cancelled their event sign-up. */
+	public static function signup_cancelled( array $su, array $event ): void {
+		$settings = Settings::get();
+		$staff    = Settings::staff_emails( $settings );
+		if ( ! $staff ) {
+			return;
+		}
+		$body = EmailTemplate::rows(
+			array_filter(
+				array(
+					__( 'Reference', 'pawfectly-reservations' ) => $su['reference'],
+					__( 'Event', 'pawfectly-reservations' )     => $event['title'],
+					__( 'Session', 'pawfectly-reservations' )   => $su['session_label'],
+					__( 'Name', 'pawfectly-reservations' )      => trim( $su['first_name'] . ' ' . $su['last_name'] ),
+					__( 'Dogs', 'pawfectly-reservations' )      => implode( ', ', array_column( $su['dogs'], 'name' ) ),
+				),
+				'strlen'
+			)
+		);
+		self::send(
+			$staff,
+			/* translators: 1: event title, 2: owner's name, 3: reference */
+			sprintf( __( 'Sign-up cancelled for %1$s: %2$s (%3$s)', 'pawfectly-reservations' ), $event['title'], trim( $su['first_name'] . ' ' . $su['last_name'] ), $su['reference'] ),
+			EmailTemplate::render( __( 'Sign-up cancelled by the owner', 'pawfectly-reservations' ), $body, $settings ),
+			$su['email']
+		);
+	}
+
 		/** Tells the owner their reservation's new status. */
 	public static function status_changed( array $r ): void {
 		$settings = Settings::get();
