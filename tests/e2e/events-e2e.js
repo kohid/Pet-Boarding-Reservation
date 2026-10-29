@@ -197,6 +197,29 @@ async function nextTitle(page, before) {
     ok('sign-up: add-to-calendar links', (await page.locator('[data-paw-su-cal] a').count()) === 3 && (await page.getAttribute('[data-paw-su-cal] a >> nth=0', 'href')).includes('calendar.google.com'));
     await shot(page, 'signup-thanks');
 
+    // Signed in: the page carries the person's own nonce, and the form uses it instead of /nonce.
+    const signed = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    signed.on('pageerror', e => errors.push(e.message));
+    await signed.addInitScript(() => { window.PAW_SIGNUP_NONCE = 'good-nonce'; });
+    const fetched = [];
+    signed.on('request', r => fetched.push(r.url()));
+    await signed.goto(BASE + 'event.html');
+    await signed.check(form + ' [name=session] >> nth=0');
+    for (const [k, v] of [['first_name', 'Amy'], ['last_name', 'Lee'], ['email', 'amy@example.com'], ['phone', '239-555-0101']]) await signed.fill(`${form} [name=${k}]`, v);
+    await signed.fill('[data-paw-su-dog] >> nth=0 >> [data-paw-su-dog-field=name]', 'Rex');
+    await signed.click('[data-paw-su-add]');
+    await signed.click('[data-paw-su-add]');
+    await signed.fill('[data-paw-su-dog] >> nth=2 >> [data-paw-su-dog-field=breed]', 'Pug');
+    await signed.check(form + ' [name=agree]');
+    await signed.click(form + ' button[type=submit]');
+    await signed.waitForSelector('[data-paw-su-err]');
+    ok('sign-up: a dog error lands on its own card, past a blank one', (await signed.locator('[data-paw-su-dog] >> nth=2 >> [data-paw-su-err]').count()) === 1 && (await signed.locator('[data-paw-su-dog] >> nth=1 >> [data-paw-su-err]').count()) === 0);
+    await signed.fill('[data-paw-su-dog] >> nth=2 >> [data-paw-su-dog-field=name]', 'Ivy');
+    await signed.click(form + ' button[type=submit]');
+    await signed.waitForSelector('[data-paw-su-thanks]:not([hidden])');
+    ok('sign-up: signed in, the page\'s own nonce is used, never /nonce', !fetched.some(u => u.includes('/wp-json/pawfectly/v1/nonce')) && /^EVT-/.test((await signed.textContent('[data-paw-su-ref]')).trim()));
+    await signed.close();
+
     await page.goto(BASE + 'event-ticket.html');
     ok('sign-up: an event with a ticket link has no form, its button goes to the tickets', (await page.locator(form).count()) === 0 && (await page.getAttribute('#paw-event-reserve [data-paw-ticket]', 'href')) === 'https://tickets.example/gala');
 

@@ -62,12 +62,19 @@ final class SignupRest {
 			return new \WP_REST_Response( array( 'reference' => Reference::generate( 'EVT' ) ), 201 );
 		}
 
-		$clean = Signups::sanitize( $event, $in );
-		if ( is_wp_error( $clean ) ) {
-			return $clean;
+		$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		// The spots and duplicate-email checks and the insert run as one, so two people sending
+		// at the same moment can't both take the last spot.
+		$su = Signups::locked(
+			(int) $event['id'],
+			static function () use ( $event, $in, $ip ) {
+				$clean = Signups::sanitize( $event, $in );
+				return is_wp_error( $clean ) ? $clean : Signups::create( $event, $clean, is_user_logged_in() ? get_current_user_id() : 0, $ip );
+			}
+		);
+		if ( is_wp_error( $su ) ) {
+			return $su;
 		}
-		$ip  = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
-		$su  = Signups::create( $event, $clean, is_user_logged_in() ? get_current_user_id() : 0, $ip );
 		$out = array(
 			'reference' => $su['reference'],
 			'summary'   => self::summary( $su, $event ),

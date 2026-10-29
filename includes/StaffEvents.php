@@ -90,6 +90,16 @@ final class StaffEvents {
 		if ( is_wp_error( $clean ) ) {
 			return $clean;
 		}
+		if ( $id && ! self::sessions_kept( Events::get( $id ), $clean ) ) {
+			return new \WP_Error(
+				'paw_invalid',
+				__( 'Please check the highlighted fields.', 'pawfectly-reservations' ),
+				array(
+					'status' => 400,
+					'fields' => array( 'sections.sessions' => __( "Sessions that have sign-ups can't be removed, moved or given new times. You can rename them, or add new sessions at the end.", 'pawfectly-reservations' ) ),
+				)
+			);
+		}
 		$saved = Events::save( $clean, $id );
 		if ( ! $saved ) {
 			return new \WP_Error( 'paw_storage', __( 'Something went wrong. Please try again.', 'pawfectly-reservations' ), array( 'status' => 500 ) );
@@ -223,6 +233,24 @@ final class StaffEvents {
 			'notes'      => $su['notes'],
 			'created'    => $su['created'],
 		);
+	}
+
+	/**
+	 * Sign-ups point at their session by its place in the list, so a session with active
+	 * sign-ups must keep its place and its times.
+	 */
+	private static function sessions_kept( array $old, array $clean ): bool {
+		$before = $old['sections']['sessions']['rows'];
+		$after  = $clean['sections']['sessions']['rows'] ?? array();
+		foreach ( array_unique( array_column( Signups::for_event( (int) $old['id'], true ), 'session' ) ) as $n ) {
+			if ( $n < 0 || ! isset( $before[ $n ] ) ) {
+				continue;
+			}
+			if ( ! isset( $after[ $n ] ) || $after[ $n ]['from'] !== $before[ $n ]['from'] || $after[ $n ]['to'] !== $before[ $n ]['to'] ) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/** One list row. */

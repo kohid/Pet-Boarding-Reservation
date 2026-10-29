@@ -39,6 +39,8 @@ t( 'at most 5 dogs', isset( errs( Signups::sanitize( $ev, $six ) )['dogs'] ) );
 $blank = form( array( 'dogs' => array( array( 'name' => 'Rex' ), array( 'name' => '', 'breed' => '', 'weight' => '' ) ) ) );
 t( 'blank dogs are dropped', 1 === Signups::sanitize( $ev, $blank )['dog_count'] );
 t( 'a dog with a breed needs a name', isset( errs( Signups::sanitize( $ev, form( array( 'dogs' => array( array( 'name' => '', 'breed' => 'Pug' ) ) ) ) ) )['dogs.0.name'] ) );
+$gap = form( array( 'dogs' => array( array( 'name' => 'Rex' ), array( 'name' => '' ), array( 'name' => '', 'breed' => 'Pug' ) ) ) );
+t( 'a dog error keeps its card\'s place, blank cards before it included', array( 'dogs.2.name' ) === array_keys( errs( Signups::sanitize( $ev, $gap ) ) ) );
 t( 'the agreement is required', isset( errs( Signups::sanitize( $ev, form( array( 'agree' => '' ) ) ) )['agree'] ) );
 
 // Member code and totals.
@@ -67,6 +69,10 @@ t( 'only known statuses', false === Signups::set_status( $a['id'], 'lost' ) && '
 // The event's price changes later: sign-ups keep theirs.
 Events::save( Events::sanitize( array( 'title' => 'X-Mas Party', 'start_date' => '2030-12-19', 'start_time' => '10:00', 'end_date' => '2030-12-19', 'end_time' => '14:00', 'venue' => 'Paw-radise', 'price' => '20', 'status' => 'publish' ) ), $ev['id'] );
 t( 'totals are snapshots', '30.00' === Signups::get( $a['id'] )['total'] );
+
+$limited = Events::get( Events::save( Events::sanitize( array( 'title' => 'Walk', 'start_date' => '2030-12-21', 'start_time' => '08:00', 'end_date' => '2030-12-21', 'end_time' => '09:00', 'venue' => 'Park', 'price' => '15', 'status' => 'publish', 'spots' => '2' ) ) ) );
+$three   = form( array( 'session' => '', 'email' => 'tri@example.com', 'dogs' => array( array( 'name' => 'A' ), array( 'name' => 'B' ), array( 'name' => 'C' ) ) ) );
+t( 'no sessions: the spots message talks about the event', 'Only 2 spots left.' === ( errs( Signups::sanitize( $limited, $three ) )['dogs'] ?? '' ) );
 
 // Owners and lists.
 $mine = Signups::create( $ev, Signups::sanitize( $ev, form( array( 'email' => 'me@example.com', 'session' => '1' ) ) ), 42, '' );

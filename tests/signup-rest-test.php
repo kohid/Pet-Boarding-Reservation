@@ -46,6 +46,7 @@ $ok = SignupRest::submit( req( $ev['id'], body( array( 'submission_id' => '0b6b1
 $d  = $ok->get_data();
 t( 'success: 201 with a reference, a summary and calendar links', 201 === $ok->get_status() && 1 === preg_match( '/^EVT-/', $d['reference'] ) && '2 × $15 = $30, paid at the event' === $d['summary']['total_text'] && 'Rex, Ivy' === $d['summary']['dogs'] && str_contains( $d['calendar']['google'], 'calendar.google.com' ) );
 t( 'success: never echoes the member code', ! str_contains( wp_json_encode( $d ), 'PawPark' ) );
+t( 'the spots check and the insert run under a per-event lock', (bool) preg_grep( '/GET_LOCK\(.*paw_su_' . $ev['id'] . '/', $GLOBALS['wpdb']->queries ) && (bool) preg_grep( '/RELEASE_LOCK\(.*paw_su_' . $ev['id'] . '/', $GLOBALS['wpdb']->queries ) );
 t( 'one sign-up stored', 1 === count( Signups::for_event( $ev['id'] ) ) );
 $again = SignupRest::submit( req( $ev['id'], body( array( 'submission_id' => '0b6b1a4e-58f3-4a5c-9d8e-1f2a3b4c5d6e' ) ) ) );
 t( 'a double click gets the first reference and stores nothing new', $d['reference'] === $again->get_data()['reference'] && 1 === count( Signups::for_event( $ev['id'] ) ) );

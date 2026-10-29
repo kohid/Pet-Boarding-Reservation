@@ -179,8 +179,8 @@
 			clearErrors();
 			btn.disabled = true;
 			btn.textContent = t.sending;
-			fetch(cfg.nonceUrl, { credentials: 'same-origin' })
-				.then(function (r) { return r.json(); })
+			// Signed-in people get their own nonce in the page; visitors' pages may be cached.
+			(window.PAW_SIGNUP_NONCE ? Promise.resolve({ nonce: window.PAW_SIGNUP_NONCE }) : fetch(cfg.nonceUrl, { credentials: 'same-origin' }).then(function (r) { return r.json(); }))
 				.then(function (n) {
 					return fetch(cfg.route, {
 						method: 'POST',

@@ -93,6 +93,20 @@ t( 'status: changed, and the cancel frees its spots', 200 === $st->get_status() 
 t( 'status: only known statuses', is_wp_error( StaffEvents::signup_status( req( array( 'status' => 'lost' ), array( 'id' => (string) $s1['id'] ) ) ) ) );
 t( 'status: not a sign-up is a 404', 404 === StaffEvents::signup_status( req( array( 'status' => 'attended' ), array( 'id' => (string) $party ) ) )->get_error_data()['status'] );
 
+// Sessions with sign-ups keep their place and times (sign-ups point at them by position).
+$sess  = static fn( array $rows ): array => body( array( 'title' => 'Sign-up party', 'spots' => '4', 'sections' => array( 'sessions' => array( 'rows' => $rows ) ) ) );
+$s1row = array( 'from' => '10:00', 'to' => '12:00', 'name' => 'Session 1', 'who' => 'Small dogs' );
+$s2row = array( 'from' => '12:00', 'to' => '14:00', 'name' => 'Session 2', 'who' => '' );
+$s3row = array( 'from' => '14:00', 'to' => '15:00', 'name' => 'Session 3', 'who' => '' );
+$moved = StaffEvents::save( req( $sess( array( $s2row, $s1row ) ), array( 'id' => (string) $party ) ) );
+t( 'sessions: moving one that has sign-ups is refused', is_wp_error( $moved ) && isset( $moved->get_error_data()['fields']['sections.sessions'] ) );
+$gone = StaffEvents::save( req( $sess( array( $s1row ) ), array( 'id' => (string) $party ) ) );
+t( 'sessions: removing one that has sign-ups is refused', is_wp_error( $gone ) );
+$retimed = StaffEvents::save( req( $sess( array( $s1row, array_merge( $s2row, array( 'to' => '15:00' ) ) ) ), array( 'id' => (string) $party ) ) );
+t( 'sessions: retiming one that has sign-ups is refused', is_wp_error( $retimed ) );
+$renamed = StaffEvents::save( req( $sess( array( $s1row, array_merge( $s2row, array( 'name' => 'Big dogs' ) ), $s3row ) ), array( 'id' => (string) $party ) ) );
+t( 'sessions: renaming them and adding one at the end is fine', ! is_wp_error( $renamed ) && 3 === count( Events::get( $party )['sections']['sessions']['rows'] ) );
+
 $csv = StaffEvents::csv_lines( $party );
 t( 'CSV: a header, one row per dog, formulas defused', 'Reference' === $csv[0][0] && 4 === count( $csv ) && in_array( "'=cmd()", array_merge( ...$csv ), true ) );
 t( 'CSV: needs the capability and its nonce', StaffEvents::csv_allowed( $party, wp_create_nonce( 'paw_signups_csv_' . $party ) ) && ! StaffEvents::csv_allowed( $party, 'bad' ) );

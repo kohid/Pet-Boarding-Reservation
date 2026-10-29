@@ -89,7 +89,7 @@ final class Signups {
 		$out['session_label'] = $labels[ $out['session'] ] ?? '';
 
 		$out['dogs'] = array();
-		foreach ( array_values( is_array( $in['dogs'] ?? null ) ? $in['dogs'] : array() ) as $dog ) {
+		foreach ( array_values( is_array( $in['dogs'] ?? null ) ? $in['dogs'] : array() ) as $n => $dog ) {
 			$dog = is_array( $dog ) ? $dog : array();
 			$d   = array(
 				'name'   => mb_substr( sanitize_text_field( (string) ( $dog['name'] ?? '' ) ), 0, 60 ),
@@ -100,7 +100,7 @@ final class Signups {
 				continue; // A dog card left blank.
 			}
 			if ( '' === $d['name'] ) {
-				$errors[ 'dogs.' . count( $out['dogs'] ) . '.name' ] = $need;
+				$errors[ "dogs.$n.name" ] = $need; // The card's place on the form, blank cards counted.
 			}
 			$out['dogs'][] = $d;
 		}
@@ -143,8 +143,11 @@ final class Signups {
 			$key            = $labels ? 'session' : 'dogs';
 			$errors[ $key ] = 0 === $left
 				? ( $labels ? __( 'Sorry, that session just filled up. Please pick another.', 'pawfectly-reservations' ) : __( 'Sorry, this event is full.', 'pawfectly-reservations' ) )
-				/* translators: %d: spots left */
-				: sprintf( _n( 'Only %d spot left in this session.', 'Only %d spots left in this session.', $left, 'pawfectly-reservations' ), $left );
+				: ( $labels
+					/* translators: %d: spots left */
+					? sprintf( _n( 'Only %d spot left in this session.', 'Only %d spots left in this session.', $left, 'pawfectly-reservations' ), $left )
+					/* translators: %d: spots left */
+					: sprintf( _n( 'Only %d spot left.', 'Only %d spots left.', $left, 'pawfectly-reservations' ), $left ) );
 		}
 
 		if ( $errors ) {
@@ -178,6 +181,23 @@ final class Signups {
 			update_post_meta( $id, self::META . $key, is_bool( $data[ $key ] ) ? (int) $data[ $key ] : $data[ $key ] );
 		}
 		return (array) self::get( $id );
+	}
+
+	/**
+	 * Runs $work while holding a MySQL named lock for the event, so its sign-ups are checked and
+	 * stored one at a time. @return mixed $work's result, or a 503 WP_Error when the lock is busy.
+	 */
+	public static function locked( int $event, callable $work ) {
+		global $wpdb;
+		$name = 'paw_su_' . $event;
+		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $name ) ) ) {
+			return new \WP_Error( 'paw_busy', __( 'Lots of people are signing up right now. Please try again in a moment.', 'pawfectly-reservations' ), array( 'status' => 503 ) );
+		}
+		try {
+			return $work();
+		} finally {
+			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $name ) );
+		}
 	}
 
 	public static function get( int $id ): ?array {

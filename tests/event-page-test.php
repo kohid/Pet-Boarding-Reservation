@@ -8,6 +8,9 @@ require __DIR__ . '/bootstrap.php';
 require __DIR__ . '/post-stubs.php';
 require __DIR__ . '/user-stubs.php';
 function home_url( $p = '' ) { return 'https://example.test/' . ltrim( $p, '/' ); }
+function wp_enqueue_style( ...$a ) {}
+function wp_enqueue_script( ...$a ) {}
+function wp_add_inline_script( $handle, $js, $pos = 'after' ) { $GLOBALS['paw_inline'][] = array( $handle, $js, $pos ); }
 
 use Pawfectly\Activator;
 use Pawfectly\EventPage;
@@ -128,5 +131,16 @@ $free_ev = array_merge( $su_ev, array( 'free' => true, 'price' => '' ) );
 t( 'form: no member code field on a free event', ! str_contains( EventPage::body( $free_ev, $now ), 'name="coupon"' ) );
 t( 'form: none on a past event', ! str_contains( EventPage::body( $su_ev, new DateTimeImmutable( '2026-12-20', new DateTimeZone( 'UTC' ) ) ), 'data-paw-signup' ) );
 t( 'form: none on a draft preview', ! str_contains( EventPage::body( array_merge( $su_ev, array( 'status' => 'draft' ) ), $now ), 'data-paw-signup' ) );
+
+// The REST nonce: visitors fetch one (the page may be cached); signed-in people get their own.
+$GLOBALS['paw_inline'] = array();
+wp_set_current_user( 0 );
+EventPage::enqueue();
+t( 'enqueue: no nonce in the page for visitors', array() === $GLOBALS['paw_inline'] );
+$amy = paw_test_user( 'amy@example.com', 'amy pass1', array( 'paw_customer' ) );
+wp_set_current_user( $amy->ID );
+EventPage::enqueue();
+t( 'enqueue: a signed-in person gets their own nonce for the form', 'paw-signup' === ( $GLOBALS['paw_inline'][0][0] ?? '' ) && str_contains( $GLOBALS['paw_inline'][0][1], 'PAW_SIGNUP_NONCE' ) && str_contains( $GLOBALS['paw_inline'][0][1], wp_create_nonce( 'wp_rest' ) ) );
+wp_set_current_user( 0 );
 
 done();
