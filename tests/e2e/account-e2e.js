@@ -155,10 +155,12 @@ function ok(name, cond) { assert.ok(cond, name); passed++; console.log('ok   - '
     ok('save: the whole list is sent, the new pet with its answers', petsBody.pets.length === 2 && petsBody.pets[0].values.pet_name === 'Luna' && added.pet_name === 'Brax' && added.dog_size === 'large' && added.medications_details === 'Apoquel 16mg daily' && added.feeding_schedule === '2 cups, twice a day' && !('pet_type_other' in added));
     ok('save: listed, editor closed, message shown', (await petNames()).join() === 'Luna,Brax' && await page.isHidden(`${pets} [data-paw-pet-editor]`) && (await page.textContent(`${pets} [data-paw-pets-msg]`)) === 'Your pets are saved.');
     await page.click(`${pets} [data-paw-pet-edit="1"]`);
+    ok('edit: the editor opens inside that pet\'s row (valid list markup)', await page.evaluate(() => document.querySelector('#profile-in [data-paw-pet-editor]').parentElement.matches('li[data-paw-pet-row="1"]')));
     ok('edit: the saved answers are filled in', (await page.inputValue(`${pets} [name=pet_name]`)) === 'Brax' && (await page.inputValue(`${pets} [name=medications_details]`)) === 'Apoquel 16mg daily');
     await page.selectOption(`${pets} [name=medications]`, 'no');
     await page.click(`${pets} .paw-acct__pet-editor button[type=submit]`);
     await page.waitForSelector(`${pets} [data-paw-pet-editor]`, { state: 'hidden' });
+    ok('after saving, focus goes back to that pet\'s Edit button', await page.evaluate(() => document.activeElement && document.activeElement.getAttribute('data-paw-pet-edit') === '1'));
     ok('edit: a hidden follow-up answer is dropped', petsBody.pets[1].uid !== '' && petsBody.pets[1].values.medications === 'no' && !('medications_details' in petsBody.pets[1].values));
     if (SHOTS) await page.locator(pets).screenshot({ path: path.join(SHOTS, 'profile-pets.png') });
     page.once('dialog', d => d.accept());

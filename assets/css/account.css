@@ -649,3 +649,7 @@
 .paw-acct button.paw-acct__link:not(#paw-0):hover {
 	text-decoration: underline;
 }
+
+.paw-acct .paw-acct__pet > [data-paw-pet-editor] {
+	flex-basis: 100%;
+}

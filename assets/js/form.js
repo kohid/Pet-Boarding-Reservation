@@ -1266,8 +1266,41 @@
 		return out;
 	}
 
+	/** Card n has nothing typed, chosen or uploaded yet (every control still as the page drew it). */
+	function blankCard(n) {
+		if (files[n] && files[n].length) {
+			return false;
+		}
+		return Array.prototype.every.call(root.querySelectorAll('[data-paw-pet="' + n + '"] input, [data-paw-pet="' + n + '"] textarea, [data-paw-pet="' + n + '"] select'), function (input) {
+			if (input.type === 'radio' || input.type === 'checkbox') {
+				return input.checked === input.defaultChecked;
+			}
+			if (input.tagName === 'SELECT') {
+				var first = input.querySelector('option[selected]') || input.options[0]; // What clearPet() resets it to.
+				return !first || input.value === first.value;
+			}
+			return input.type === 'file' || input.value === input.defaultValue;
+		});
+	}
+
 	function onlyBlankCard() {
-		return petCount() === 1 && petValues(0).pet_name === '';
+		return petCount() === 1 && blankCard(0);
+	}
+
+	/** Each saved pet's card as it looked when filled in, to tell later edits apart. */
+	var snaps = {};
+
+	function snapKey(pet) {
+		return String(pet.name).trim().toLowerCase();
+	}
+
+	/** Card n was changed since it was filled in (typed over, added to, or files uploaded). */
+	function changedFrom(n, pet) {
+		if (files[n] && files[n].length) {
+			return true;
+		}
+		var snap = snaps[snapKey(pet)];
+		return !!snap && JSON.stringify(petValues(n)) !== snap;
 	}
 
 	function syncSaved() {
@@ -1275,6 +1308,12 @@
 			return;
 		}
 		savedBox.hidden = SAVED.length < 2;
+		SAVED.forEach(function (pet) {
+			var at = cardsFor(pet);
+			if (at.length && !snaps[snapKey(pet)]) {
+				snaps[snapKey(pet)] = JSON.stringify(petValues(at[0]));
+			}
+		});
 		savedBox.querySelectorAll('[data-paw-saved]').forEach(function (chip) {
 			var on = cardsFor(SAVED[+chip.getAttribute('data-paw-saved')]).length > 0;
 			chip.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -1300,7 +1339,11 @@
 			var pet = SAVED[+chip.getAttribute('data-paw-saved')];
 			var at = cardsFor(pet);
 			if (at.length) {
-				// Leaving: its cards go (the last card left is emptied instead).
+				// Leaving: its cards go (the last card left is emptied instead), after asking if anything was changed there.
+				if (at.some(function (n) { return changedFrom(n, pet); }) && !window.confirm(I18N.dropSavedPet.replace('%s', pet.name))) {
+					return;
+				}
+				delete snaps[snapKey(pet)];
 				at.reverse().forEach(function (n) {
 					if (petCount() === 1) {
 						clearPet(0);
@@ -1314,6 +1357,7 @@
 					addPet();
 				}
 				setPetValues(petCount() - 1, pet.values);
+				snaps[snapKey(pet)] = JSON.stringify(petValues(petCount() - 1));
 			}
 			refresh();
 			saveDraft();

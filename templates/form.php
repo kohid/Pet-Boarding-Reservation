@@ -139,8 +139,8 @@ $paw_count = count( $steps );
 					<?php if ( $paw_pet_fields ) : ?>
 						<?php if ( 'pet' === $paw_step['id'] ) : ?>
 							<div class="paw-saved-pets" data-paw-saved-pets hidden>
-								<p class="paw-saved-pets__title"><?php esc_html_e( "Who's coming?", 'pawfectly-reservations' ); ?> <span><?php esc_html_e( 'Your saved pets: tap to add or remove.', 'pawfectly-reservations' ); ?></span></p>
-								<div class="paw-saved-pets__chips" data-paw-saved-chips></div>
+								<p class="paw-saved-pets__title" id="paw-saved-pets-title"><?php esc_html_e( "Who's coming?", 'pawfectly-reservations' ); ?> <span><?php esc_html_e( 'Your saved pets: tap to add or remove.', 'pawfectly-reservations' ); ?></span></p>
+								<div class="paw-saved-pets__chips" role="group" aria-labelledby="paw-saved-pets-title" data-paw-saved-chips></div>
 							</div>
 						<?php endif; ?>
 						<div class="paw-pets" data-paw-pets="<?php echo esc_attr( $paw_step['id'] ); ?>">

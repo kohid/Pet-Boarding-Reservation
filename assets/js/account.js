@@ -205,6 +205,7 @@
 		var fields = {};
 		P.groups.forEach(function (g) { g.fields.forEach(function (f) { fields[f.id] = f; }); });
 		var editing = -1; // Index in pets, or pets.length for a new one.
+		var busy = false; // A save is on its way: one at a time, so a quick second Remove can't resend the first.
 
 		function el(tag, cls, text) {
 			var n = document.createElement(tag);
@@ -363,25 +364,33 @@
 			editorBox.hidden = false;
 			refreshShown();
 			renderList();
+			// Inside the pet's own row (a list may only hold rows), or under the list for a new pet.
 			var row = list.querySelector('[data-paw-pet-row="' + i + '"]');
 			if (row) {
-				row.after(editorBox);
+				row.appendChild(editorBox);
 			} else {
 				list.after(editorBox);
 			}
 			form.querySelector('input, select, textarea').focus();
 		}
 
+		/** Closes the editor; keyboard focus goes back to that pet's Edit button (or Add). */
 		function closeEditor() {
+			var was = editing;
 			editing = -1;
 			editorBox.hidden = true;
 			editorBox.textContent = '';
 			list.after(editorBox);
 			renderList();
+			var back = list.querySelector('[data-paw-pet-edit="' + was + '"]') || (addBtn.hidden ? null : addBtn);
+			if (back) {
+				back.focus();
+			}
 		}
 
 		/** Sends the whole list; on errors, shows them in the open editor and keeps what was saved. */
 		function saveList(next, form, btn) {
+			busy = true;
 			var label = btn ? btn.textContent : '';
 			if (btn) {
 				btn.disabled = true;
@@ -416,6 +425,7 @@
 			}).catch(function () {
 				say(msg, I18N.network, true);
 			}).then(function () {
+				busy = false;
 				if (btn) {
 					btn.disabled = false;
 					btn.textContent = label;
@@ -424,6 +434,9 @@
 		}
 
 		box.addEventListener('click', function (e) {
+			if (busy) {
+				return;
+			}
 			var edit = e.target.closest('[data-paw-pet-edit]');
 			var remove = e.target.closest('[data-paw-pet-remove]');
 			if (edit) {

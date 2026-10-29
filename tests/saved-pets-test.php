@@ -72,6 +72,12 @@ $pets = SavedPets::get( $zoe->ID );
 t( 'remember: a known name (any case) takes the new answers and keeps the old ones', 3 === count( $pets ) && $uid === $pets[0]['uid'] && '31 lbs' === $pets[0]['values']['pet_weight'] && 'Twice a day' === $pets[0]['values']['feeding_schedule'] );
 t( 'remember: a new name is added', 'Brax' === $pets[2]['values']['pet_name'] );
 t( 'remember: details for bookings updated', 'Naples' === SavedPets::info( $zoe->ID )['address_city'] && 'Dr. Paws' === SavedPets::info( $zoe->ID )['vet_name'] );
+// A booking that answers "no" drops the saved follow-up (no stale medical details), and a cat has no dog size.
+$kim = paw_test_user( 'kim@example.com', 'some pass1', array( Accounts::ROLE ) );
+SavedPets::save( $kim->ID, array( array( 'uid' => 'dddddddddddd', 'values' => array( 'pet_name' => 'Luna', 'pet_type' => 'dog', 'dog_size' => 'small', 'medical_conditions' => 'yes', 'medical_conditions_details' => 'Diabetes, insulin twice a day' ) ) ) );
+SavedPets::remember( $kim->ID, book( $kim->ID, 'kim@example.com', array( array( 'pet_name' => 'Luna', 'pet_type' => 'cat', 'medical_conditions' => 'no' ) ) ) );
+$luna = SavedPets::get( $kim->ID )[0]['values'];
+t( 'remember: answers the new booking hides are dropped', 'no' === $luna['medical_conditions'] && ! isset( $luna['medical_conditions_details'] ) && 'cat' === $luna['pet_type'] && ! isset( $luna['dog_size'] ) );
 SavedPets::remember( 0, $next );
 t( 'remember: nobody signed in, nothing kept', true );
 

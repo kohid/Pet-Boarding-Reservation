@@ -28,7 +28,7 @@ The user said: "On my-profile, users can add each pet's details and information,
 - **Filling in:** a signed-in owner's form fills in their name, email and phone, their saved details for bookings, and their saved pets.
 - **Who's coming?:** with more than one saved pet, the Pet Information step starts with a "Who's coming?" row of pet chips.
   - **At first:** the pets from their last booking are ticked (all saved pets if none match). The form then shows one pet card for each ticked pet, filled in.
-  - **Ticking and unticking** adds or removes that pet's card. Typing in a card never gets overwritten.
+  - **Ticking and unticking** adds or removes that pet's card. Typing in a card never gets overwritten: a pet goes into the first card only if nothing in that card was touched. Unticking a pet whose card was changed, or has files uploaded, asks first.
 - **Only empty fields are filled,** so a draft the owner already started wins, as before.
 - **Staff:** staff filling in the form for a customer get no prefill, as before.
 
@@ -36,7 +36,7 @@ The user said: "On my-profile, users can add each pet's details and information,
 
 - **Signed-in owners:** when they send a booking, its pets are saved to their profile, matched by name with any letter case. A new name adds a pet; a known name updates that pet's saved answers with the new non-empty ones. The booking's address, emergency contact and vet update the saved details.
 - **"Create an account" on the form:** the new account starts with those pets and details.
-- **Owners who haven't saved any pets yet:** My Profile shows the pets from their last booking. Nothing is saved until they press Save.
+- **Owners who haven't saved any pets yet:** My Profile shows the pets from their last booking. Nothing is saved until they save a pet or remove one. Either action saves the list as shown.
 
 ## Data
 
@@ -77,3 +77,9 @@ The user said: "On my-profile, users can add each pet's details and information,
 - Saving vaccination files to the profile.
 - Pet photos.
 - Payment history. The plugin takes no payments; "transactions" means bookings and sign-ups.
+
+## Review decisions
+
+- **Merging a booking into a saved pet:** the merged answers are checked again as a whole. Follow-ups that the new answers hide are dropped, such as medical details after a "no", or a dog size once the pet is a cat.
+- **Clearing an answer:** a booking cannot clear a saved answer, because only non-empty answers are taken. Owners clear answers in My Profile.
+

@@ -155,7 +155,8 @@ final class SavedPets {
 			}
 			if ( isset( $index[ $name ] ) ) {
 				unset( $values['pet_name'] ); // The profile's spelling of the name stays.
-				$pets[ $index[ $name ] ]['values'] = array_merge( $pets[ $index[ $name ] ]['values'], $values );
+				// Checked again as a whole: answers the new ones hide (details after a "no", a cat's dog size) go.
+				$pets[ $index[ $name ] ]['values'] = self::keep( array_merge( $pets[ $index[ $name ] ]['values'], $values ), self::pet_fields() );
 			} elseif ( count( $pets ) < self::MAX ) {
 				$index[ $name ] = count( $pets );
 				$pets[]         = array( 'uid' => self::uid(), 'values' => $values );
