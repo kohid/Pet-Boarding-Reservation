@@ -34,6 +34,7 @@ $GLOBALS['paw_transients'] = array();
 function is_wp_error( $x ) { return $x instanceof WP_Error; }
 function __( $s, $d = null ) { return $s; }
 function esc_html__( $s, $d = null ) { return esc_html( $s ); }
+function esc_attr__( $s, $d = null ) { return esc_attr( $s ); }
 function _n( $one, $many, $n, $d = null ) { return 1 === $n ? $one : $many; }
 function esc_html( $s ) { return htmlspecialchars( (string) $s, ENT_QUOTES, 'UTF-8' ); }
 function esc_attr( $s ) { return htmlspecialchars( (string) $s, ENT_QUOTES, 'UTF-8' ); }
@@ -47,7 +48,7 @@ function sanitize_key( $s ) { return preg_replace( '/[^a-z0-9_\-]/', '', strtolo
 function sanitize_email( $s ) { return trim( (string) $s ); }
 function is_email( $s ) { return (bool) filter_var( $s, FILTER_VALIDATE_EMAIL ); }
 function wp_unslash( $v ) { return is_array( $v ) ? array_map( 'wp_unslash', $v ) : stripslashes( (string) $v ); }
-function wp_timezone() { return new DateTimeZone( 'UTC' ); }
+function wp_timezone() { return new DateTimeZone( $GLOBALS['paw_tz'] ?? 'UTC' ); } // Tests set $GLOBALS['paw_tz'] to try another zone.
 function wp_json_encode( $v, $flags = 0 ) { return json_encode( $v, $flags ); }
 function get_option( $k, $d = false ) { return $GLOBALS['paw_options'][ $k ] ?? $d; }
 function update_option( $k, $v, $autoload = null ) { $GLOBALS['paw_options'][ $k ] = $v; return true; }

@@ -167,3 +167,29 @@ $paw_saved = (array) $settings['services'];
 		<button type="submit" class="paw-dash__btn"><?php esc_html_e( 'Save settings', 'pawfectly-reservations' ); ?></button>
 	</div>
 </form>
+
+<section class="paw-dash__card paw-dash__ev-cats" data-paw-ev-cats>
+	<h3 class="paw-dash__card-title"><?php esc_html_e( 'Event categories', 'pawfectly-reservations' ); ?></h3>
+	<p class="paw-dash__hint"><?php esc_html_e( 'Each category has a colour on the event calendar. Removing one keeps its events, without a category.', 'pawfectly-reservations' ); ?></p>
+	<ul class="paw-dash__ev-catlist" data-paw-ev-catlist></ul>
+	<template data-paw-ev-cat-template>
+		<li class="paw-dash__ev-cat" data-paw-ev-cat>
+			<label class="paw-dash__field" data-paw-ev-key="name">
+				<span><?php esc_html_e( 'Name', 'pawfectly-reservations' ); ?></span>
+				<input type="text" data-paw-ev-cat-name maxlength="40" placeholder="<?php esc_attr_e( 'Holiday party', 'pawfectly-reservations' ); ?>">
+			</label>
+			<fieldset class="paw-dash__ev-swatches">
+				<legend class="screen-reader-text"><?php esc_html_e( 'Colour', 'pawfectly-reservations' ); ?></legend>
+				<?php foreach ( \Pawfectly\Events::PALETTE as $paw_color ) : ?>
+					<label class="paw-dash__ev-swatch" style="--sw:<?php echo esc_attr( $paw_color ); ?>"><input type="radio" value="<?php echo esc_attr( $paw_color ); ?>" data-paw-ev-cat-color><span class="screen-reader-text"><?php echo esc_html( $paw_color ); ?></span></label>
+				<?php endforeach; ?>
+			</fieldset>
+			<button type="button" class="paw-dash__ev-tool paw-dash__ev-tool--remove" data-paw-ev-cat-remove aria-label="<?php esc_attr_e( 'Remove category', 'pawfectly-reservations' ); ?>">✕</button>
+		</li>
+	</template>
+	<div class="paw-dash__ev-cat-actions">
+		<button type="button" class="paw-dash__btn paw-dash__btn--light" data-paw-ev-cat-add><?php esc_html_e( '+ Add category', 'pawfectly-reservations' ); ?></button>
+		<button type="button" class="paw-dash__btn" data-paw-ev-cat-save><?php esc_html_e( 'Save categories', 'pawfectly-reservations' ); ?></button>
+		<span class="paw-dash__savemsg" data-paw-ev-cat-msg role="status" hidden></span>
+	</div>
+</section>

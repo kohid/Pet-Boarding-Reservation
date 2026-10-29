@@ -82,9 +82,10 @@
 		} else if (view === 'reservations') {
 			loadList();
 		}
+		root.dispatchEvent(new CustomEvent('paw:view', { detail: { view: view } })); // events-admin.js listens.
 	}
 
-	root.querySelectorAll('[data-paw-nav="overview"], [data-paw-nav="reservations"]').forEach(function (a) {
+	root.querySelectorAll('[data-paw-nav="overview"], [data-paw-nav="reservations"], [data-paw-nav="events"]').forEach(function (a) {
 		a.addEventListener('click', function (e) {
 			if (e.metaKey || e.ctrlKey || e.shiftKey) {
 				return;

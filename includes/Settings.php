@@ -14,7 +14,7 @@ final class Settings {
 	public const OPTION = 'paw_settings';
 	public const PAGE   = 'paw-settings';
 
-	private const WAIVER_TAGS = array(
+	public const WAIVER_TAGS = array(
 		'p'      => array(),
 		'strong' => array(),
 		'em'     => array(),

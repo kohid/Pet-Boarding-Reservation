@@ -9,6 +9,7 @@ require dirname( __DIR__ ) . '/bootstrap.php';
 require dirname( __DIR__ ) . '/wp-db-stubs.php';
 require dirname( __DIR__ ) . '/user-stubs.php';
 function get_permalink( $id = 0 ) { return '/tests/e2e/out/dashboard.html'; }
+require dirname( __DIR__ ) . '/post-stubs.php';
 function home_url( $p = '' ) { return '/' . ltrim( $p, '/' ); }
 function shortcode_atts( $pairs, $atts, $tag = '' ) { return array_merge( $pairs, array_intersect_key( (array) $atts, $pairs ) ); }
 function wp_enqueue_style() {}
@@ -27,16 +28,21 @@ $desk               = paw_test_user( 'desk@example.com', 'desk pass1', array( 'a
 $desk->display_name = 'Dana Desk';
 wp_set_current_user( $desk->ID );
 
+wp_insert_term( 'Holiday party', 'paw_event_cat', array( 'slug' => 'holiday' ) );
+update_term_meta( get_term_by( 'slug', 'holiday', 'paw_event_cat' )->term_id, '_paw_color', '#0f42c0' );
+
 $html           = Dashboard::render();
 $config         = Dashboard::config( 'overview' );
 $config['rest'] = '/mock/';
 
 $page = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pawfectly dashboard (e2e)</title><link rel="stylesheet" href="/assets/css/dashboard.css"><style>body{margin:0}</style><style>/* Elementor Site Settings → Form Fields (kit rule, specificity 0,3,1). */ .elementor-kit-5 input:not([type="button"]):not([type="submit"]),.elementor-kit-5 textarea,.elementor-kit-5 select{border:2px solid #000;border-radius:6px;background:#fff}</style>
+<title>Pawfectly dashboard (e2e)</title><link rel="stylesheet" href="/assets/css/dashboard.css"><link rel="stylesheet" href="/assets/css/emoji-picker.css"><style>body{margin:0}</style><style>/* Elementor Site Settings → Form Fields (kit rule, specificity 0,3,1). */ .elementor-kit-5 input:not([type="button"]):not([type="submit"]),.elementor-kit-5 textarea,.elementor-kit-5 select{border:2px solid #000;border-radius:6px;background:#fff}</style>
 </head><body class="elementor-kit-5">
 ' . $html . '
 <script>window.PAW_DASH = ' . json_encode( $config ) . ';</script>
 <script src="/assets/js/dashboard.js"></script>
+<script src="/assets/js/emoji-picker.js"></script>
+<script src="/assets/js/events-admin.js"></script>
 </body></html>';
 @mkdir( __DIR__ . '/out', 0755, true );
 file_put_contents( __DIR__ . '/out/dashboard.html', $page );

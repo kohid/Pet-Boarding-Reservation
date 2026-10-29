@@ -12,6 +12,7 @@ use Pawfectly\Activator;
 use Pawfectly\Dashboard;
 
 function get_permalink( $id = 0 ) { return 'https://example.test/dashboard/'; }
+require __DIR__ . '/post-stubs.php';
 function home_url( $p = '' ) { return 'https://example.test/' . ltrim( $p, '/' ); }
 function shortcode_atts( $pairs, $atts, $tag = '' ) { return array_merge( $pairs, array_intersect_key( (array) $atts, $pairs ) ); }
 function wp_enqueue_style() {}
@@ -57,6 +58,12 @@ t( 'settings view: groomers, one per line', str_contains( $html, 'name="groomers
 t( 'settings view: grooming waiver and vaccination switch', str_contains( $html, 'name="grooming_waiver"' ) && str_contains( $html, 'name="grooming_needs_vaccines"' ) );
 t( 'settings view: logo picker gets the media library', ! empty( $GLOBALS['paw_media'] ) );
 t( 'settings view: warns when nobody can reach wp-admin', str_contains( $html, 'PAW_WP_ADMIN_OPEN' ) );
+t( 'settings view: event categories card with the palette', str_contains( $html, 'data-paw-ev-cats' ) && str_contains( $html, 'data-paw-ev-cat-template' ) && str_contains( $html, 'value="#0f42c0"' ) );
+t( 'nav: Events between Reservations and Settings', strpos( $html, 'data-paw-nav="reservations"' ) < strpos( $html, 'data-paw-nav="events"' ) && strpos( $html, 'data-paw-nav="events"' ) < strpos( $html, 'data-paw-nav="settings"' ) );
+t( 'events view: list and editor shell', str_contains( $html, 'data-paw-view="events"' ) && str_contains( $html, 'data-paw-ev-list' ) && str_contains( $html, 'data-paw-ev-form' ) && str_contains( $html, 'data-paw-ev-field="title"' ) );
+t( 'events view: a row template and an add button per repeatable section', 4 === substr_count( $html, 'data-paw-ev-row-template=' ) && str_contains( $html, 'data-paw-ev-add="sessions"' ) && str_contains( $html, 'data-paw-ev-add="good_to_know"' ) );
+t( 'events view: emoji picker buttons and the cover photo', str_contains( $html, 'data-emoji-trigger' ) && str_contains( $html, 'data-paw-ev-photo' ) );
+t( 'events config: url, limits, palette and default headings', str_contains( $GLOBALS['paw_inline'], 'paw_view=events' ) && str_contains( $GLOBALS['paw_inline'], '"limits":{"sessions":8' ) && str_contains( $GLOBALS['paw_inline'], '"defaults":' ) && str_contains( $GLOBALS['paw_inline'], 'Pick Your Pup' ) );
 wp_set_current_user( $desk->ID );
 $GLOBALS['paw_inline'] = '';
 $staff_html = Dashboard::render( array( 'view' => 'settings' ) );

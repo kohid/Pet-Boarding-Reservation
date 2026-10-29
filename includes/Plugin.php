@@ -18,6 +18,10 @@ final class Plugin {
 		AccountRest::init();
 		Accounts::init();
 		StaffRest::init();
+		Events::init();
+		Calendar::init();
+		EventsList::init();
+		EventPage::init();
 		Uploads::init();
 		Shortcode::init();
 		Pages::init();

@@ -19,7 +19,9 @@ Requires WordPress 6.0+ and PHP 8.0+. This is v0.4. See `docs/superpowers/specs/
 | `[pawfectly_user_menu]` | everyone | The avatar and dropdown for your site header (an Elementor Shortcode widget in the header template). Guests: Sign In / Sign Up. Signed in: Dashboard (staff), My Bookings, My Profile, Settings (admins), Admin Panel (see below), Log Out. `align="left"` opens it to the right. |
 | `[pawfectly_my_profile]` | everyone signed in | Name, email, phone and password. Signed out, it shows the login panel in place. |
 | `[pawfectly_my_bookings]` | owners | Their reservations, with Cancel while a stay is Pending or Confirmed and check-in is still ahead. |
-| `[pawfectly_dashboard]` | staff | The staff dashboard: Overview and Reservations. It fills the browser; `fullscreen="no"` keeps it in the page column, and `view="reservations"` opens that view first. |
+| `[pawfectly_dashboard]` | staff | The staff dashboard: Overview, Reservations and Events. It fills the browser; `fullscreen="no"` keeps it in the page column, and `view="reservations"` opens that view first. |
+| `[pawfectly_calendar]` | everyone | The event calendar: Month, List and Day views, search, a category filter and Add to calendar. `view="list"` opens the list; `category="slug"` shows one category. |
+| `[pawfectly_events]` | everyone | Event cards with Upcoming, Happening now, Past and All tabs, nine at a time with Load more. `show="past"` or `category="slug"` if you like. |
 
 **Settings → Shortcodes** lists them all with a Copy button, the page each one is on, and "Create page" (which makes a draft). The account menu finds the pages by itself.
 
@@ -51,9 +53,30 @@ If no account uses the Administration Email Address and there is no Developer, a
 Put `[pawfectly_dashboard]` on a page, for example `/dashboard/`.
 - **Overview:** today's check-ins and check-outs, pets boarding tonight, grooming appointments today, requests to review, and a 14-night chart of pets per night.
 - **Reservations:** search, status tabs, a check-in date range, and a side panel with every answer, the vaccination files, the signature, status change (optionally emailing the owner), staff notes, history and delete.
+- **Events:** the event list and the Add / Edit editor (see Events below).
 
 - **Export CSV** on the Reservations view downloads the current filter, one row per pet.
 - **Settings** (administrators, Developers and the admin-email account): everything below, including prices.
+
+## Events
+
+- **Add Event:** in **Dashboard → Events**. Each event has:
+  - an emoji (with a picker), a title and a tagline, a category, and an optional cover photo
+  - start and end, venue and address, price per dog (or Free), an optional ticket link, and a highlight note
+  - a description
+- **Sections:** each one is optional, and its heading is yours to edit. Add, remove, drag or move rows; a section with no rows is hidden.
+  - **Sessions:** times and who each one is for
+  - **Ticket includes:** `{price}` in the heading shows "$15"
+  - **Extra goodies**
+  - **Good to know**
+  - a closing **Reserve Your Spot** block
+- **Duplicate** copies an event as a draft, which is handy for next year's party.
+- **Drafts:** only staff see them. Use **Preview**.
+- **Event page:** every event has its own page at `/event/<name>/`, laid out top to bottom: date line, emoji, title, tagline, facts, description, tickets, then the sections. It includes search-engine event data and an Add to calendar menu (Google, Outlook, .ics).
+- **Ticket buttons:** "Get Tickets" and "Reserve Your Spot" go to the event's ticket link. Without one, the page says sign-ups open soon. Pawfectly's own sign-up form comes in a later release.
+- **Categories:** **Settings → Event categories** sets each one's name and colour. The calendar uses the colours.
+- **Calendar page:** put `[pawfectly_calendar]` on a page such as `/event-calendar/`.
+- **Events list:** put `[pawfectly_events]` on `/events/`. The event pages use `/event/`, so the two don't clash.
 
 The **Pawfectly staff** role can use the dashboard. Give it to front-desk people under **Users**. You can also tick other roles in **Settings → Who can manage reservations**.
 
@@ -165,6 +188,8 @@ bash bin/test.sh                                          # PHP unit tests (no W
 php tests/e2e/build.php && php tests/e2e/build.php signed-in && node tests/e2e/form-e2e.js   # the form
 php tests/e2e/build-account.php && node tests/e2e/account-e2e.js                          # menu, login, profile, bookings
 php tests/e2e/build-dashboard.php && node tests/e2e/dashboard-e2e.js                      # staff dashboard and settings
+php tests/e2e/build-dashboard.php && node tests/e2e/dashboard-events-e2e.js               # dashboard Events editor
+php tests/e2e/build-events.php && node tests/e2e/events-e2e.js                            # calendar, events list, event page
 bin/build-release.sh                                      # dist/pawfectly-reservations.zip
 ```
 

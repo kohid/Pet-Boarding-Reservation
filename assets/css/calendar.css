@@ -1,0 +1,1381 @@
+/*
+ * Pawfectly — public events: [pawfectly_calendar], [pawfectly_events] and the event page.
+ * Same tokens as the reservation form. Scoped under .paw-cal / .paw-events / .paw-event
+ * (and .paw-cal-pop, the popover appended to <body>) so the theme cannot reach in.
+ */
+
+.paw-cal,
+.paw-cal-pop,
+.paw-events,
+.paw-event {
+	--paw-primary: #ff7f50;
+	--paw-primary-dark: #e8663a;
+	--paw-primary-tint: #fff1eb;
+	--paw-ink: #2c3947;
+	--paw-steel: #3b7597;
+	--paw-cream: #fff8f3;
+	--paw-card: #fff;
+	--paw-line: #e4e6ef;
+	--paw-hairline: #f1f1f4;
+	--paw-muted: #6b7280;
+	--paw-fill: #f6f6f8;
+	--paw-radius: 0.475rem;
+	--paw-pill: 2rem;
+	--paw-shadow: 0 0.1rem 1rem 0.25rem rgba(44, 57, 71, 0.05);
+	--paw-ring: 0 0 0 3px rgba(255, 127, 80, 0.3);
+
+	box-sizing: border-box;
+	color: var(--paw-ink);
+	font-family: Nunito, ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, -apple-system, sans-serif;
+	font-size: 1rem;
+	line-height: 1.5;
+	text-align: left;
+	-webkit-font-smoothing: antialiased;
+}
+
+.paw-cal *,
+.paw-cal *::before,
+.paw-cal *::after,
+.paw-cal-pop *,
+.paw-events *,
+.paw-events *::before,
+.paw-events *::after,
+.paw-event *,
+.paw-event *::before,
+.paw-event *::after {
+	box-sizing: inherit;
+}
+
+.paw-cal [hidden],
+.paw-cal-pop[hidden],
+.paw-events [hidden],
+.paw-event [hidden] {
+	display: none !important;
+}
+
+.paw-cal :where(button, input, select),
+.paw-events :where(button),
+.paw-cal-pop :where(button) {
+	font: inherit;
+	color: inherit;
+	letter-spacing: normal;
+	text-transform: none;
+}
+
+.paw-cal :where(ul, p),
+.paw-events :where(ul, p),
+.paw-event :where(ul, p, h1, h2, h3, figure) {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.paw-cal .screen-reader-text,
+.paw-events .screen-reader-text {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+/* ---------- Buttons ---------- */
+
+.paw-cal .paw-cal__btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 2.75rem;
+	padding: 0 1.125rem;
+	border: 1px solid var(--paw-line);
+	border-radius: var(--paw-pill);
+	background: var(--paw-card);
+	color: var(--paw-ink);
+	font-weight: 700;
+	font-size: 0.9375rem;
+	line-height: 1;
+	cursor: pointer;
+	transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.paw-cal .paw-cal__btn:hover {
+	border-color: var(--paw-primary);
+}
+
+.paw-cal .paw-cal__btn--primary {
+	border-color: var(--paw-primary);
+	background: var(--paw-primary);
+	color: #fff;
+}
+
+.paw-cal .paw-cal__btn--primary:hover {
+	border-color: var(--paw-primary-dark);
+	background: var(--paw-primary-dark);
+}
+
+.paw-cal :where(button, a, input, select):focus-visible,
+.paw-events :where(button, a):focus-visible,
+.paw-cal-pop :where(button, a):focus-visible {
+	outline: none;
+	box-shadow: var(--paw-ring);
+}
+
+/* ---------- Toolbar ---------- */
+
+.paw-cal .paw-cal__toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	align-items: center;
+	margin-bottom: 1rem;
+	padding: 0.625rem;
+	border-radius: 1rem;
+	background: var(--paw-card);
+	box-shadow: var(--paw-shadow);
+}
+
+.paw-cal .paw-cal__search {
+	position: relative;
+	display: flex;
+	flex: 1 1 18rem;
+	gap: 0.5rem;
+	align-items: center;
+	min-width: 0;
+}
+
+.paw-cal .paw-cal__search-ic {
+	position: absolute;
+	left: 1rem;
+	width: 1.125rem;
+	height: 1.125rem;
+	fill: var(--paw-muted);
+	pointer-events: none;
+}
+
+.paw-cal .paw-cal__q {
+	flex: 1;
+	min-width: 0;
+	height: 2.75rem;
+	padding: 0 1rem 0 2.75rem;
+	border: 1px solid transparent;
+	border-radius: var(--paw-pill);
+	background: var(--paw-fill);
+	color: var(--paw-ink);
+}
+
+.paw-cal .paw-cal__q:focus {
+	border-color: var(--paw-primary);
+	background: var(--paw-card);
+	outline: none;
+}
+
+.paw-cal .paw-cal__cat select {
+	height: 2.75rem;
+	padding: 0 2.25rem 0 1rem;
+	border: 1px solid var(--paw-line);
+	border-radius: var(--paw-pill);
+	background: var(--paw-card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236b7280' d='M7.4 8.6 12 13.2l4.6-4.6L18 10l-6 6-6-6z'/%3E%3C/svg%3E") no-repeat right 0.75rem center / 1.125rem;
+	font-weight: 600;
+	appearance: none;
+	cursor: pointer;
+}
+
+.paw-cal .paw-cal__views {
+	display: inline-flex;
+	gap: 0.25rem;
+	padding: 0.25rem;
+	border-radius: var(--paw-pill);
+	background: var(--paw-fill);
+}
+
+.paw-cal .paw-cal__view {
+	min-height: 2.25rem;
+	padding: 0 1rem;
+	border: 0;
+	border-radius: var(--paw-pill);
+	background: transparent;
+	color: var(--paw-muted);
+	font-weight: 700;
+	font-size: 0.875rem;
+	cursor: pointer;
+}
+
+.paw-cal .paw-cal__view.is-active {
+	background: var(--paw-card);
+	color: var(--paw-ink);
+	box-shadow: 0 1px 3px rgba(44, 57, 71, 0.14);
+}
+
+/* ---------- Navigation ---------- */
+
+.paw-cal .paw-cal__nav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	align-items: center;
+	margin-bottom: 1rem;
+}
+
+.paw-cal .paw-cal__arrows {
+	display: inline-flex;
+	gap: 0.25rem;
+}
+
+.paw-cal .paw-cal__arrow {
+	display: grid;
+	place-items: center;
+	width: 2.75rem;
+	height: 2.75rem;
+	padding: 0;
+	border: 1px solid var(--paw-line);
+	border-radius: 50%;
+	background: var(--paw-card);
+	cursor: pointer;
+}
+
+.paw-cal .paw-cal__arrow svg,
+.paw-cal .paw-cal__title svg {
+	width: 1.375rem;
+	height: 1.375rem;
+	fill: currentColor;
+}
+
+.paw-cal .paw-cal__arrow:hover {
+	border-color: var(--paw-primary);
+	color: var(--paw-primary-dark);
+}
+
+.paw-cal .paw-cal__titlewrap {
+	position: relative;
+}
+
+.paw-cal .paw-cal__title {
+	display: inline-flex;
+	gap: 0.25rem;
+	align-items: center;
+	padding: 0.25rem 0.5rem;
+	border: 0;
+	border-radius: var(--paw-radius);
+	background: transparent;
+	font-size: clamp(1.375rem, 3vw, 1.75rem);
+	font-weight: 800;
+	line-height: 1.2;
+	cursor: pointer;
+}
+
+.paw-cal .paw-cal__picker {
+	position: absolute;
+	top: calc(100% + 0.5rem);
+	left: 0;
+	z-index: 20;
+	width: 18rem;
+	padding: 0.75rem;
+	border-radius: 1rem;
+	background: var(--paw-card);
+	box-shadow: 0 0.5rem 2rem rgba(44, 57, 71, 0.18);
+}
+
+.paw-cal .paw-cal__pk-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 0.5rem;
+	font-weight: 800;
+}
+
+.paw-cal .paw-cal__pk-nav {
+	width: 2.25rem;
+	height: 2.25rem;
+	border: 0;
+	border-radius: 50%;
+	background: var(--paw-fill);
+	font-size: 1.25rem;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.paw-cal .paw-cal__pk-grid {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: 0.125rem;
+	text-align: center;
+}
+
+.paw-cal .paw-cal__pk-dow {
+	padding: 0.25rem 0;
+	color: var(--paw-muted);
+	font-size: 0.75rem;
+	font-weight: 700;
+}
+
+.paw-cal .paw-cal__pk-day {
+	aspect-ratio: 1;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	font-size: 0.875rem;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.paw-cal .paw-cal__pk-day:hover {
+	background: var(--paw-primary-tint);
+}
+
+.paw-cal .paw-cal__pk-day.is-other {
+	color: #b5b9c4;
+}
+
+.paw-cal .paw-cal__pk-day.is-today {
+	color: var(--paw-primary-dark);
+	font-weight: 800;
+}
+
+.paw-cal .paw-cal__pk-day.is-sel {
+	background: var(--paw-primary);
+	color: #fff;
+}
+
+/* ---------- Month grid ---------- */
+
+.paw-cal .paw-cal__body {
+	position: relative;
+}
+
+.paw-cal .paw-cal__grid {
+	overflow: hidden;
+	border-radius: 1rem;
+	background: var(--paw-card);
+	box-shadow: var(--paw-shadow);
+}
+
+.paw-cal .paw-cal__week {
+	display: grid;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.paw-cal .paw-cal__dows {
+	background: var(--paw-cream);
+}
+
+.paw-cal .paw-cal__dow {
+	padding: 0.625rem 0.5rem;
+	color: var(--paw-muted);
+	font-size: 0.8125rem;
+	font-weight: 700;
+	text-align: center;
+}
+
+.paw-cal .paw-cal__dow abbr {
+	text-decoration: none;
+}
+
+.paw-cal .paw-cal__cell {
+	min-width: 0;
+	min-height: 7.25rem;
+	padding: 0.375rem 0.375rem 0.5rem;
+	border-top: 1px solid var(--paw-hairline);
+	border-left: 1px solid var(--paw-hairline);
+}
+
+.paw-cal .paw-cal__cell:nth-child(7n + 1) {
+	border-left: 0;
+}
+
+.paw-cal .paw-cal__cell.is-other {
+	background: #fbfbfc;
+}
+
+.paw-cal .paw-cal__cell.is-other .paw-cal__daynum {
+	color: #b5b9c4;
+}
+
+.paw-cal .paw-cal__daynum {
+	display: grid;
+	place-items: center;
+	width: 1.875rem;
+	height: 1.875rem;
+	margin-bottom: 0.25rem;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	font-size: 0.875rem;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.paw-cal .paw-cal__daynum:hover {
+	background: var(--paw-fill);
+}
+
+.paw-cal .paw-cal__cell.is-today .paw-cal__daynum {
+	background: var(--paw-primary);
+	color: #fff;
+}
+
+.paw-cal .paw-cal__events {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1875rem;
+}
+
+/* An event chip: a tint of its category colour with a solid edge. */
+.paw-cal .paw-cal__ev {
+	display: block;
+	overflow: hidden;
+	padding: 0.1875rem 0.4375rem;
+	border-left: 3px solid var(--paw-ev, var(--paw-primary));
+	border-radius: 0.3125rem;
+	background: color-mix(in srgb, var(--paw-ev, var(--paw-primary)) 14%, #fff);
+	color: var(--paw-ink);
+	font-size: 0.8125rem;
+	line-height: 1.35;
+	text-decoration: none;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.paw-cal .paw-cal__ev:hover {
+	background: color-mix(in srgb, var(--paw-ev, var(--paw-primary)) 24%, #fff);
+}
+
+.paw-cal .paw-cal__ev-time {
+	color: color-mix(in srgb, var(--paw-ev, var(--paw-primary)) 70%, #2c3947);
+	font-weight: 700;
+	font-size: 0.75rem;
+}
+
+.paw-cal .paw-cal__ev-title {
+	font-weight: 600;
+}
+
+/* Several days: one bar running across the days it covers. */
+.paw-cal .paw-cal__ev.is-multi {
+	margin-right: -0.4375rem;
+	margin-left: -0.4375rem;
+	border-left-width: 0;
+	border-radius: 0;
+	background: var(--paw-ev, var(--paw-primary));
+	color: #fff;
+}
+
+.paw-cal .paw-cal__ev.is-multi .paw-cal__ev-time {
+	color: rgba(255, 255, 255, 0.9);
+}
+
+.paw-cal .paw-cal__ev.is-mstart {
+	margin-left: 0;
+	border-top-left-radius: 0.3125rem;
+	border-bottom-left-radius: 0.3125rem;
+}
+
+.paw-cal .paw-cal__ev.is-mend {
+	margin-right: 0;
+	border-top-right-radius: 0.3125rem;
+	border-bottom-right-radius: 0.3125rem;
+}
+
+.paw-cal .paw-cal__more {
+	align-self: flex-start;
+	padding: 0.125rem 0.375rem;
+	border: 0;
+	border-radius: 0.3125rem;
+	background: transparent;
+	color: var(--paw-steel);
+	font-size: 0.75rem;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.paw-cal .paw-cal__more:hover {
+	background: var(--paw-fill);
+}
+
+/* ---------- List and Day views ---------- */
+
+.paw-cal .paw-cal__agenda-list,
+.paw-cal .paw-cal__day-list {
+	overflow: hidden;
+	border-radius: 1rem;
+	background: var(--paw-card);
+	box-shadow: var(--paw-shadow);
+}
+
+.paw-cal .paw-cal__agenda-day {
+	display: grid;
+	grid-template-columns: 4.5rem 1fr;
+	gap: 1rem;
+	padding: 1rem 1.25rem;
+	border-top: 1px solid var(--paw-hairline);
+}
+
+.paw-cal .paw-cal__agenda-day:first-child {
+	border-top: 0;
+}
+
+.paw-cal .paw-cal__agenda-date {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	align-self: start;
+	width: 3.75rem;
+	height: 3.75rem;
+	border-radius: 0.75rem;
+	background: var(--paw-primary-tint);
+	color: var(--paw-primary-dark);
+}
+
+.paw-cal .paw-cal__agenda-num {
+	font-size: 1.5rem;
+	font-weight: 800;
+	line-height: 1;
+}
+
+.paw-cal .paw-cal__agenda-dow {
+	font-size: 0.75rem;
+	font-weight: 700;
+}
+
+.paw-cal .paw-cal__agenda-events {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.paw-cal .paw-cal__agenda-ev,
+.paw-cal .paw-cal__day-card {
+	display: flex;
+	gap: 1rem;
+	padding: 0.75rem 1rem;
+	border-left: 4px solid var(--paw-ev, var(--paw-primary));
+	border-radius: var(--paw-radius);
+	background: var(--paw-fill);
+	color: var(--paw-ink);
+	text-decoration: none;
+}
+
+.paw-cal .paw-cal__agenda-ev:hover,
+.paw-cal .paw-cal__day-card:hover {
+	background: color-mix(in srgb, var(--paw-ev, var(--paw-primary)) 10%, #fff);
+}
+
+.paw-cal .paw-cal__agenda-time {
+	flex: 0 0 9.5rem;
+	color: var(--paw-muted);
+	font-size: 0.875rem;
+	font-weight: 700;
+}
+
+.paw-cal .paw-cal__agenda-info,
+.paw-cal .paw-cal__day-info {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.paw-cal .paw-cal__agenda-title,
+.paw-cal .paw-cal__day-title {
+	font-weight: 800;
+	font-size: 1.0625rem;
+}
+
+.paw-cal .paw-cal__agenda-venue,
+.paw-cal .paw-cal__day-venue,
+.paw-cal .paw-cal__day-range {
+	color: var(--paw-muted);
+	font-size: 0.875rem;
+}
+
+.paw-cal .paw-cal__agenda-ex,
+.paw-cal .paw-cal__day-ex {
+	margin-top: 0.25rem;
+	font-size: 0.9375rem;
+}
+
+.paw-cal .paw-cal__day-item {
+	display: grid;
+	grid-template-columns: 6rem 1fr;
+	gap: 1rem;
+	padding: 0.875rem 1.25rem;
+	border-top: 1px solid var(--paw-hairline);
+}
+
+.paw-cal .paw-cal__day-item:first-child {
+	border-top: 0;
+}
+
+.paw-cal .paw-cal__day-rail {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+	align-self: start;
+	padding-top: 0.875rem;
+	font-size: 0.875rem;
+	font-weight: 700;
+}
+
+.paw-cal .paw-cal__day-dot {
+	width: 0.625rem;
+	height: 0.625rem;
+	border-radius: 50%;
+	background: var(--paw-ev, var(--paw-primary));
+}
+
+.paw-cal .paw-cal__day-thumb {
+	flex: 0 0 6rem;
+	border-radius: var(--paw-radius);
+	background: center / cover no-repeat;
+}
+
+.paw-cal .paw-cal__empty {
+	padding: 3rem 1.5rem;
+	border-radius: 1rem;
+	background: var(--paw-card);
+	box-shadow: var(--paw-shadow);
+	color: var(--paw-muted);
+	text-align: center;
+}
+
+.paw-cal .paw-cal__empty span {
+	display: block;
+	margin-bottom: 0.5rem;
+	font-size: 2rem;
+}
+
+.paw-cal .paw-cal__loader {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	border-radius: 1rem;
+	background: rgba(255, 255, 255, 0.6);
+}
+
+.paw-cal .paw-cal__loader span {
+	width: 2rem;
+	height: 2rem;
+	border: 3px solid var(--paw-primary-tint);
+	border-top-color: var(--paw-primary);
+	border-radius: 50%;
+	animation: paw-cal-spin 0.8s linear infinite;
+}
+
+@keyframes paw-cal-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* ---------- [pawfectly_events] ---------- */
+
+.paw-events .paw-events__tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+	width: fit-content;
+	max-width: 100%;
+	margin-bottom: 1.25rem;
+	padding: 0.25rem;
+	border-radius: var(--paw-pill);
+	background: var(--paw-fill);
+}
+
+.paw-events .paw-events__tab {
+	padding: 0.5rem 1rem;
+	border-radius: var(--paw-pill);
+	color: var(--paw-muted);
+	font-weight: 700;
+	font-size: 0.9375rem;
+	text-decoration: none;
+}
+
+.paw-events .paw-events__tab[aria-current="page"] {
+	background: var(--paw-card);
+	color: var(--paw-ink);
+	box-shadow: 0 1px 3px rgba(44, 57, 71, 0.14);
+}
+
+.paw-events .paw-events__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+	gap: 1.25rem;
+}
+
+.paw-events .paw-events__card {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	border-radius: 1rem;
+	background: var(--paw-card);
+	box-shadow: var(--paw-shadow);
+	color: var(--paw-ink);
+	text-decoration: none;
+	transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.paw-events .paw-events__card:hover {
+	box-shadow: 0 0.5rem 1.75rem rgba(44, 57, 71, 0.12);
+	transform: translateY(-2px);
+}
+
+.paw-events .paw-events__media {
+	display: grid;
+	place-items: center;
+	aspect-ratio: 16 / 9;
+	background: center / cover no-repeat;
+}
+
+/* No photo: the emoji large on a wash of the event's colour. */
+.paw-events .paw-events__media--emoji {
+	background: color-mix(in srgb, var(--paw-ev, var(--paw-primary)) 16%, #fff8f3);
+}
+
+.paw-events .paw-events__emoji {
+	font-size: 4rem;
+	line-height: 1;
+}
+
+.paw-events .paw-events__date {
+	position: absolute;
+	top: 0.75rem;
+	left: 0.75rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	min-width: 3.25rem;
+	padding: 0.375rem 0.5rem;
+	border-radius: 0.75rem;
+	background: var(--paw-card);
+	box-shadow: 0 2px 8px rgba(44, 57, 71, 0.16);
+	line-height: 1;
+}
+
+.paw-events .paw-events__mon {
+	color: var(--paw-primary-dark);
+	font-size: 0.75rem;
+	font-weight: 800;
+}
+
+.paw-events .paw-events__day {
+	font-size: 1.5rem;
+	font-weight: 800;
+}
+
+.paw-events .paw-events__body {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 0.125rem;
+	padding: 1rem 1.125rem 1.25rem;
+}
+
+.paw-events .paw-events__cat {
+	color: var(--paw-ev, var(--paw-primary-dark));
+	font-size: 0.8125rem;
+	font-weight: 800;
+}
+
+.paw-events .paw-events__title {
+	font-size: 1.1875rem;
+	font-weight: 800;
+	line-height: 1.3;
+}
+
+.paw-events .paw-events__when,
+.paw-events .paw-events__venue {
+	color: var(--paw-muted);
+	font-size: 0.9375rem;
+}
+
+.paw-events .paw-events__price {
+	align-self: flex-start;
+	margin-top: 0.5rem;
+	padding: 0.25rem 0.625rem;
+	border-radius: var(--paw-pill);
+	background: var(--paw-primary-tint);
+	color: var(--paw-primary-dark);
+	font-size: 0.875rem;
+	font-weight: 800;
+}
+
+.paw-events .paw-events__empty {
+	grid-column: 1 / -1;
+	padding: 2.5rem 1.5rem;
+	border-radius: 1rem;
+	background: var(--paw-card);
+	box-shadow: var(--paw-shadow);
+	color: var(--paw-muted);
+	text-align: center;
+}
+
+.paw-events .paw-events__more {
+	margin-top: 1.5rem;
+	text-align: center;
+}
+
+.paw-events .paw-events__more-btn {
+	min-height: 2.875rem;
+	padding: 0 1.5rem;
+	border: 1px solid var(--paw-primary);
+	border-radius: var(--paw-pill);
+	background: var(--paw-card);
+	color: var(--paw-primary-dark);
+	font-weight: 800;
+	cursor: pointer;
+}
+
+.paw-events .paw-events__more-btn:hover {
+	background: var(--paw-primary-tint);
+}
+
+/* ---------- Event page ---------- */
+
+.paw-event {
+	max-width: 52rem;
+	margin: 0 auto;
+	padding: 1.5rem 0 3rem;
+}
+
+.paw-event .paw-event__hero {
+	position: relative;
+	overflow: hidden;
+	padding: clamp(2rem, 6vw, 3.5rem) 1.5rem;
+	border-radius: 1.5rem;
+	background: color-mix(in srgb, var(--paw-ev, var(--paw-primary)) 14%, #fff8f3) center / cover no-repeat;
+	text-align: center;
+}
+
+/* A cover photo sits behind the heading, darkened so the text stays readable. */
+.paw-event .paw-event__hero.has-photo::before {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(180deg, rgba(36, 48, 57, 0.35), rgba(36, 48, 57, 0.75));
+	content: "";
+}
+
+.paw-event .paw-event__hero-inner {
+	position: relative;
+}
+
+.paw-event .paw-event__hero.has-photo .paw-event__title,
+.paw-event .paw-event__hero.has-photo .paw-event__tagline {
+	color: #fff;
+}
+
+.paw-event .paw-event__ended {
+	display: inline-block;
+	margin-bottom: 0.75rem;
+	padding: 0.25rem 0.875rem;
+	border-radius: var(--paw-pill);
+	background: var(--paw-ink);
+	color: #fff;
+	font-size: 0.875rem;
+	font-weight: 800;
+}
+
+.paw-event .paw-event__dateline {
+	display: block;
+	width: fit-content;
+	margin: 0 auto 1rem;
+	padding: 0.375rem 1rem;
+	border-radius: var(--paw-pill);
+	background: var(--paw-card);
+	color: var(--paw-primary-dark);
+	font-size: 0.9375rem;
+	font-weight: 800;
+}
+
+.paw-event .paw-event__emoji {
+	margin-bottom: 0.25rem;
+	font-size: clamp(3.5rem, 10vw, 5rem);
+	line-height: 1.1;
+}
+
+.paw-event .paw-event__title {
+	color: var(--paw-ink);
+	font-size: clamp(2.25rem, 6vw, 3.25rem);
+	font-weight: 800;
+	line-height: 1.1;
+}
+
+.paw-event .paw-event__tagline {
+	max-width: 34rem;
+	margin: 0.75rem auto 0;
+	color: var(--paw-ink);
+	font-size: 1.125rem;
+}
+
+.paw-event .paw-event__facts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	justify-content: center;
+	margin: 1.25rem 0 0;
+}
+
+.paw-event .paw-event__facts li {
+	padding: 0.5rem 0.875rem;
+	border-radius: var(--paw-pill);
+	background: var(--paw-card);
+	box-shadow: var(--paw-shadow);
+	font-size: 0.9375rem;
+	font-weight: 700;
+}
+
+.paw-event .paw-event__facts a {
+	color: inherit;
+	text-decoration: underline;
+	text-decoration-color: var(--paw-line);
+	text-underline-offset: 3px;
+}
+
+.paw-event .paw-event__description {
+	max-width: 40rem;
+	margin: 2rem auto 0;
+	font-size: 1.0625rem;
+	line-height: 1.65;
+}
+
+.paw-event .paw-event__description :where(p, ul, ol) {
+	margin: 0 0 1em;
+}
+
+.paw-event .paw-event__description :where(ul, ol) {
+	padding-left: 1.25rem;
+	list-style: revert;
+}
+
+.paw-event .paw-event__tickets {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	align-items: center;
+	margin: 2rem 0 0;
+	text-align: center;
+}
+
+.paw-event .paw-event__btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 3.25rem;
+	padding: 0 2rem;
+	border-radius: var(--paw-pill);
+	background: var(--paw-primary);
+	color: #fff;
+	font-size: 1.125rem;
+	font-weight: 800;
+	text-decoration: none;
+	box-shadow: 0 0.5rem 1.25rem rgba(255, 127, 80, 0.3);
+	transition: background-color 0.15s ease;
+}
+
+.paw-event .paw-event__btn:hover {
+	background: var(--paw-primary-dark);
+	color: #fff;
+}
+
+.paw-event .paw-event__btn:focus-visible,
+.paw-event .paw-event__addcal summary:focus-visible {
+	outline: none;
+	box-shadow: var(--paw-ring);
+}
+
+.paw-event .paw-event__note {
+	max-width: 34rem;
+	font-weight: 700;
+}
+
+.paw-event .paw-event__note a,
+.paw-event .paw-event__section a {
+	color: var(--paw-primary-dark);
+	font-weight: 800;
+}
+
+.paw-event a[href^="tel:"] {
+	white-space: nowrap;
+}
+
+.paw-event .paw-event__addcal summary {
+	color: var(--paw-steel);
+	font-size: 0.9375rem;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.paw-event .paw-event__addcal[open] {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 1rem;
+	justify-content: center;
+}
+
+.paw-event .paw-event__addcal[open] summary {
+	flex-basis: 100%;
+}
+
+.paw-event .paw-event__addcal a {
+	color: var(--paw-ink);
+	font-size: 0.9375rem;
+}
+
+.paw-event .paw-event__section {
+	margin-top: 3rem;
+}
+
+.paw-event .paw-event__heading {
+	color: var(--paw-ink);
+	font-size: clamp(1.5rem, 4vw, 1.875rem);
+	font-weight: 800;
+	line-height: 1.2;
+	text-align: center;
+}
+
+.paw-event .paw-event__intro {
+	max-width: 34rem;
+	margin: 0.5rem auto 0;
+	color: var(--paw-muted);
+	text-align: center;
+}
+
+.paw-event .paw-event__sessions {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+	gap: 1rem;
+	margin-top: 1.5rem;
+}
+
+.paw-event .paw-event__session {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	padding: 1.25rem;
+	border-top: 4px solid var(--paw-ev, var(--paw-primary));
+	border-radius: 1rem;
+	background: var(--paw-card);
+	box-shadow: var(--paw-shadow);
+	text-align: center;
+}
+
+.paw-event .paw-event__session-time {
+	color: var(--paw-primary-dark);
+	font-size: 1.25rem;
+	font-weight: 800;
+}
+
+.paw-event .paw-event__session-name {
+	font-weight: 700;
+}
+
+.paw-event .paw-event__includes,
+.paw-event .paw-event__knows {
+	display: flex;
+	flex-direction: column;
+	gap: 0.625rem;
+	max-width: 36rem;
+	margin: 1.5rem auto 0;
+}
+
+.paw-event .paw-event__include,
+.paw-event .paw-event__know {
+	display: flex;
+	gap: 0.875rem;
+	align-items: flex-start;
+	padding: 0.875rem 1rem;
+	border-radius: 0.875rem;
+	background: var(--paw-card);
+	box-shadow: var(--paw-shadow);
+	font-weight: 600;
+}
+
+.paw-event .paw-event__know {
+	background: var(--paw-cream);
+	box-shadow: none;
+	font-weight: 500;
+}
+
+.paw-event .paw-event__include-emoji,
+.paw-event .paw-event__know-emoji {
+	flex: 0 0 auto;
+	font-size: 1.375rem;
+	line-height: 1.1;
+}
+
+.paw-event .paw-event__goodies {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+	gap: 1rem;
+	margin-top: 1.5rem;
+}
+
+.paw-event .paw-event__goodie {
+	padding: 1.5rem 1.25rem;
+	border-radius: 1rem;
+	background: var(--paw-card);
+	box-shadow: var(--paw-shadow);
+	text-align: center;
+}
+
+.paw-event .paw-event__goodie-emoji {
+	display: block;
+	margin-bottom: 0.5rem;
+	font-size: 2.5rem;
+	line-height: 1;
+}
+
+.paw-event .paw-event__goodie-title {
+	margin-bottom: 0.375rem;
+	font-size: 1.125rem;
+	font-weight: 800;
+}
+
+.paw-event .paw-event__closing {
+	margin-top: 3.5rem;
+	padding: clamp(1.75rem, 5vw, 2.75rem) 1.5rem;
+	border-radius: 1.5rem;
+	background: color-mix(in srgb, var(--paw-ev, var(--paw-primary)) 14%, #fff8f3);
+	text-align: center;
+}
+
+.paw-event .paw-event__summary {
+	max-width: 36rem;
+	margin: 0.75rem auto 0;
+	font-weight: 700;
+}
+
+.paw-event .paw-event__closing .paw-event__btn {
+	margin-top: 1.25rem;
+}
+
+.paw-event .paw-event__soon {
+	display: inline-block;
+	margin-top: 1.25rem;
+	padding: 0.5rem 1rem;
+	border-radius: var(--paw-pill);
+	background: var(--paw-card);
+	font-weight: 700;
+}
+
+/* ---------- Popover (appended to <body>) ---------- */
+
+.paw-cal-pop {
+	position: absolute;
+	z-index: 100000;
+	width: 19rem;
+	max-width: calc(100vw - 1.5rem);
+	overflow: hidden;
+	border-radius: 1rem;
+	background: var(--paw-card);
+	box-shadow: 0 0.75rem 2.5rem rgba(44, 57, 71, 0.22);
+	opacity: 0;
+	transform: translateY(4px);
+	transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.paw-cal-pop.is-shown {
+	opacity: 1;
+	transform: none;
+}
+
+.paw-cal-pop .paw-cal-pop__media {
+	display: grid;
+	place-items: center;
+	height: 7rem;
+	background: var(--paw-primary-tint) center / cover no-repeat;
+	font-size: 3rem;
+}
+
+.paw-cal-pop .paw-cal-pop__body {
+	padding: 0.875rem 1rem 1rem;
+}
+
+.paw-cal-pop .paw-cal-pop__time {
+	color: var(--paw-primary-dark);
+	font-size: 0.8125rem;
+	font-weight: 800;
+}
+
+.paw-cal-pop .paw-cal-pop__title {
+	font-size: 1.0625rem;
+	font-weight: 800;
+	line-height: 1.3;
+}
+
+.paw-cal-pop .paw-cal-pop__venue {
+	color: var(--paw-muted);
+	font-size: 0.875rem;
+}
+
+.paw-cal-pop .paw-cal-pop__ex {
+	display: -webkit-box;
+	margin: 0.375rem 0 0;
+	overflow: hidden;
+	font-size: 0.875rem;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+}
+
+.paw-cal-pop .paw-cal-pop__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: 0.75rem;
+}
+
+.paw-cal-pop .paw-cal-pop__btn {
+	display: inline-flex;
+	align-items: center;
+	min-height: 2.25rem;
+	padding: 0 0.875rem;
+	border: 1px solid var(--paw-line);
+	border-radius: var(--paw-pill);
+	background: var(--paw-card);
+	color: var(--paw-ink);
+	font-size: 0.875rem;
+	font-weight: 700;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.paw-cal-pop .paw-cal-pop__btn--primary {
+	border-color: var(--paw-primary);
+	background: var(--paw-primary);
+	color: #fff;
+}
+
+.paw-cal-pop .paw-cal-pop__menu {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	margin-top: 0.25rem;
+}
+
+.paw-cal-pop .paw-cal-pop__menu a {
+	padding: 0.5rem 0.25rem;
+	border-top: 1px solid var(--paw-hairline);
+	color: var(--paw-ink);
+	font-size: 0.875rem;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+/* ---------- Phone ---------- */
+
+@media (max-width: 640px) {
+	.paw-cal .paw-cal__toolbar {
+		border-radius: 0.75rem;
+	}
+
+	.paw-cal .paw-cal__views {
+		flex: 1;
+		justify-content: space-between;
+	}
+
+	.paw-cal .paw-cal__view {
+		flex: 1;
+	}
+
+	.paw-cal .paw-cal__cat,
+	.paw-cal .paw-cal__cat select {
+		width: 100%;
+	}
+
+	.paw-cal .paw-cal__cell {
+		min-height: 3.5rem;
+		padding: 0.25rem 0.125rem;
+		text-align: center;
+	}
+
+	.paw-cal .paw-cal__daynum {
+		margin: 0 auto 0.125rem;
+	}
+
+	/* Chips become dots; tapping the day number opens that day. */
+	.paw-cal .paw-cal__events {
+		flex-flow: row wrap;
+		gap: 0.1875rem;
+		justify-content: center;
+	}
+
+	.paw-cal .paw-cal__ev,
+	.paw-cal .paw-cal__ev.is-multi,
+	.paw-cal .paw-cal__ev.is-extra[hidden] {
+		display: block !important;
+		width: 0.4375rem;
+		height: 0.4375rem;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		border-radius: 50%;
+		background: var(--paw-ev, var(--paw-primary));
+		font-size: 0;
+	}
+
+	.paw-cal .paw-cal__more {
+		display: none;
+	}
+
+	.paw-cal .paw-cal__agenda-day {
+		grid-template-columns: 1fr;
+		gap: 0.5rem;
+		padding: 1rem;
+	}
+
+	.paw-cal .paw-cal__agenda-date {
+		flex-direction: row;
+		gap: 0.375rem;
+		width: auto;
+		height: auto;
+		padding: 0.25rem 0.625rem;
+		justify-self: start;
+	}
+
+	.paw-cal .paw-cal__agenda-num {
+		font-size: 1rem;
+	}
+
+	.paw-cal .paw-cal__agenda-ev {
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.paw-cal .paw-cal__agenda-time {
+		flex-basis: auto;
+	}
+
+	.paw-cal .paw-cal__day-item {
+		grid-template-columns: 1fr;
+		gap: 0.375rem;
+		padding: 1rem;
+	}
+
+	.paw-cal .paw-cal__day-rail {
+		padding-top: 0;
+	}
+
+	.paw-cal .paw-cal__day-thumb {
+		display: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.paw-cal-pop,
+	.paw-cal .paw-cal__btn,
+	.paw-events .paw-events__card,
+	.paw-event .paw-event__btn {
+		transition: none;
+	}
+
+	.paw-events .paw-events__card:hover {
+		transform: none;
+	}
+
+	.paw-cal .paw-cal__loader span {
+		animation-duration: 2s;
+	}
+}
