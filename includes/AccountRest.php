@@ -25,6 +25,8 @@ final class AccountRest {
 			array( '/account/resend', 'POST', 'resend' ),
 			array( '/account/reservations/(?P<id>\d+)/cancel', 'POST', 'cancel' ),
 			array( '/account/signups/(?P<id>\d+)/cancel', 'POST', 'cancel_signup' ),
+			array( '/account/pets', 'POST', 'pets' ),
+			array( '/account/info', 'POST', 'info' ),
 		);
 		foreach ( $routes as $r ) {
 			register_rest_route(
@@ -197,6 +199,41 @@ final class AccountRest {
 			Mailer::owner_cancelled( $reservation );
 		}
 		return new \WP_REST_Response( array( 'ok' => true, 'status' => 'cancelled', 'label' => Reservations::label( 'cancelled' ) ) );
+	}
+
+	/** My Profile → My Pets: replaces the saved pets (SavedPets). Errors are keyed pets.N.field. */
+	public static function pets( \WP_REST_Request $req ) {
+		$user = self::signed_in();
+		if ( is_wp_error( $user ) ) {
+			return $user;
+		}
+		if ( ! RateLimit::allow( 'pets', 30, 10 * MINUTE_IN_SECONDS ) ) {
+			return self::too_many();
+		}
+		[ $clean, $errors ] = SavedPets::sanitize( $req->get_json_params()['pets'] ?? array() );
+		if ( $errors ) {
+			return self::invalid( $errors );
+		}
+		SavedPets::save( (int) $user->ID, $clean );
+		return new \WP_REST_Response( array( 'ok' => true, 'pets' => $clean, 'message' => __( 'Your pets are saved.', 'pawfectly-reservations' ) ) );
+	}
+
+	/** My Profile → Details for bookings: address, emergency contact and vet. */
+	public static function info( \WP_REST_Request $req ) {
+		$user = self::signed_in();
+		if ( is_wp_error( $user ) ) {
+			return $user;
+		}
+		if ( ! RateLimit::allow( 'pets', 30, 10 * MINUTE_IN_SECONDS ) ) {
+			return self::too_many();
+		}
+		$params = (array) $req->get_json_params();
+		[ $clean, $errors ] = SavedPets::sanitize_info( $params['values'] ?? $params ); // My Profile's form posts the fields as they are.
+		if ( $errors ) {
+			return self::invalid( $errors );
+		}
+		SavedPets::save_info( (int) $user->ID, $clean );
+		return new \WP_REST_Response( array( 'ok' => true, 'values' => $clean, 'message' => __( 'Your details for bookings are saved.', 'pawfectly-reservations' ) ) );
 	}
 
 	/** Owner cancels one of their own event sign-ups, until the event starts (Signups::can_cancel). */

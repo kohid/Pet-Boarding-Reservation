@@ -1147,6 +1147,62 @@
 	box-shadow: var(--paw-ring);
 }
 
+.paw-app .paw-saved-pets {
+	margin: 0 0 1.25rem;
+	padding: 1rem 1.25rem;
+	border-radius: var(--paw-radius);
+	background: var(--paw-primary-tint);
+}
+
+.paw-app .paw-saved-pets[hidden] {
+	display: none;
+}
+
+.paw-app .paw-saved-pets__title {
+	margin: 0 0 0.75rem;
+	color: var(--paw-ink);
+	font-weight: 700;
+}
+
+.paw-app .paw-saved-pets__title span {
+	color: var(--paw-muted, #6b7280);
+	font-size: 0.875rem;
+	font-weight: 400;
+}
+
+.paw-app .paw-saved-pets__chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.paw-app .paw-saved-pets__chip {
+	min-height: 2.5rem;
+	padding: 0.375rem 1rem;
+	border: 1.5px solid var(--paw-primary);
+	border-radius: 2rem;
+	background: #fff;
+	color: var(--paw-primary-dark);
+	font: inherit;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.paw-app .paw-saved-pets__chip[aria-pressed="true"] {
+	background: var(--paw-primary);
+	color: #fff;
+}
+
+.paw-app .paw-saved-pets__chip:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.paw-app .paw-saved-pets__chip:focus-visible {
+	outline: none;
+	box-shadow: var(--paw-ring);
+}
+
 /* ---------- Welcome: booking choice and the menu ---------- */
 
 .paw-app .paw-welcome__choice {

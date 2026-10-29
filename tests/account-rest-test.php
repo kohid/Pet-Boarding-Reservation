@@ -100,4 +100,22 @@ $pw = AccountRest::password( req( array( 'current' => 'correct horse', 'password
 t( 'password changed', 'ok' === code( $pw ) && wp_check_password( 'brand new pass', $zoe->user_pass ) );
 t( 'password change reloads the page (the sign-in cookie and nonce are renewed)', true === ( $pw->get_data()['reload'] ?? null ) );
 
+// My Profile: saved pets and details for bookings.
+wp_set_current_user( 0 );
+t( 'pets: signed out → 401', 401 === status( AccountRest::pets( req( array( 'pets' => array() ) ) ) ) );
+t( 'details: signed out → 401', 401 === status( AccountRest::info( req( array( 'values' => array() ) ) ) ) );
+$owner = paw_test_user( 'pets@example.com', 'some pass1', array( Accounts::ROLE ) );
+wp_set_current_user( $owner->ID );
+$bad = AccountRest::pets( req( array( 'pets' => array( array( 'values' => array( 'pet_name' => 'Rex' ) ), array( 'values' => array( 'pet_type' => 'dog' ) ) ) ) ) );
+t( 'pets: errors keyed per pet, nothing saved', 400 === status( $bad ) && isset( $bad->get_error_data()['fields']['pets.1.pet_name'] ) && '' === get_user_meta( $owner->ID, \Pawfectly\SavedPets::META_PETS, true ) );
+$ok = AccountRest::pets( req( array( 'pets' => array( array( 'values' => array( 'pet_name' => 'Rex', 'pet_type' => 'dog', 'dog_size' => 'large' ) ), array( 'values' => array( 'pet_name' => 'Mingming', 'pet_type' => 'cat' ) ) ) ) ) );
+t( 'pets: saved, with a uid each', 200 === status( $ok ) && array( 'Rex', 'Mingming' ) === array_map( static fn( $p ) => $p['values']['pet_name'], $ok->get_data()['pets'] ) && 2 === count( get_user_meta( $owner->ID, \Pawfectly\SavedPets::META_PETS, true ) ) && 12 === strlen( $ok->get_data()['pets'][0]['uid'] ) );
+$none = AccountRest::pets( req( array( 'pets' => array() ) ) );
+t( 'pets: an empty list removes them all', 200 === status( $none ) && array() === get_user_meta( $owner->ID, \Pawfectly\SavedPets::META_PETS, true ) );
+$bad = AccountRest::info( req( array( 'values' => array( 'vet_phone' => 'nope' ) ) ) );
+t( 'details: errors keyed by field', 400 === status( $bad ) && isset( $bad->get_error_data()['fields']['vet_phone'] ) );
+$ok = AccountRest::info( req( array( 'values' => array( 'address_city' => 'Estero', 'vet_name' => 'Dr. Paws' ) ) ) );
+t( 'details: saved', 200 === status( $ok ) && 'Estero' === get_user_meta( $owner->ID, \Pawfectly\SavedPets::META_INFO, true )['address_city'] && 'Dr. Paws' === $ok->get_data()['values']['vet_name'] );
+wp_set_current_user( 0 );
+
 done();

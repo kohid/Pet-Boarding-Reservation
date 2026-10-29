@@ -428,6 +428,7 @@
 		if (addBtn) {
 			addBtn.hidden = petCount() >= CFG.maxPets;
 		}
+		syncSaved();
 		showPrices();
 		showEstimate();
 		showProgress();
@@ -1243,6 +1244,80 @@
 			ensurePets(pets.length);
 			pets.forEach(function (pet, n) { setPetValues(n, pet); });
 		}
+	}
+
+	/* ---------- Saved pets (My Profile): "Who's coming?" ---------- */
+
+	var savedBox = root.querySelector('[data-paw-saved-pets]');
+	var SAVED = ACCOUNT.prefill && Array.isArray(ACCOUNT.prefill.saved_pets) ? ACCOUNT.prefill.saved_pets : [];
+
+	function sameName(a, b) {
+		return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+	}
+
+	/** The pet cards holding this saved pet (matched by name, as the server matches them). */
+	function cardsFor(pet) {
+		var out = [];
+		for (var n = 0; n < petCount(); n++) {
+			if (sameName(petValues(n).pet_name, pet.name)) {
+				out.push(n);
+			}
+		}
+		return out;
+	}
+
+	function onlyBlankCard() {
+		return petCount() === 1 && petValues(0).pet_name === '';
+	}
+
+	function syncSaved() {
+		if (!savedBox) {
+			return;
+		}
+		savedBox.hidden = SAVED.length < 2;
+		savedBox.querySelectorAll('[data-paw-saved]').forEach(function (chip) {
+			var on = cardsFor(SAVED[+chip.getAttribute('data-paw-saved')]).length > 0;
+			chip.setAttribute('aria-pressed', on ? 'true' : 'false');
+			chip.disabled = !on && petCount() >= CFG.maxPets && !onlyBlankCard();
+		});
+	}
+
+	if (savedBox) {
+		var chips = savedBox.querySelector('[data-paw-saved-chips]');
+		SAVED.forEach(function (pet, i) {
+			var chip = document.createElement('button');
+			chip.type = 'button';
+			chip.className = 'paw-saved-pets__chip';
+			chip.setAttribute('data-paw-saved', String(i));
+			chip.textContent = (pet.type === 'cat' ? '🐱 ' : pet.type === 'dog' ? '🐶 ' : '🐾 ') + pet.name;
+			chips.appendChild(chip);
+		});
+		chips.addEventListener('click', function (e) {
+			var chip = e.target.closest('[data-paw-saved]');
+			if (!chip) {
+				return;
+			}
+			var pet = SAVED[+chip.getAttribute('data-paw-saved')];
+			var at = cardsFor(pet);
+			if (at.length) {
+				// Leaving: its cards go (the last card left is emptied instead).
+				at.reverse().forEach(function (n) {
+					if (petCount() === 1) {
+						clearPet(0);
+					} else {
+						removePet(n);
+					}
+				});
+			} else {
+				// Coming: a new card (or the blank first one), filled from the profile.
+				if (!onlyBlankCard()) {
+					addPet();
+				}
+				setPetValues(petCount() - 1, pet.values);
+			}
+			refresh();
+			saveDraft();
+		});
 	}
 
 	/* ---------- Start ---------- */
