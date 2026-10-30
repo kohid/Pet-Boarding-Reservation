@@ -613,6 +613,38 @@ let window_today;
       await ctx.close();
     }
 
+    // Staff (the site owner) booking for their own pets.
+    {
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+      const page = await ctx.newPage();
+      const errors = [];
+      page.on('pageerror', e => errors.push(e.message));
+      await page.goto(URL.replace('index.html', 'staff.html'));
+      await next(page);
+      ok('staff: "Who is this booking for?" starts on A customer, nothing filled in', await page.isChecked('[data-paw-booking-for][value=customer]') && (await page.inputValue('[name=owner_first_name]')) === '');
+      await page.check('[data-paw-booking-for][value=me]');
+      ok('staff, my own pets: their details are filled in', (await page.inputValue('[name=owner_first_name]')) === 'Kim' && (await page.inputValue('[name=owner_email]')) === 'boss@example.com' && (await page.inputValue('[name=address_street]')) === '9 Owner Way');
+      await page.fill('[name=owner_phone]', '239-555-0100');
+      ok('staff, my own pets: the choice is sent with the booking', await page.evaluate(() => new FormData(document.querySelector('form.paw-form')).get('booking_for')) === 'me');
+      await page.waitForTimeout(700);
+      await page.reload();
+      await next(page);
+      ok('staff, my own pets: a reloaded draft is still for their own pets', await page.isChecked('[data-paw-booking-for][value=me]') && (await page.inputValue('[name=owner_phone]')) === '239-555-0100' && (await page.inputValue('[name=owner_first_name]')) === 'Kim');
+      await next(page);
+      const cards = () => page.$$eval('[data-paw-pets="pet"] [data-paw-pet]', cs => cs.map((c, n) => c.querySelector(`[name="pets[${n}][pet_name]"]`).value));
+      ok('staff, my own pets: their saved pets and the chooser', (await cards()).join() === 'Coco,Milo' && await page.isVisible('[data-paw-saved-pets]') && (await page.locator('[data-paw-saved]').count()) === 2);
+      if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'form-staff-own.png') });
+      await page.click('[data-paw-prev]');
+      await page.fill('[name=owner_phone]', '239-555-0199');
+      await page.check('[data-paw-booking-for][value=customer]');
+      ok('back to a customer: what came from their account is taken out, what was typed stays', (await page.inputValue('[name=owner_first_name]')) === '' && (await page.inputValue('[name=address_street]')) === '' && (await page.inputValue('[name=owner_phone]')) === '239-555-0199');
+      ok('back to a customer: their yes/no answers are cleared and the country goes back to how the page drew it', await page.evaluate(() => !document.querySelector('[name=vet_authorization]:checked') && document.querySelector('[name=address_country]').value === (document.querySelector('[name=address_country] option[selected]') || document.querySelector('[name=address_country]').options[0]).value));
+      await next(page).catch(() => {});
+      ok('back to a customer: their pets are taken out too', (await cards()).join() === '' && await page.isHidden('[data-paw-saved-pets]'));
+      ok('staff: no script errors', errors.length === 0 || (console.log(errors), false));
+      await ctx.close();
+    }
+
     console.log(`\nall ${passed} passed`);
   } finally {
     await browser.close();

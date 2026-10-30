@@ -68,7 +68,7 @@ wp_set_current_user( $front->ID );
 $staff_html = Shortcode::markup( $settings );
 $staff_cfg  = Shortcode::config();
 t( 'staff: no prefill from the last customer they entered', array() === $staff_cfg['account']['prefill'] && true === $staff_cfg['account']['staff'] );
-t( 'staff: told they are booking for a customer', str_contains( $staff_html, 'booking for a customer' ) && ! str_contains( $staff_html, 'name="create_account"' ) );
+t( 'staff: asked who the booking is for, a customer by default', str_contains( $staff_html, 'name="booking_for" value="customer" checked' ) && str_contains( $staff_html, 'name="booking_for" value="me"' ) && ! str_contains( $staff_html, 'name="create_account"' ) );
 wp_set_current_user( 0 );
 $cfg = Shortcode::config();
 t( 'config: endpoints and nonce', 'https://example.test/wp-json/pawfectly/v1/reservations' === $cfg['restUrl'] && str_ends_with( $cfg['nonceUrl'], 'pawfectly/v1/nonce' ) && 'good-nonce' === $cfg['nonce'] );

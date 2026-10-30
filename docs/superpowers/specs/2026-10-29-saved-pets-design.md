@@ -83,3 +83,15 @@ The user said: "On my-profile, users can add each pet's details and information,
 - **Merging a booking into a saved pet:** the merged answers are checked again as a whole. Follow-ups that the new answers hide are dropped, such as medical details after a "no", or a dog size once the pet is a cat.
 - **Clearing an answer:** a booking cannot clear a saved answer, because only non-empty answers are taken. Owners clear answers in My Profile.
 
+
+## v0.11: staff and the site owner booking for their own pets
+
+The user said: "the website owner has pets too and can book; those bookings are made by the owner for their own pets, and I can still check them all."
+
+- **The choice:** on the booking form, signed-in staff (the site owner included) see "Who is this booking for?":
+  - **A customer** (the default, as before): nothing is filled in, and nothing is saved to their account.
+  - **My own pets:** their name, email, phone, saved details and saved pets fill in, with the "Who's coming?" chips, exactly as for an owner (`account.selfPrefill`, from `Accounts::prefill()`).
+- **Sending:** the form sends `booking_for=me`. `Rest::submit` then links the booking to the staffer (`user_id`) and remembers its pets and details in their My Profile, as for owners. Without it, a staff booking is linked to nobody, as before.
+- **Switching back to A customer** takes out what was filled in from their account and not changed since: the details, and the pet cards that still match a saved pet.
+- **Drafts** remember the choice. A reloaded draft picks "My own pets" again, so the booking stays theirs. "Start over" goes back to A customer.
+- **Checking them all:** these bookings are ordinary reservations, so they show in the staff dashboard with every other booking, and in the staffer's own My Bookings.

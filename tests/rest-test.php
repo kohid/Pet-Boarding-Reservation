@@ -154,6 +154,10 @@ wp_set_current_user( $staffer->ID );
 Rest::submit( request( $good ) );
 t( 'staff booking for a customer: not linked to the staff account', null === $wpdb->rows[1]['user_id'] );
 t( 'staff booking for a customer: nothing saved to the staff account', '' === get_user_meta( $staffer->ID, \Pawfectly\SavedPets::META_PETS, true ) );
+reset_state();
+Rest::submit( request( $good, array( 'booking_for' => 'me' ) ) );
+t( 'staff booking for their own pets: linked to their account', (string) $staffer->ID === ( $wpdb->rows[1]['user_id'] ?? '' ) );
+t( 'staff booking for their own pets: the pets are saved to their profile', $good['pets'][0]['pet_name'] === ( get_user_meta( $staffer->ID, \Pawfectly\SavedPets::META_PETS, true )[0]['values']['pet_name'] ?? '' ) );
 wp_set_current_user( 0 );
 
 reset_state();

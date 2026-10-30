@@ -87,10 +87,14 @@ $paw_count = count( $steps );
 
 				<?php if ( 'owner' === $paw_step['id'] ) : ?>
 					<?php if ( $account['staff'] ) : ?>
-						<p class="paw-account paw-account--in" data-paw-account>
-							<?php esc_html_e( 'Signed in as', 'pawfectly-reservations' ); ?> <strong><?php echo esc_html( $account['name'] ); ?></strong> (<?php esc_html_e( 'staff', 'pawfectly-reservations' ); ?>).
-							<?php esc_html_e( "You're booking for a customer: enter their details. Nothing is saved to your account.", 'pawfectly-reservations' ); ?>
-						</p>
+						<div class="paw-account paw-account--in paw-booking-for" data-paw-account>
+							<p class="paw-account__lead"><?php esc_html_e( 'Signed in as', 'pawfectly-reservations' ); ?> <strong><?php echo esc_html( $account['name'] ); ?></strong> (<?php esc_html_e( 'staff', 'pawfectly-reservations' ); ?>).</p>
+							<fieldset class="paw-booking-for__choice">
+								<legend><?php esc_html_e( 'Who is this booking for?', 'pawfectly-reservations' ); ?></legend>
+								<label><input type="radio" name="booking_for" value="customer" checked data-paw-booking-for> <span><strong><?php esc_html_e( 'A customer', 'pawfectly-reservations' ); ?></strong> <?php esc_html_e( 'Enter their details. Nothing is saved to your account.', 'pawfectly-reservations' ); ?></span></label>
+								<label><input type="radio" name="booking_for" value="me" data-paw-booking-for> <span><strong><?php esc_html_e( 'My own pets', 'pawfectly-reservations' ); ?></strong> <?php esc_html_e( 'Your details and saved pets are filled in, and the booking shows in your My Bookings.', 'pawfectly-reservations' ); ?></span></label>
+							</fieldset>
+						</div>
 					<?php elseif ( $account['signedIn'] ) : ?>
 						<p class="paw-account paw-account--in" data-paw-account>
 							<?php esc_html_e( 'Signed in as', 'pawfectly-reservations' ); ?> <strong><?php echo esc_html( $account['name'] ); ?></strong>.
