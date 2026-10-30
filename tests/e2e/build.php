@@ -91,7 +91,7 @@ if ( $signed_in ) {
 	$boss->last_name    = 'Owner';
 	$boss->display_name = 'Kim Owner';
 	\Pawfectly\SavedPets::save( $boss->ID, array( array( 'uid' => 'eeeeeeeeeeee', 'values' => array( 'pet_name' => 'Coco', 'pet_type' => 'dog', 'dog_size' => 'small' ) ), array( 'uid' => 'ffffffffffff', 'values' => array( 'pet_name' => 'Milo', 'pet_type' => 'cat' ) ) ) );
-	\Pawfectly\SavedPets::save_info( $boss->ID, array( 'address_street' => '9 Owner Way', 'address_state' => 'FL', 'address_postcode' => '33928', 'address_country' => 'US' ) );
+	\Pawfectly\SavedPets::save_info( $boss->ID, array( 'address_street' => '9 Owner Way', 'address_state' => 'FL', 'address_postcode' => '33928', 'address_country' => 'US', 'vet_authorization' => 'yes' ) );
 	wp_set_current_user( $boss->ID );
 	$config3             = Shortcode::config();
 	$config3['restUrl']  = '/mock/reservations';

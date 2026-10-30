@@ -516,18 +516,21 @@
 		});
 	}
 
+	/** Puts a control back as the page drew it. */
+	function resetInput(input) {
+		if (input.type === 'radio' || input.type === 'checkbox') {
+			input.checked = input.defaultChecked;
+		} else if (input.tagName === 'SELECT') {
+			var first = input.querySelector('option[selected]') || input.options[0];
+			input.value = first ? first.value : '';
+		} else if (input.type !== 'file') {
+			input.value = '';
+		}
+	}
+
 	function clearPet(n) {
 		root.querySelectorAll('[data-paw-pet="' + n + '"]').forEach(function (card) {
-			card.querySelectorAll('input, textarea, select').forEach(function (input) {
-				if (input.type === 'radio' || input.type === 'checkbox') {
-					input.checked = input.defaultChecked;
-				} else if (input.tagName === 'SELECT') {
-					var first = input.querySelector('option[selected]') || input.options[0];
-					input.value = first ? first.value : '';
-				} else if (input.type !== 'file') {
-					input.value = '';
-				}
-			});
+			card.querySelectorAll('input, textarea, select').forEach(resetInput);
 			card.querySelectorAll('[data-paw-date]').forEach(function (input) {
 				if (pickers[input.name]) {
 					pickers[input.name].clear();
@@ -1406,7 +1409,10 @@
 				// Back to a customer: take out what was filled in from their account and not changed since.
 				Object.keys(self).forEach(function (id) {
 					if (CFG.fields[id] && !CFG.fields[id].perPet && value(id) === String(self[id])) {
-						setValue(id, '');
+						form.querySelectorAll('[name="' + nameOf(id) + '"]').forEach(resetInput);
+						if (pickers[nameOf(id)]) {
+							pickers[nameOf(id)].clear();
+						}
 					}
 				});
 				SAVED.forEach(function (pet) {

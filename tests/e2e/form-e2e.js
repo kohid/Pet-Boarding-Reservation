@@ -638,6 +638,7 @@ let window_today;
       await page.fill('[name=owner_phone]', '239-555-0199');
       await page.check('[data-paw-booking-for][value=customer]');
       ok('back to a customer: what came from their account is taken out, what was typed stays', (await page.inputValue('[name=owner_first_name]')) === '' && (await page.inputValue('[name=address_street]')) === '' && (await page.inputValue('[name=owner_phone]')) === '239-555-0199');
+      ok('back to a customer: their yes/no answers are cleared and the country goes back to how the page drew it', await page.evaluate(() => !document.querySelector('[name=vet_authorization]:checked') && document.querySelector('[name=address_country]').value === (document.querySelector('[name=address_country] option[selected]') || document.querySelector('[name=address_country]').options[0]).value));
       await next(page).catch(() => {});
       ok('back to a customer: their pets are taken out too', (await cards()).join() === '' && await page.isHidden('[data-paw-saved-pets]'));
       ok('staff: no script errors', errors.length === 0 || (console.log(errors), false));
