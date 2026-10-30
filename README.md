@@ -34,6 +34,10 @@ Requires WordPress 6.0+ and PHP 8.0+. This is v0.4. See `docs/superpowers/specs/
   - **Booking while signed in** saves that booking's pets automatically, matched by name, adding new ones and updating known ones.
 - **My Profile → Details for bookings:** home address, emergency contact and vet, saved once and filled in on the booking form.
 - **My Profile → Recent activity:** the last 5 reservations and event sign-ups, with a link to My Bookings.
+- **Staff and the site owner booking for their own pets:** signed-in staff see "Who is this booking for?" on the owner step.
+  - **A customer** is the default: nothing is saved to the staff account.
+  - **My own pets** fills in their own details and saved pets, links the booking to their account (so it shows in their My Bookings and Recent activity), and saves the pets to their My Pets.
+  - Every booking, theirs included, is in the staff dashboard as usual.
 - **The booking form's "Who's coming?":** owners with two or more saved pets tap the pets that are coming. Each tap adds or removes that pet's card, filled in from the profile. At the start, the pets from their last booking are chosen.
 - **New accounts confirm their email with a link,** valid for 7 days. Until they do, My Bookings shows only reservations made while signed in. After confirming, it also shows earlier reservations made with that email.
 - **Everyone signs in on the login page,** owners, staff and admins alike, with their email or username. It goes through WordPress's own sign-in, so login-limit and security plugins still apply. After signing in, everyone lands on My Profile (or the page that sent them to sign in). After logging out, they land on the homepage.

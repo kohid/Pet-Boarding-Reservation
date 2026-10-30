@@ -55,6 +55,8 @@ final class Shortcode {
 			'staff'     => $in && ! $customer,
 			'name'      => $in ? (string) $user->display_name : '',
 			'prefill'   => $customer ? Accounts::prefill( (int) $user->ID ) : array(),
+			// Staff choose "My own pets" to book for themselves: their own details and saved pets.
+			'selfPrefill' => $in && ! $customer ? Accounts::prefill( (int) $user->ID ) : array(),
 			'loginRest' => rest_url( Rest::NS . '/account/login' ),
 			'lostUrl'   => wp_lostpassword_url( $here ),
 			'logoutUrl' => Login::logout_url(),

@@ -84,4 +84,21 @@ if ( $signed_in ) {
 	$saved_page = str_replace( 'window.PAW_FORM = ' . json_encode( $config ) . ';', 'window.PAW_FORM = ' . json_encode( $config2 ) . ';', $page );
 	file_put_contents( __DIR__ . '/out/saved-pets.html', $saved_page );
 	echo "wrote tests/e2e/out/saved-pets.html\n";
+
+	// Staff (the site owner) with pets of their own: out/staff.html, for "Who is this booking for?".
+	$boss               = paw_test_user( 'boss@example.com', 'boss pass1', array( 'administrator' ), array( 'manage_options' => true, \Pawfectly\Activator::CAPABILITY => true ) );
+	$boss->first_name   = 'Kim';
+	$boss->last_name    = 'Owner';
+	$boss->display_name = 'Kim Owner';
+	\Pawfectly\SavedPets::save( $boss->ID, array( array( 'uid' => 'eeeeeeeeeeee', 'values' => array( 'pet_name' => 'Coco', 'pet_type' => 'dog', 'dog_size' => 'small' ) ), array( 'uid' => 'ffffffffffff', 'values' => array( 'pet_name' => 'Milo', 'pet_type' => 'cat' ) ) ) );
+	\Pawfectly\SavedPets::save_info( $boss->ID, array( 'address_street' => '9 Owner Way', 'address_state' => 'FL', 'address_postcode' => '33928', 'address_country' => 'US' ) );
+	wp_set_current_user( $boss->ID );
+	$config3             = Shortcode::config();
+	$config3['restUrl']  = '/mock/reservations';
+	$config3['nonceUrl'] = '/mock/nonce';
+	$config3['today']    = gmdate( 'Y-m-d' );
+	$staff_page          = str_replace( 'window.PAW_FORM = ' . json_encode( $config ) . ';', 'window.PAW_FORM = ' . json_encode( $config3 ) . ';', $page );
+	$staff_page          = str_replace( $html, Shortcode::markup( Settings::get() ), $staff_page );
+	file_put_contents( __DIR__ . '/out/staff.html', $staff_page );
+	echo "wrote tests/e2e/out/staff.html\n";
 }

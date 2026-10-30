@@ -1203,6 +1203,42 @@
 	box-shadow: var(--paw-ring);
 }
 
+.paw-app .paw-booking-for__choice {
+	display: grid;
+	gap: 0.5rem;
+	margin: 0.75rem 0 0;
+	padding: 0;
+	border: 0;
+}
+
+.paw-app .paw-booking-for__choice legend {
+	margin-bottom: 0.5rem;
+	padding: 0;
+	color: var(--paw-ink);
+	font-weight: 700;
+}
+
+.paw-app .paw-booking-for__choice label {
+	display: flex;
+	gap: 0.625rem;
+	align-items: flex-start;
+	padding: 0.625rem 0.875rem;
+	border: 1px solid var(--paw-line, #e4e6ef);
+	border-radius: var(--paw-radius);
+	cursor: pointer;
+}
+
+.paw-app .paw-booking-for__choice label:has(input:checked) {
+	border-color: var(--paw-primary);
+	background: var(--paw-primary-tint);
+}
+
+.paw-app .paw-booking-for__choice input {
+	flex: none;
+	margin: 0.2rem 0 0;
+	accent-color: var(--paw-primary);
+}
+
 /* ---------- Welcome: booking choice and the menu ---------- */
 
 .paw-app .paw-welcome__choice {

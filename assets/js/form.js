@@ -789,7 +789,7 @@
 			pets.push(petValues(n));
 		}
 		try {
-			localStorage.setItem(DRAFT_KEY, JSON.stringify({ t: Date.now(), v: values, pets: pets }));
+			localStorage.setItem(DRAFT_KEY, JSON.stringify({ t: Date.now(), v: values, pets: pets, forMe: !!root.querySelector('[data-paw-booking-for][value="me"]:checked') }));
 		} catch (err) { /* Private mode or storage full: drafts are a convenience only. */ }
 	}
 
@@ -857,6 +857,12 @@
 		if (any && draftNote) {
 			draftNote.hidden = false;
 		}
+		// Staff who were booking for their own pets: pick that again, so the booking stays theirs.
+		var me = draft.forMe && root.querySelector('[data-paw-booking-for][value="me"]');
+		if (me) {
+			me.checked = true;
+			me.dispatchEvent(new Event('change'));
+		}
 	}
 
 	if (draftNote) {
@@ -878,6 +884,13 @@
 			}
 			keysOf(0).concat([1, 2, 3, 4, 5, 6, 7].reduce(function (all, s) { return all.concat(keysOf(s)); }, [])).forEach(function (key) { showError(key, null); });
 			draftNote.hidden = true;
+			if (root.querySelector('[data-paw-booking-for]')) {
+				// form.reset() put staff back on "A customer": drop their own details and pets too.
+				ACCOUNT.prefill = {};
+				SAVED = [];
+				snaps = {};
+				buildChips();
+			}
 			reached = 0;
 			refresh();
 		});
@@ -1321,16 +1334,26 @@
 		});
 	}
 
-	if (savedBox) {
-		var chips = savedBox.querySelector('[data-paw-saved-chips]');
+	/** One chip per saved pet (drawn again when staff switch who the booking is for). */
+	function buildChips() {
+		if (!savedBox) {
+			return;
+		}
+		var box = savedBox.querySelector('[data-paw-saved-chips]');
+		box.textContent = '';
 		SAVED.forEach(function (pet, i) {
 			var chip = document.createElement('button');
 			chip.type = 'button';
 			chip.className = 'paw-saved-pets__chip';
 			chip.setAttribute('data-paw-saved', String(i));
 			chip.textContent = (pet.type === 'cat' ? '🐱 ' : pet.type === 'dog' ? '🐶 ' : '🐾 ') + pet.name;
-			chips.appendChild(chip);
+			box.appendChild(chip);
 		});
+	}
+
+	if (savedBox) {
+		var chips = savedBox.querySelector('[data-paw-saved-chips]');
+		buildChips();
 		chips.addEventListener('click', function (e) {
 			var chip = e.target.closest('[data-paw-saved]');
 			if (!chip) {
@@ -1363,6 +1386,49 @@
 			saveDraft();
 		});
 	}
+
+	/* ---------- Staff: "Who is this booking for?" ---------- */
+
+	root.querySelectorAll('[data-paw-booking-for]').forEach(function (radio) {
+		radio.addEventListener('change', function () {
+			if (!radio.checked) {
+				return;
+			}
+			var self = ACCOUNT.selfPrefill || {};
+			if (radio.value === 'me') {
+				// Their own booking: fill in their details and saved pets, as for any owner.
+				ACCOUNT.prefill = self;
+				SAVED = Array.isArray(self.saved_pets) ? self.saved_pets : [];
+				snaps = {};
+				buildChips();
+				applyPrefill();
+			} else {
+				// Back to a customer: take out what was filled in from their account and not changed since.
+				Object.keys(self).forEach(function (id) {
+					if (CFG.fields[id] && !CFG.fields[id].perPet && value(id) === String(self[id])) {
+						setValue(id, '');
+					}
+				});
+				SAVED.forEach(function (pet) {
+					cardsFor(pet).reverse().forEach(function (n) {
+						if (!changedFrom(n, pet)) {
+							if (petCount() === 1) {
+								clearPet(0);
+							} else {
+								removePet(n);
+							}
+						}
+					});
+				});
+				ACCOUNT.prefill = {};
+				SAVED = [];
+				snaps = {};
+				buildChips();
+			}
+			refresh();
+			saveDraft();
+		});
+	});
 
 	/* ---------- Start ---------- */
 

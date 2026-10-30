@@ -135,7 +135,9 @@ final class Rest {
 
 		$ip  = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 		$row = Reservations::build_row( $clean, $reference, $stored, $signature_path, $ip, current_time( 'mysql', true ) );
-		$row['user_id'] = is_user_logged_in() && Accounts::may_use_customer_login( wp_get_current_user() ) ? get_current_user_id() : null;
+		// An owner's booking is theirs; staff book for a customer unless they chose "My own pets".
+		$own            = Accounts::may_use_customer_login( wp_get_current_user() ) || 'me' === (string) $request->get_param( 'booking_for' );
+		$row['user_id'] = is_user_logged_in() && $own ? get_current_user_id() : null;
 		$id             = Reservations::insert( $row );
 		if ( ! $id ) {
 			Uploads::delete( array_merge( $stored, array( array( 'path' => $signature_path ) ) ) );
